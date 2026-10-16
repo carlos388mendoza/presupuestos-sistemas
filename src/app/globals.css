@@ -1,0 +1,82 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Instrument Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --color-tinta: #1d2b3a;
+  --color-tinta-2: #34475a;
+  --color-fondo: #eef1f0;
+  --color-papel: #ffffff;
+  --color-linea: #d3dad7;
+  --color-linea-2: #e4e9e7;
+  --color-suave: #5b6670;
+  --color-usd: #2e6b4e;
+  --color-usd-claro: #e5f0ea;
+  --color-hnl: #2d5b8e;
+  --color-hnl-claro: #e4ecf5;
+  --color-aviso: #8a5a00;
+  --color-aviso-claro: #fbf1dc;
+  --color-peligro: #a23b2a;
+  --color-peligro-claro: #f8e6e2;
+}
+
+html {
+  background: var(--color-fondo);
+  color: var(--color-tinta);
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Cifras alineadas en columnas */
+.cifra {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-md px-3.5 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+}
+@utility btn-primario {
+  @apply btn bg-tinta text-white hover:bg-tinta-2;
+}
+@utility btn-secundario {
+  @apply btn border border-linea bg-papel text-tinta hover:border-tinta;
+}
+@utility btn-texto {
+  @apply inline-flex items-center gap-1 rounded px-1.5 py-1 text-sm font-medium text-tinta-2 underline-offset-4 hover:underline disabled:opacity-50;
+}
+@utility btn-peligro {
+  @apply inline-flex items-center gap-1 rounded px-1.5 py-1 text-sm font-medium text-peligro underline-offset-4 hover:underline disabled:opacity-50;
+}
+@utility campo {
+  @apply w-full rounded-md border border-linea bg-papel px-3 py-2 text-sm text-tinta placeholder:text-suave/70 focus:border-tinta focus:outline-none;
+}
+@utility etiqueta {
+  @apply mb-1 block text-sm font-medium text-tinta;
+}
+@utility panel {
+  @apply rounded-lg border border-linea bg-papel;
+}
+@utility titulo-pagina {
+  @apply text-2xl font-semibold tracking-tight text-tinta;
+}
+@utility ayuda {
+  @apply text-sm text-suave;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-hnl);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

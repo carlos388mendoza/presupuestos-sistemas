@@ -1,0 +1,35 @@
+# dependencias
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+
+# pruebas
+/coverage
+
+# next.js
+/.next/
+/out/
+/build
+next-env.d.ts
+*.tsbuildinfo
+
+# varios
+.DS_Store
+*.pem
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.vercel
+
+# variables de entorno (sí se sube .env.example)
+.env*
+!.env.example
+
+# base de datos y archivos subidos
+/data
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+/uploads

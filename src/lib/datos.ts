@@ -1,0 +1,393 @@
+/**
+ * Capa de acceso a datos. Todas las reglas de permisos y de negocio viven aquí,
+ * para que páginas, acciones y APIs no puedan saltárselas.
+ * Recibe `db` como parámetro para poder probarse con una base de prueba.
+ */
+import { and, asc, desc, eq, inArray } from "drizzle-orm";
+import type { DB } from "@/db/cliente";
+import {
+  alternativas,
+  archivos,
+  equipos,
+  itemsAlternativa,
+  partidas,
+  presupuestos,
+  user,
+  type Moneda,
+  type Rol,
+  type TipoCompra,
+} from "@/db/schema";
+import { resumenPresupuesto, totalesDeItems } from "./dinero";
+
+export type Actor = { id: string; role: Rol };
+
+export class ErrorNegocio extends Error {
+  constructor(mensaje: string) {
+    super(mensaje);
+    this.name = "ErrorNegocio";
+  }
+}
+
+const NO_ENCONTRADO = "No se encontró el presupuesto o no tienes acceso a él.";
+
+/* ------------------------------------------------------------------ */
+/* Permisos                                                            */
+/* ------------------------------------------------------------------ */
+
+export function puedeAcceder(actor: Actor, creadoPor: string): boolean {
+  return actor.role === "admin" || actor.id === creadoPor;
+}
+
+/** Devuelve el presupuesto si el actor puede verlo; si no, lanza error. */
+export async function presupuestoAccesible(db: DB, actor: Actor, presupuestoId: string) {
+  const [p] = await db.select().from(presupuestos).where(eq(presupuestos.id, presupuestoId));
+  if (!p || !puedeAcceder(actor, p.creadoPor)) throw new ErrorNegocio(NO_ENCONTRADO);
+  return p;
+}
+
+async function presupuestoEditable(db: DB, actor: Actor, presupuestoId: string) {
+  const p = await presupuestoAccesible(db, actor, presupuestoId);
+  if (p.estado === "listo") {
+    throw new ErrorNegocio("El presupuesto está marcado como listo. Reábrelo para hacer cambios.");
+  }
+  return p;
+}
+
+async function partidaAccesible(db: DB, actor: Actor, partidaId: string) {
+  const [pa] = await db.select().from(partidas).where(eq(partidas.id, partidaId));
+  if (!pa) throw new ErrorNegocio("No se encontró la partida.");
+  const p = await presupuestoAccesible(db, actor, pa.presupuestoId);
+  return { partida: pa, presupuesto: p };
+}
+
+async function alternativaAccesible(db: DB, actor: Actor, alternativaId: string) {
+  const [a] = await db.select().from(alternativas).where(eq(alternativas.id, alternativaId));
+  if (!a) throw new ErrorNegocio("No se encontró la alternativa.");
+  const { partida, presupuesto } = await partidaAccesible(db, actor, a.partidaId);
+  return { alternativa: a, partida, presupuesto };
+}
+
+/* ------------------------------------------------------------------ */
+/* Lectura                                                             */
+/* ------------------------------------------------------------------ */
+
+export async function listarPresupuestos(db: DB, actor: Actor) {
+  const filas = await db
+    .select({
+      id: presupuestos.id,
+      nombre: presupuestos.nombre,
+      restaurante: presupuestos.restaurante,
+      tipo: presupuestos.tipo,
+      estado: presupuestos.estado,
+      updatedAt: presupuestos.updatedAt,
+      creadoPor: presupuestos.creadoPor,
+      autor: user.name,
+    })
+    .from(presupuestos)
+    .innerJoin(user, eq(user.id, presupuestos.creadoPor))
+    .where(actor.role === "admin" ? undefined : eq(presupuestos.creadoPor, actor.id))
+    .orderBy(desc(presupuestos.updatedAt));
+
+  return Promise.all(
+    filas.map(async (f) => {
+      const completo = await cargarDetalle(db, f.id);
+      return { ...f, resumen: resumenPresupuesto(completo.partidas), partidas: completo.partidas.length };
+    }),
+  );
+}
+
+async function cargarDetalle(db: DB, presupuestoId: string) {
+  const ps = await db
+    .select()
+    .from(partidas)
+    .where(eq(partidas.presupuestoId, presupuestoId))
+    .orderBy(asc(partidas.orden), asc(partidas.createdAt));
+  const partidaIds = ps.map((p) => p.id);
+
+  const alts = partidaIds.length
+    ? await db
+        .select({
+          alternativa: alternativas,
+          archivoNombre: archivos.nombreOriginal,
+        })
+        .from(alternativas)
+        .leftJoin(archivos, eq(archivos.id, alternativas.archivoId))
+        .where(inArray(alternativas.partidaId, partidaIds))
+        .orderBy(asc(alternativas.createdAt))
+    : [];
+  const altIds = alts.map((a) => a.alternativa.id);
+
+  const items = altIds.length
+    ? await db
+        .select({ item: itemsAlternativa, equipoNombre: equipos.nombre })
+        .from(itemsAlternativa)
+        .leftJoin(equipos, eq(equipos.id, itemsAlternativa.equipoId))
+        .where(inArray(itemsAlternativa.alternativaId, altIds))
+        .orderBy(asc(itemsAlternativa.orden))
+    : [];
+
+  return {
+    partidas: ps.map((p) => ({
+      ...p,
+      alternativas: alts
+        .filter((a) => a.alternativa.partidaId === p.id)
+        .map(({ alternativa, archivoNombre }) => {
+          const its = items
+            .filter((i) => i.item.alternativaId === alternativa.id)
+            .map((i) => ({ ...i.item, equipoNombre: i.equipoNombre }));
+          return { ...alternativa, archivoNombre, items: its, totales: totalesDeItems(its) };
+        }),
+    })),
+  };
+}
+
+export async function obtenerPresupuesto(db: DB, actor: Actor, presupuestoId: string) {
+  const p = await presupuestoAccesible(db, actor, presupuestoId);
+  const [autor] = await db.select({ name: user.name }).from(user).where(eq(user.id, p.creadoPor));
+  const detalle = await cargarDetalle(db, p.id);
+  return {
+    ...p,
+    autor: autor?.name ?? "",
+    partidas: detalle.partidas,
+    resumen: resumenPresupuesto(detalle.partidas),
+  };
+}
+
+export type PresupuestoCompleto = Awaited<ReturnType<typeof obtenerPresupuesto>>;
+
+export async function obtenerAlternativa(db: DB, actor: Actor, alternativaId: string) {
+  const { alternativa, partida, presupuesto } = await alternativaAccesible(db, actor, alternativaId);
+  const items = await db
+    .select()
+    .from(itemsAlternativa)
+    .where(eq(itemsAlternativa.alternativaId, alternativa.id))
+    .orderBy(asc(itemsAlternativa.orden));
+  const [archivo] = alternativa.archivoId
+    ? await db.select().from(archivos).where(eq(archivos.id, alternativa.archivoId))
+    : [];
+  return { alternativa, partida, presupuesto, items, archivo };
+}
+
+/* ------------------------------------------------------------------ */
+/* Presupuestos y partidas                                             */
+/* ------------------------------------------------------------------ */
+
+export async function crearPresupuesto(
+  db: DB,
+  actor: Actor,
+  datos: { nombre: string; restaurante: string; tipo: "apertura" | "remodelacion"; notas?: string },
+) {
+  const [fila] = await db
+    .insert(presupuestos)
+    .values({ ...datos, notas: datos.notas ?? "", creadoPor: actor.id })
+    .returning();
+  return fila;
+}
+
+export async function actualizarPresupuesto(
+  db: DB,
+  actor: Actor,
+  id: string,
+  datos: { nombre: string; restaurante: string; tipo: "apertura" | "remodelacion"; notas: string },
+) {
+  await presupuestoEditable(db, actor, id);
+  await db.update(presupuestos).set(datos).where(eq(presupuestos.id, id));
+}
+
+export async function eliminarPresupuesto(db: DB, actor: Actor, id: string) {
+  await presupuestoAccesible(db, actor, id);
+  await db.delete(presupuestos).where(eq(presupuestos.id, id));
+}
+
+async function tocarPresupuesto(db: DB, id: string) {
+  await db.update(presupuestos).set({ updatedAt: new Date() }).where(eq(presupuestos.id, id));
+}
+
+export async function crearPartida(db: DB, actor: Actor, presupuestoId: string, nombre: string) {
+  await presupuestoEditable(db, actor, presupuestoId);
+  const orden = (await db.select({ id: partidas.id }).from(partidas).where(eq(partidas.presupuestoId, presupuestoId))).length;
+  const [fila] = await db.insert(partidas).values({ presupuestoId, nombre, orden }).returning();
+  await tocarPresupuesto(db, presupuestoId);
+  return fila;
+}
+
+export async function renombrarPartida(db: DB, actor: Actor, partidaId: string, nombre: string) {
+  const { presupuesto } = await partidaAccesible(db, actor, partidaId);
+  await presupuestoEditable(db, actor, presupuesto.id);
+  await db.update(partidas).set({ nombre }).where(eq(partidas.id, partidaId));
+}
+
+export async function eliminarPartida(db: DB, actor: Actor, partidaId: string) {
+  const { presupuesto } = await partidaAccesible(db, actor, partidaId);
+  await presupuestoEditable(db, actor, presupuesto.id);
+  await db.delete(partidas).where(eq(partidas.id, partidaId));
+  await tocarPresupuesto(db, presupuesto.id);
+}
+
+/* ------------------------------------------------------------------ */
+/* Alternativas                                                        */
+/* ------------------------------------------------------------------ */
+
+export type ItemEntrada = {
+  equipoId: string | null;
+  /** Si es true y no hay equipoId, se crea el equipo en el catálogo. */
+  crearEquipo: boolean;
+  origenEquipo: "manual" | "ia";
+  descripcion: string;
+  marca: string;
+  modelo: string;
+  cantidad: number;
+  precioUnitarioCentavos: number;
+  moneda: Moneda;
+};
+
+export type AlternativaEntrada = {
+  id?: string;
+  partidaId: string;
+  proveedor: string;
+  tipoCompra: TipoCompra;
+  notas: string;
+  archivoId: string | null;
+  items: ItemEntrada[];
+};
+
+export async function guardarAlternativa(db: DB, actor: Actor, entrada: AlternativaEntrada): Promise<string> {
+  const { presupuesto } = await partidaAccesible(db, actor, entrada.partidaId);
+  await presupuestoEditable(db, actor, presupuesto.id);
+
+  if (entrada.items.length === 0) throw new ErrorNegocio("Agrega al menos un ítem a la alternativa.");
+
+  if (entrada.archivoId) {
+    const [archivo] = await db.select().from(archivos).where(eq(archivos.id, entrada.archivoId));
+    if (!archivo || (archivo.subidoPor !== actor.id && actor.role !== "admin")) {
+      throw new ErrorNegocio("El archivo de cotización no es válido.");
+    }
+  }
+
+  if (entrada.id) {
+    const { alternativa } = await alternativaAccesible(db, actor, entrada.id);
+    if (alternativa.partidaId !== entrada.partidaId) throw new ErrorNegocio("La alternativa no pertenece a esa partida.");
+  }
+
+  return db.transaction(async (tx) => {
+    let altId = entrada.id;
+    const datos = {
+      partidaId: entrada.partidaId,
+      proveedor: entrada.proveedor,
+      tipoCompra: entrada.tipoCompra,
+      notas: entrada.notas,
+      archivoId: entrada.archivoId,
+    };
+    if (altId) {
+      await tx.update(alternativas).set(datos).where(eq(alternativas.id, altId));
+      await tx.delete(itemsAlternativa).where(eq(itemsAlternativa.alternativaId, altId));
+    } else {
+      const [nueva] = await tx.insert(alternativas).values(datos).returning({ id: alternativas.id });
+      altId = nueva.id;
+    }
+
+    for (const [i, it] of entrada.items.entries()) {
+      let equipoId = it.equipoId;
+      if (equipoId) {
+        const [existe] = await tx.select({ id: equipos.id }).from(equipos).where(eq(equipos.id, equipoId));
+        if (!existe) equipoId = null;
+      }
+      if (!equipoId && it.crearEquipo) {
+        const [creado] = await tx
+          .insert(equipos)
+          .values({
+            nombre: it.descripcion,
+            marca: it.marca,
+            modelo: it.modelo,
+            origen: it.origenEquipo,
+            // Los creados por la IA quedan pendientes de revisión
+            revisado: it.origenEquipo === "manual",
+          })
+          .returning({ id: equipos.id });
+        equipoId = creado.id;
+      }
+      await tx.insert(itemsAlternativa)
+        .values({
+          alternativaId: altId!,
+          equipoId,
+          descripcion: it.descripcion,
+          cantidad: it.cantidad,
+          precioUnitarioCentavos: it.precioUnitarioCentavos,
+          moneda: it.moneda,
+          orden: i,
+        });
+    }
+
+    await tx.update(presupuestos).set({ updatedAt: new Date() }).where(eq(presupuestos.id, presupuesto.id));
+    return altId!;
+  });
+}
+
+export async function eliminarAlternativa(db: DB, actor: Actor, alternativaId: string) {
+  const { presupuesto } = await alternativaAccesible(db, actor, alternativaId);
+  await presupuestoEditable(db, actor, presupuesto.id);
+  await db.delete(alternativas).where(eq(alternativas.id, alternativaId));
+  await tocarPresupuesto(db, presupuesto.id);
+}
+
+/** Marca una alternativa como la elegida de su partida (y desmarca las demás). */
+export async function elegirAlternativa(db: DB, actor: Actor, alternativaId: string) {
+  const { alternativa, presupuesto } = await alternativaAccesible(db, actor, alternativaId);
+  await presupuestoEditable(db, actor, presupuesto.id);
+  await db.transaction(async (tx) => {
+    await tx
+      .update(alternativas)
+      .set({ elegida: false })
+      .where(and(eq(alternativas.partidaId, alternativa.partidaId), eq(alternativas.elegida, true)));
+    await tx.update(alternativas).set({ elegida: true }).where(eq(alternativas.id, alternativaId));
+    await tx.update(presupuestos).set({ updatedAt: new Date() }).where(eq(presupuestos.id, presupuesto.id));
+  });
+}
+
+export async function quitarEleccion(db: DB, actor: Actor, alternativaId: string) {
+  const { presupuesto } = await alternativaAccesible(db, actor, alternativaId);
+  await presupuestoEditable(db, actor, presupuesto.id);
+  await db.update(alternativas).set({ elegida: false }).where(eq(alternativas.id, alternativaId));
+  await tocarPresupuesto(db, presupuesto.id);
+}
+
+/* ------------------------------------------------------------------ */
+/* Estado                                                              */
+/* ------------------------------------------------------------------ */
+
+export function pendientesParaListo(p: Pick<PresupuestoCompleto, "partidas">): string[] {
+  if (p.partidas.length === 0) return ["Agrega al menos una partida."];
+  return p.partidas
+    .filter((pa) => !pa.alternativas.some((a) => a.elegida))
+    .map((pa) => `Elige una alternativa en "${pa.nombre}".`);
+}
+
+export async function marcarListo(db: DB, actor: Actor, presupuestoId: string) {
+  const completo = await obtenerPresupuesto(db, actor, presupuestoId);
+  const pendientes = pendientesParaListo(completo);
+  if (pendientes.length) throw new ErrorNegocio(pendientes.join(" "));
+  await db.update(presupuestos).set({ estado: "listo" }).where(eq(presupuestos.id, presupuestoId));
+}
+
+export async function reabrir(db: DB, actor: Actor, presupuestoId: string) {
+  await presupuestoAccesible(db, actor, presupuestoId);
+  await db.update(presupuestos).set({ estado: "borrador" }).where(eq(presupuestos.id, presupuestoId));
+}
+
+/* ------------------------------------------------------------------ */
+/* Archivos                                                            */
+/* ------------------------------------------------------------------ */
+
+/** Un archivo se puede ver si lo subió el actor, si es admin o si es dueño del presupuesto que lo usa. */
+export async function puedeVerArchivo(db: DB, actor: Actor, archivoId: string): Promise<boolean> {
+  const [a] = await db.select().from(archivos).where(eq(archivos.id, archivoId));
+  if (!a) return false;
+  if (actor.role === "admin" || a.subidoPor === actor.id) return true;
+  const usos = await db
+    .select({ creadoPor: presupuestos.creadoPor })
+    .from(alternativas)
+    .innerJoin(partidas, eq(partidas.id, alternativas.partidaId))
+    .innerJoin(presupuestos, eq(presupuestos.id, partidas.presupuestoId))
+    .where(eq(alternativas.archivoId, archivoId));
+  return usos.some((u) => u.creadoPor === actor.id);
+}
