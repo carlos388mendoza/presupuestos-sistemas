@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { db } from "@/db";
 import { requerirUsuario } from "@/lib/sesion";
@@ -13,13 +14,18 @@ export default async function LayoutApp({ children }: { children: React.ReactNod
     <div className="min-h-screen md:grid md:grid-cols-[15rem_1fr]">
       <aside className="border-b border-linea bg-papel md:sticky md:top-0 md:h-screen md:border-r md:border-b-0">
         <div className="flex h-full flex-col gap-6 p-4 md:p-5">
-          <Link href="/presupuestos" className="block">
-            <div className="mb-2 flex gap-1" aria-hidden>
-              <span className="h-1 w-6 rounded-full bg-usd" />
-              <span className="h-1 w-6 rounded-full bg-hnl" />
+          <Link href="/presupuestos" className="flex items-center gap-3">
+            <Image
+              src="/logo-grupo-comidas-circulo-96.png"
+              alt="Grupo Comidas"
+              width={96}
+              height={96}
+              className="size-10 shrink-0"
+            />
+            <div className="min-w-0">
+              <div className="font-semibold leading-tight">Presupuestos</div>
+              <div className="text-sm text-suave">Departamento de Sistemas</div>
             </div>
-            <div className="font-semibold leading-tight">Presupuestos</div>
-            <div className="text-sm text-suave">Departamento de Sistemas</div>
           </Link>
           <nav className="flex gap-1 overflow-x-auto md:flex-col" aria-label="Principal">
             <EnlaceNav href="/presupuestos">Presupuestos</EnlaceNav>
