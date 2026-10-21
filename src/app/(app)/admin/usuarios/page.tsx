@@ -5,6 +5,7 @@ import { NOMBRES_ROL } from "@/lib/datos";
 import { cambiarActivo, cambiarRol, crearUsuario, restablecerContrasena } from "@/actions/usuarios";
 import { FormAccion } from "@/components/FormAccion";
 import { Etiqueta } from "@/components/Etiqueta";
+import { ModalFormulario } from "@/components/ModalFormulario";
 
 export default async function PaginaUsuarios() {
   const actual = await requerirAdmin();
@@ -68,31 +69,32 @@ export default async function PaginaUsuarios() {
         </ul>
 
         <aside className="panel h-fit p-5">
-          <h2 className="mb-3 font-semibold">Nuevo usuario</h2>
-          <FormAccion action={crearUsuario} limpiarAlTerminar className="space-y-3">
-            <div>
-              <label className="etiqueta" htmlFor="u-name">Nombre</label>
-              <input id="u-name" name="name" required maxLength={120} className="campo" />
-            </div>
-            <div>
-              <label className="etiqueta" htmlFor="u-email">Correo</label>
-              <input id="u-email" name="email" type="email" required className="campo" />
-            </div>
-            <div>
-              <label className="etiqueta" htmlFor="u-pass">Contraseña temporal</label>
-              <input id="u-pass" name="password" type="text" minLength={8} required autoComplete="off" className="campo" />
-              <p className="ayuda mt-1">Mínimo 8 caracteres.</p>
-            </div>
-            <div>
-              <label className="etiqueta" htmlFor="u-role">Rol</label>
-              <select id="u-role" name="role" defaultValue="creador" className="campo">
-                <option value="creador">{NOMBRES_ROL.creador}</option>
-                <option value="aprobador">{NOMBRES_ROL.aprobador}</option>
-                <option value="admin">{NOMBRES_ROL.admin}</option>
-              </select>
-            </div>
-            <button className="btn-primario w-full">Crear usuario</button>
-          </FormAccion>
+          <ModalFormulario titulo="Nuevo usuario">
+            <FormAccion action={crearUsuario} limpiarAlTerminar className="space-y-3">
+              <div>
+                <label className="etiqueta" htmlFor="u-name">Nombre</label>
+                <input id="u-name" name="name" required maxLength={120} className="campo" />
+              </div>
+              <div>
+                <label className="etiqueta" htmlFor="u-email">Correo</label>
+                <input id="u-email" name="email" type="email" required className="campo" />
+              </div>
+              <div>
+                <label className="etiqueta" htmlFor="u-pass">Contraseña temporal</label>
+                <input id="u-pass" name="password" type="text" minLength={8} required autoComplete="off" className="campo" />
+                <p className="ayuda mt-1">Mínimo 8 caracteres.</p>
+              </div>
+              <div>
+                <label className="etiqueta" htmlFor="u-role">Rol</label>
+                <select id="u-role" name="role" defaultValue="creador" className="campo">
+                  <option value="creador">{NOMBRES_ROL.creador}</option>
+                  <option value="aprobador">{NOMBRES_ROL.aprobador}</option>
+                  <option value="admin">{NOMBRES_ROL.admin}</option>
+                </select>
+              </div>
+              <button className="btn-primario w-full">Crear usuario</button>
+            </FormAccion>
+          </ModalFormulario>
         </aside>
       </div>
     </>
