@@ -9,5 +9,6 @@ Lee `README.md` (reglas de negocio y estructura) y `AGENTS.md` (Next.js 16 tiene
 - Montos en centavos enteros; nunca convertir USD/HNL.
 - Publicada en Vercel (plan Hobby); `main` se publica solo. Archivos en Vercel Blob privado vía `src/lib/archivos.ts`; nunca URLs públicas, siempre servidos por `/api/archivos/[id]` tras `puedeVerArchivo`. Límites: 4 MB por archivo (`src/lib/limites.ts`), `maxDuration` 300 s. Nada se escribe en disco en producción.
 - Server actions en `src/actions`, validadas con zod, devuelven `{ error }` / `{ ok }` y se usan con `<FormAccion>`.
+- Formularios: usa los componentes de `src/components/campos` (`CampoTexto`, `CampoContrasena`, `CampoSelect`, `AreaTexto`, `Casilla`, `OpcionRadio`) en vez de inputs sueltos.
 - Tailwind 4: clases propias definidas con `@utility` en `globals.css` (tokens: tinta, usd, hnl, linea, suave…).
 - Interfaz en español. Corre `npm test` y `npm run build` antes de terminar.
