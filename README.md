@@ -44,6 +44,8 @@ npm run dev     # http://localhost:3000
 
 En tu computadora usa la *branch* `desarrollo` de Neon (copia de producción), no la de producción: así las pruebas no tocan los datos reales. La app publicada en Vercel usa la branch principal (`production`). Si cambias el esquema, aplica la migración primero en `desarrollo` y, después de unir el PR, en producción.
 
+Para cargar los presupuestos de ejemplo, confirma primero en Neon que `DATABASE_URL` apunta a `desarrollo` y define `DATABASE_BRANCH=desarrollo` en tu `.env`. `npm run db:ejemplos` rechaza otros destinos y no se ejecuta en Vercel ni en producción. Puedes correrlo varias veces sin duplicar los ejemplos.
+
 Sin las variables de OpenRouter la app funciona igual; los archivos se adjuntan y los ítems se ingresan a mano.
 
 ## Publicación en Vercel
@@ -66,6 +68,7 @@ La app está publicada en Vercel (proyecto `presupuestos-grupo-comidas`), conect
 | `npm run db:generate` | Generar migración después de cambiar `src/db/schema.ts` |
 | `npm run db:migrate` | Aplicar migraciones |
 | `npm run db:seed` | Crear administrador y catálogo inicial |
+| `npm run db:ejemplos` | Agregar dos presupuestos ficticios (solo Neon desarrollo) |
 | `npm run db:studio` | Ver la base de datos en el navegador |
 | `npm run db:local` | (Opcional) Postgres local sin internet en el puerto 5433, por si Neon no está disponible |
 
