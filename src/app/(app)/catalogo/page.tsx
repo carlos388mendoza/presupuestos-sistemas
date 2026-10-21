@@ -5,6 +5,7 @@ import { contarPendientes, listarEquipos } from "@/lib/catalogo";
 import { actualizarEquipo, aprobarEquipo, crearEquipo, eliminarEquipo, fusionarEquipo } from "@/actions/catalogo";
 import { FormAccion } from "@/components/FormAccion";
 import { Etiqueta } from "@/components/Etiqueta";
+import { ModalFormulario } from "@/components/ModalFormulario";
 
 type Equipo = Awaited<ReturnType<typeof listarEquipos>>[number];
 
@@ -133,11 +134,12 @@ export default async function PaginaCatalogo({
         </div>
 
         <aside className="panel h-fit p-5 lg:sticky lg:top-8">
-          <h2 className="mb-3 font-semibold">Agregar equipo</h2>
-          <FormAccion action={crearEquipo} limpiarAlTerminar className="space-y-3">
-            <CamposEquipo prefijo="nuevo" />
-            <button className="btn-primario w-full">Agregar al catálogo</button>
-          </FormAccion>
+          <ModalFormulario titulo="Agregar equipo">
+            <FormAccion action={crearEquipo} limpiarAlTerminar className="space-y-3">
+              <CamposEquipo prefijo="nuevo" />
+              <button className="btn-primario w-full">Agregar al catálogo</button>
+            </FormAccion>
+          </ModalFormulario>
         </aside>
       </div>
     </>
