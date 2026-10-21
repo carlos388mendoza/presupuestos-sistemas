@@ -4,6 +4,7 @@ import { requerirUsuario } from "@/lib/sesion";
 import { listarPresupuestos, puedeCrearPresupuestos, puedeVerTodo } from "@/lib/datos";
 import { formatear } from "@/lib/dinero";
 import { Etiqueta } from "@/components/Etiqueta";
+import { FilaPresupuesto } from "./FilaPresupuesto";
 
 const fecha = new Intl.DateTimeFormat("es-HN", { day: "numeric", month: "short", year: "numeric" });
 
@@ -56,7 +57,7 @@ export default async function PaginaPresupuestos() {
             </thead>
             <tbody>
               {lista.map((p) => (
-                <tr key={p.id} className="border-b border-linea-2 last:border-0 hover:bg-fondo/60">
+                <FilaPresupuesto key={p.id} href={`/presupuestos/${p.id}`} nombre={p.nombre}>
                   <td className="px-4 py-3">
                     <Link href={`/presupuestos/${p.id}`} className="font-semibold hover:underline">
                       {p.nombre}
@@ -73,7 +74,7 @@ export default async function PaginaPresupuestos() {
                   <td className="px-4 py-3 text-suave">
                     {verTodo ? p.autor : fecha.format(p.updatedAt)}
                   </td>
-                </tr>
+                </FilaPresupuesto>
               ))}
             </tbody>
           </table>
