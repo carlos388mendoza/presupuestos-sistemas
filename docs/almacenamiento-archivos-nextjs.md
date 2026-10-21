@@ -1,6 +1,13 @@
 # Guardar cotizaciones en UploadThing, S3 o Cloudflare R2
 
-La aplicación puede guardar las cotizaciones localmente, en UploadThing o en un bucket compatible con S3 como Cloudflare R2 o AWS S3. Las descargas siempre pasan por `/api/archivos/[id]`, que comprueba la sesión y los permisos del presupuesto antes de leer el archivo.
+La aplicación puede guardar las cotizaciones localmente, en Vercel Blob privado (lo que usa la app publicada), en UploadThing o en un bucket compatible con S3 como Cloudflare R2 o AWS S3.
+
+## Vercel Blob (producción)
+
+1. En el proyecto de Vercel: **Storage → Create → Blob**, acceso **Private**, conectado a todos los entornos. Vercel agrega solo las credenciales.
+2. `ARCHIVOS_STORAGE=blob` en las variables del proyecto (dentro de Vercel es el valor por defecto si se deja vacío).
+3. Los archivos se guardan como `cotizaciones/<uuid>.<ext>` con `access: "private"`. Nadie puede abrirlos con su URL; `/api/archivos/[id]` comprueba permisos y los lee con `get()` del SDK.
+4. Para probar en tu computadora, pon `ARCHIVOS_STORAGE=blob` y el `BLOB_READ_WRITE_TOKEN` del almacenamiento en tu `.env`. Las descargas siempre pasan por `/api/archivos/[id]`, que comprueba la sesión y los permisos del presupuesto antes de leer el archivo.
 
 ## Componentes que ya vienen listos
 
