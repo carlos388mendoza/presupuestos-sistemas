@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { archivos } from "@/db/schema";
 import { obtenerUsuario } from "@/lib/sesion";
-import { borrarArchivo, guardarArchivo, TAMANO_MAXIMO, TIPOS_PERMITIDOS } from "@/lib/archivos";
+import { guardarEnDisco, TAMANO_MAXIMO, TIPOS_PERMITIDOS } from "@/lib/archivos";
 import { ErrorExtraccion, extraccionDisponible, extraerCotizacion } from "@/lib/extraccion";
 import { buscarCoincidencia } from "@/lib/coincidencias";
 import { listarEquipos } from "@/lib/catalogo";
@@ -34,24 +34,17 @@ export async function POST(req: Request) {
   }
 
   const buffer = Buffer.from(await archivo.arrayBuffer());
-  const guardado = await guardarArchivo(buffer, extension, archivo.type);
-  let registro;
-  try {
-    [registro] = await db
-      .insert(archivos)
-      .values({
-        nombreOriginal: archivo.name,
-        nombreGuardado: guardado.nombreGuardado,
-        almacenamiento: guardado.almacenamiento,
-        mime: archivo.type,
-        tamano: archivo.size,
-        subidoPor: usuario.id,
-      })
-      .returning();
-  } catch (error) {
-    await borrarArchivo(guardado.nombreGuardado, guardado.almacenamiento).catch((errorAlBorrar) => console.error(errorAlBorrar));
-    throw error;
-  }
+  const nombreGuardado = await guardarEnDisco(buffer, extension);
+  const [registro] = await db
+    .insert(archivos)
+    .values({
+      nombreOriginal: archivo.name,
+      nombreGuardado,
+      mime: archivo.type,
+      tamano: archivo.size,
+      subidoPor: usuario.id,
+    })
+    .returning();
 
   const base = { archivoId: registro.id, archivoNombre: registro.nombreOriginal };
 
