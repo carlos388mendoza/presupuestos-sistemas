@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { db } from "@/db";
 import { requerirUsuario } from "@/lib/sesion";
-import { listarPresupuestos } from "@/lib/datos";
+import { listarPresupuestos, puedeCrearPresupuestos, puedeVerTodo } from "@/lib/datos";
 import { formatear } from "@/lib/dinero";
 import { Etiqueta } from "@/components/Etiqueta";
 
@@ -10,7 +10,8 @@ const fecha = new Intl.DateTimeFormat("es-HN", { day: "numeric", month: "short",
 export default async function PaginaPresupuestos() {
   const usuario = await requerirUsuario();
   const lista = await listarPresupuestos(db, usuario);
-  const esAdmin = usuario.role === "admin";
+  const verTodo = puedeVerTodo(usuario);
+  const puedeCrear = puedeCrearPresupuestos(usuario);
 
   return (
     <>
@@ -18,20 +19,28 @@ export default async function PaginaPresupuestos() {
         <div>
           <h1 className="titulo-pagina">Presupuestos</h1>
           <p className="ayuda">
-            {esAdmin ? "Todos los presupuestos del departamento." : "Tus presupuestos de aperturas y remodelaciones."}
+            {verTodo ? "Todos los presupuestos del departamento." : "Tus presupuestos de aperturas y remodelaciones."}
           </p>
         </div>
-        <Link href="/presupuestos/nuevo" className="btn-primario">Nuevo presupuesto</Link>
+        {puedeCrear && <Link href="/presupuestos/nuevo" className="btn-primario">Nuevo presupuesto</Link>}
       </div>
 
       {lista.length === 0 ? (
         <div className="panel p-8">
           <h2 className="font-semibold">Todavía no hay presupuestos</h2>
-          <p className="ayuda mt-1 max-w-prose">
-            Crea uno por cada apertura o remodelación. Dentro agregas las partidas (por ejemplo, red, puntos de venta o
-            cámaras) y las cotizaciones de cada proveedor.
-          </p>
-          <Link href="/presupuestos/nuevo" className="btn-primario mt-4">Crear el primero</Link>
+          {puedeCrear ? (
+            <>
+              <p className="ayuda mt-1 max-w-prose">
+                Crea uno por cada apertura o remodelación. Dentro agregas las partidas (por ejemplo, red, puntos de venta o
+                cámaras) y las cotizaciones de cada proveedor.
+              </p>
+              <Link href="/presupuestos/nuevo" className="btn-primario mt-4">Crear el primero</Link>
+            </>
+          ) : (
+            <p className="ayuda mt-1 max-w-prose">
+              Aquí aparecerán los presupuestos del departamento para que elijas las alternativas.
+            </p>
+          )}
         </div>
       ) : (
         <div className="panel overflow-x-auto">
@@ -42,7 +51,7 @@ export default async function PaginaPresupuestos() {
                 <th className="px-4 py-3 font-medium">Estado</th>
                 <th className="px-4 py-3 text-right font-medium">Dólares</th>
                 <th className="px-4 py-3 text-right font-medium">Lempiras</th>
-                <th className="px-4 py-3 font-medium">{esAdmin ? "Creado por" : "Actualizado"}</th>
+                <th className="px-4 py-3 font-medium">{verTodo ? "Creado por" : "Actualizado"}</th>
               </tr>
             </thead>
             <tbody>
@@ -62,7 +71,7 @@ export default async function PaginaPresupuestos() {
                   <td className="cifra px-4 py-3 text-right text-usd">{formatear(p.resumen.total.USD, "USD")}</td>
                   <td className="cifra px-4 py-3 text-right text-hnl">{formatear(p.resumen.total.HNL, "HNL")}</td>
                   <td className="px-4 py-3 text-suave">
-                    {esAdmin ? p.autor : fecha.format(p.updatedAt)}
+                    {verTodo ? p.autor : fecha.format(p.updatedAt)}
                   </td>
                 </tr>
               ))}

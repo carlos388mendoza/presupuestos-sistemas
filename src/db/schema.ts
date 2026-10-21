@@ -36,7 +36,7 @@ export const user = pgTable("user", {
   createdAt: creadoEn(),
   updatedAt: actualizadoEn(),
   // Campos propios de la aplicación
-  role: text("role", { enum: ["admin", "creador"] }).notNull().default("creador"),
+  role: text("role", { enum: ["admin", "creador", "aprobador"] }).notNull().default("creador"),
   activo: boolean("activo").notNull().default(true),
 });
 
@@ -209,4 +209,4 @@ export const itemsAlternativa = pgTable(
 
 export type Moneda = "USD" | "HNL";
 export type TipoCompra = "nacional" | "internacional";
-export type Rol = "admin" | "creador";
+export type Rol = "admin" | "creador" | "aprobador";

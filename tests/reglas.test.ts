@@ -41,6 +41,74 @@ describe("permisos", () => {
   });
 });
 
+describe("rol aprobador", () => {
+  it("ve todos los presupuestos del departamento", async () => {
+    const { db, damaris, p } = await armar();
+    expect(await datos.listarPresupuestos(db, damaris)).toHaveLength(1);
+    expect((await datos.obtenerPresupuesto(db, damaris, p.id)).id).toBe(p.id);
+  });
+
+  it("elige y quita alternativas en presupuestos ajenos", async () => {
+    const { db, damaris, pa, a1, a2 } = await armar();
+    await datos.elegirAlternativa(db, damaris, a1);
+    await datos.elegirAlternativa(db, damaris, a2);
+    let elegidas = (await db.select().from(alternativas).where(eq(alternativas.partidaId, pa.id))).filter((a) => a.elegida);
+    expect(elegidas.map((a) => a.id)).toEqual([a2]);
+    await datos.quitarEleccion(db, damaris, a2);
+    elegidas = (await db.select().from(alternativas).where(eq(alternativas.partidaId, pa.id))).filter((a) => a.elegida);
+    expect(elegidas).toHaveLength(0);
+  });
+
+  it("marca listo y reabre presupuestos ajenos", async () => {
+    const { db, damaris, p, a1 } = await armar();
+    await datos.elegirAlternativa(db, damaris, a1);
+    await datos.marcarListo(db, damaris, p.id);
+    expect((await datos.obtenerPresupuesto(db, damaris, p.id)).estado).toBe("listo");
+    await datos.reabrir(db, damaris, p.id);
+    expect((await datos.obtenerPresupuesto(db, damaris, p.id)).estado).toBe("borrador");
+  });
+
+  it("no crea, edita ni borra presupuestos, partidas ni alternativas", async () => {
+    const { db, damaris, p, pa, a1 } = await armar();
+    const rechaza = (promesa: Promise<unknown>) => expect(promesa).rejects.toThrow(/solo permite elegir/);
+    await rechaza(datos.crearPresupuesto(db, damaris, { nombre: "X", restaurante: "Y", tipo: "apertura" }));
+    await rechaza(
+      datos.actualizarPresupuesto(db, damaris, p.id, { nombre: "X", restaurante: "Y", tipo: "apertura", notas: "" }),
+    );
+    await rechaza(datos.eliminarPresupuesto(db, damaris, p.id));
+    await rechaza(datos.crearPartida(db, damaris, p.id, "Nueva"));
+    await rechaza(datos.renombrarPartida(db, damaris, pa.id, "Otro nombre"));
+    await rechaza(datos.eliminarPartida(db, damaris, pa.id));
+    await rechaza(
+      datos.guardarAlternativa(db, damaris, {
+        partidaId: pa.id, proveedor: "X", tipoCompra: "nacional", notas: "", archivoId: null, items: [item(1, "HNL")],
+      }),
+    );
+    await rechaza(
+      datos.guardarAlternativa(db, damaris, {
+        id: a1, partidaId: pa.id, proveedor: "X", tipoCompra: "nacional", notas: "", archivoId: null, items: [item(1, "HNL")],
+      }),
+    );
+    await rechaza(datos.eliminarAlternativa(db, damaris, a1));
+    // Nada cambió
+    const completo = await datos.obtenerPresupuesto(db, damaris, p.id);
+    expect(completo.nombre).toBe("Apertura");
+    expect(completo.partidas.map((x) => x.nombre)).toEqual(["Red"]);
+    expect(completo.partidas[0].alternativas).toHaveLength(2);
+  });
+
+  it("no maneja usuarios; los otros roles quedan igual", async () => {
+    const { damaris, admin, ana } = await armar();
+    expect(datos.puedeManejarUsuarios(damaris)).toBe(false);
+    expect(datos.puedeManejarUsuarios(admin)).toBe(true);
+    expect(datos.puedeManejarUsuarios(ana)).toBe(false);
+    expect(datos.puedeCrearPresupuestos(ana)).toBe(true);
+    expect(datos.permisosPresupuesto(ana, "ana")).toEqual({ modificar: true, decidir: true });
+    expect(datos.permisosPresupuesto(admin, "ana")).toEqual({ modificar: true, decidir: true });
+    expect(datos.permisosPresupuesto(damaris, "ana")).toEqual({ modificar: false, decidir: true });
+  });
+});
+
 describe("elección de alternativas", () => {
   it("solo hay una elegida por partida", async () => {
     const { db, ana, pa, a1, a2 } = await armar();

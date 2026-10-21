@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { requerirUsuario } from "@/lib/sesion";
+import { puedeCrearPresupuestos } from "@/lib/datos";
 import { crearPresupuesto } from "@/actions/presupuestos";
 import { FormAccion } from "@/components/FormAccion";
 import { CamposPresupuesto } from "../CamposPresupuesto";
@@ -7,7 +9,8 @@ import { CamposPresupuesto } from "../CamposPresupuesto";
 const SUGERIDAS = ["Red y cableado", "Puntos de venta", "Cámaras de seguridad", "Impresoras", "Telefonía", "Licencias"];
 
 export default async function NuevoPresupuesto() {
-  await requerirUsuario();
+  const usuario = await requerirUsuario();
+  if (!puedeCrearPresupuestos(usuario)) redirect("/presupuestos");
   return (
     <div className="max-w-2xl">
       <Link href="/presupuestos" className="btn-texto -ml-1.5 mb-2">Volver a presupuestos</Link>

@@ -9,7 +9,7 @@ Funciones principales:
 - Compras nacionales e internacionales en el mismo presupuesto, con totales separados en USD y HNL, sin conversión.
 - Catálogo de equipos editable. Los equipos nuevos que trae una cotización se agregan solos y quedan "por revisar".
 - Exportación a Excel cuando el presupuesto está listo, solo como descarga.
-- Roles: administrador (maneja usuarios y ve todo) y creador (solo ve sus presupuestos).
+- Roles: administrador (maneja usuarios y ve todo), creador (solo ve sus presupuestos) y aprobador (ve todos, elige las alternativas y marca como listo, sin editar).
 
 ## Tecnologías
 
@@ -33,7 +33,7 @@ Llena el `.env`:
 | `OPENROUTER_MODEL` | ID de un modelo con visión/PDF y structured outputs |
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NAME` | Primer administrador |
 
-Las cotizaciones se guardan en la carpeta `uploads/` en desarrollo y en **Vercel Blob privado** al publicar en Vercel (`ARCHIVOS_STORAGE=blob`, es el valor por defecto dentro de Vercel). También se puede usar UploadThing (`uploadthing`) o AWS S3/Cloudflare R2 (`s3`); pasos y variables en la [guía de almacenamiento](docs/almacenamiento-archivos-nextjs.md). En todos los casos los archivos se ven solo por `/api/archivos/[id]`, que revisa que seas el dueño o administrador. Tamaño máximo por archivo: 4 MB (Vercel no acepta envíos de más de 4.5 MB).
+Las cotizaciones se guardan en la carpeta `uploads/` en desarrollo y en **Vercel Blob privado** al publicar en Vercel (`ARCHIVOS_STORAGE=blob`, es el valor por defecto dentro de Vercel). También se puede usar UploadThing (`uploadthing`) o AWS S3/Cloudflare R2 (`s3`); pasos y variables en la [guía de almacenamiento](docs/almacenamiento-archivos-nextjs.md). En todos los casos los archivos se ven solo por `/api/archivos/[id]`, que revisa que seas el dueño, administrador o aprobador (este último solo los que ya están en un presupuesto). Tamaño máximo por archivo: 4 MB (Vercel no acepta envíos de más de 4.5 MB).
 
 Luego:
 
@@ -42,7 +42,7 @@ npm run setup   # crea las tablas en Neon, el administrador y equipos de ejemplo
 npm run dev     # http://localhost:3000
 ```
 
-Los dos desarrolladores pueden usar la misma base de Neon (ven los mismos datos) o cada uno una *branch* de Neon propia para hacer pruebas sin afectar al otro.
+En tu computadora usa la *branch* `desarrollo` de Neon (copia de producción), no la de producción: así las pruebas no tocan los datos reales. La app publicada en Vercel usa la branch principal (`production`). Si cambias el esquema, aplica la migración primero en `desarrollo` y, después de unir el PR, en producción.
 
 Sin las variables de OpenRouter la app funciona igual; los archivos se adjuntan y los ítems se ingresan a mano.
 
@@ -102,8 +102,11 @@ drizzle/                        Migraciones SQL
 - El total del presupuesto usa solo las alternativas elegidas.
 - Un presupuesto se marca como "listo" solo si todas sus partidas tienen alternativa elegida. Listo = no editable hasta reabrirlo.
 - El Excel solo se descarga con el presupuesto listo.
-- Los archivos de cotización se guardan en `uploads/` localmente o en un bucket S3/R2 privado; la base guarda sus metadatos y proveedor.
-- Quien crea el presupuesto elige las alternativas. El administrador puede ver y editar todos.
+- Los archivos de cotización se guardan en Vercel Blob privado en producción (en `uploads/` solo en desarrollo local); la base guarda sus metadatos y dónde están. Nunca tienen enlace público: se ven por `/api/archivos/[id]`.
+- Roles:
+  - **Creador de presupuestos**: crea, edita y elige alternativas solo en sus presupuestos.
+  - **Aprobador de presupuestos**: ve todos los presupuestos del departamento, elige o quita la alternativa de cada partida, marca como listo o reabre, descarga el Excel y ve las cotizaciones. No crea, edita ni borra presupuestos, partidas ni alternativas, ni sube cotizaciones, ni maneja usuarios.
+  - **Administrador**: ve y edita todo, y maneja usuarios.
 
 ## Trabajo en equipo
 

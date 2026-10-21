@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { archivos } from "@/db/schema";
 import { obtenerUsuario } from "@/lib/sesion";
+import { puedeCrearPresupuestos } from "@/lib/datos";
 import { borrarArchivo, guardarArchivo, TAMANO_MAXIMO, TIPOS_PERMITIDOS } from "@/lib/archivos";
 import { ErrorExtraccion, extraccionDisponible, extraerCotizacion } from "@/lib/extraccion";
 import { buscarCoincidencia } from "@/lib/coincidencias";
@@ -21,6 +22,9 @@ export const maxDuration = 300;
 export async function POST(req: Request) {
   const usuario = await obtenerUsuario();
   if (!usuario) return NextResponse.json({ error: "Tu sesión expiró." }, { status: 401 });
+  if (!puedeCrearPresupuestos(usuario)) {
+    return NextResponse.json({ error: "Tu rol no permite subir cotizaciones." }, { status: 403 });
+  }
 
   const form = await req.formData().catch(() => null);
   const archivo = form?.get("archivo");

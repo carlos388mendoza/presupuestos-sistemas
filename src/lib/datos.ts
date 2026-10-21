@@ -34,8 +34,49 @@ const NO_ENCONTRADO = "No se encontró el presupuesto o no tienes acceso a él."
 /* Permisos                                                            */
 /* ------------------------------------------------------------------ */
 
+/*
+ * Roles:
+ * - admin: ve y modifica todo; maneja usuarios.
+ * - creador: ve y modifica solo sus presupuestos.
+ * - aprobador: ve todos los presupuestos, elige alternativas, marca listo/reabre
+ *   y descarga el Excel; no crea ni modifica presupuestos, partidas ni alternativas.
+ */
+
+export const NOMBRES_ROL: Record<Rol, string> = {
+  admin: "Administrador",
+  creador: "Creador de presupuestos",
+  aprobador: "Aprobador de presupuestos",
+};
+
+const SOLO_APROBAR = "Tu rol solo permite elegir alternativas y marcar presupuestos como listos.";
+
+/** Ve los presupuestos de todo el departamento. */
+export function puedeVerTodo(actor: Actor): boolean {
+  return actor.role === "admin" || actor.role === "aprobador";
+}
+
+export function puedeManejarUsuarios(actor: Actor): boolean {
+  return actor.role === "admin";
+}
+
+/** Crear presupuestos y subir cotizaciones. */
+export function puedeCrearPresupuestos(actor: Actor): boolean {
+  return actor.role !== "aprobador";
+}
+
 export function puedeAcceder(actor: Actor, creadoPor: string): boolean {
-  return actor.role === "admin" || actor.id === creadoPor;
+  return puedeVerTodo(actor) || actor.id === creadoPor;
+}
+
+/** Qué puede hacer el actor con un presupuesto que ya puede ver. */
+export function permisosPresupuesto(actor: Actor, creadoPor: string) {
+  const esDuenoOAdmin = actor.role === "admin" || actor.id === creadoPor;
+  return {
+    /** Editar datos, partidas y alternativas, o eliminar. */
+    modificar: esDuenoOAdmin,
+    /** Elegir alternativas y marcar listo / reabrir. */
+    decidir: esDuenoOAdmin || actor.role === "aprobador",
+  };
 }
 
 /** Devuelve el presupuesto si el actor puede verlo; si no, lanza error. */
@@ -45,8 +86,19 @@ export async function presupuestoAccesible(db: DB, actor: Actor, presupuestoId: 
   return p;
 }
 
-async function presupuestoEditable(db: DB, actor: Actor, presupuestoId: string) {
+async function presupuestoConPermiso(db: DB, actor: Actor, presupuestoId: string, permiso: "modificar" | "decidir") {
   const p = await presupuestoAccesible(db, actor, presupuestoId);
+  if (!permisosPresupuesto(actor, p.creadoPor)[permiso]) throw new ErrorNegocio(SOLO_APROBAR);
+  return p;
+}
+
+async function presupuestoEditable(
+  db: DB,
+  actor: Actor,
+  presupuestoId: string,
+  permiso: "modificar" | "decidir" = "modificar",
+) {
+  const p = await presupuestoConPermiso(db, actor, presupuestoId, permiso);
   if (p.estado === "listo") {
     throw new ErrorNegocio("El presupuesto está marcado como listo. Reábrelo para hacer cambios.");
   }
@@ -85,7 +137,7 @@ export async function listarPresupuestos(db: DB, actor: Actor) {
     })
     .from(presupuestos)
     .innerJoin(user, eq(user.id, presupuestos.creadoPor))
-    .where(actor.role === "admin" ? undefined : eq(presupuestos.creadoPor, actor.id))
+    .where(puedeVerTodo(actor) ? undefined : eq(presupuestos.creadoPor, actor.id))
     .orderBy(desc(presupuestos.updatedAt));
 
   return Promise.all(
@@ -177,6 +229,7 @@ export async function crearPresupuesto(
   actor: Actor,
   datos: { nombre: string; restaurante: string; tipo: "apertura" | "remodelacion"; notas?: string },
 ) {
+  if (!puedeCrearPresupuestos(actor)) throw new ErrorNegocio(SOLO_APROBAR);
   const [fila] = await db
     .insert(presupuestos)
     .values({ ...datos, notas: datos.notas ?? "", creadoPor: actor.id })
@@ -195,7 +248,7 @@ export async function actualizarPresupuesto(
 }
 
 export async function eliminarPresupuesto(db: DB, actor: Actor, id: string) {
-  await presupuestoAccesible(db, actor, id);
+  await presupuestoConPermiso(db, actor, id, "modificar");
   await db.delete(presupuestos).where(eq(presupuestos.id, id));
 }
 
@@ -333,7 +386,7 @@ export async function eliminarAlternativa(db: DB, actor: Actor, alternativaId: s
 /** Marca una alternativa como la elegida de su partida (y desmarca las demás). */
 export async function elegirAlternativa(db: DB, actor: Actor, alternativaId: string) {
   const { alternativa, presupuesto } = await alternativaAccesible(db, actor, alternativaId);
-  await presupuestoEditable(db, actor, presupuesto.id);
+  await presupuestoEditable(db, actor, presupuesto.id, "decidir");
   await db.transaction(async (tx) => {
     await tx
       .update(alternativas)
@@ -346,7 +399,7 @@ export async function elegirAlternativa(db: DB, actor: Actor, alternativaId: str
 
 export async function quitarEleccion(db: DB, actor: Actor, alternativaId: string) {
   const { presupuesto } = await alternativaAccesible(db, actor, alternativaId);
-  await presupuestoEditable(db, actor, presupuesto.id);
+  await presupuestoEditable(db, actor, presupuesto.id, "decidir");
   await db.update(alternativas).set({ elegida: false }).where(eq(alternativas.id, alternativaId));
   await tocarPresupuesto(db, presupuesto.id);
 }
@@ -363,6 +416,7 @@ export function pendientesParaListo(p: Pick<PresupuestoCompleto, "partidas">): s
 }
 
 export async function marcarListo(db: DB, actor: Actor, presupuestoId: string) {
+  await presupuestoConPermiso(db, actor, presupuestoId, "decidir");
   const completo = await obtenerPresupuesto(db, actor, presupuestoId);
   const pendientes = pendientesParaListo(completo);
   if (pendientes.length) throw new ErrorNegocio(pendientes.join(" "));
@@ -370,7 +424,7 @@ export async function marcarListo(db: DB, actor: Actor, presupuestoId: string) {
 }
 
 export async function reabrir(db: DB, actor: Actor, presupuestoId: string) {
-  await presupuestoAccesible(db, actor, presupuestoId);
+  await presupuestoConPermiso(db, actor, presupuestoId, "decidir");
   await db.update(presupuestos).set({ estado: "borrador" }).where(eq(presupuestos.id, presupuestoId));
 }
 
@@ -378,7 +432,10 @@ export async function reabrir(db: DB, actor: Actor, presupuestoId: string) {
 /* Archivos                                                            */
 /* ------------------------------------------------------------------ */
 
-/** Un archivo se puede ver si lo subió el actor, si es admin o si es dueño del presupuesto que lo usa. */
+/**
+ * Un archivo se puede ver si lo subió el actor, si es admin o si es dueño del presupuesto que lo usa.
+ * El aprobador ve las cotizaciones que ya están en algún presupuesto (las necesita para decidir).
+ */
 export async function puedeVerArchivo(db: DB, actor: Actor, archivoId: string): Promise<boolean> {
   const [a] = await db.select().from(archivos).where(eq(archivos.id, archivoId));
   if (!a) return false;
@@ -389,5 +446,5 @@ export async function puedeVerArchivo(db: DB, actor: Actor, archivoId: string): 
     .innerJoin(partidas, eq(partidas.id, alternativas.partidaId))
     .innerJoin(presupuestos, eq(presupuestos.id, partidas.presupuestoId))
     .where(eq(alternativas.archivoId, archivoId));
-  return usos.some((u) => u.creadoPor === actor.id);
+  return usos.some((u) => puedeAcceder(actor, u.creadoPor));
 }

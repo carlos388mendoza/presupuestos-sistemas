@@ -9,7 +9,7 @@ import type { EstadoAccion } from "@/lib/tipos";
 import { aEstado, texto } from "./util";
 
 const contrasena = z.string().min(8, "La contraseña debe tener al menos 8 caracteres.").max(128);
-const rol = z.enum(["admin", "creador"], { message: "Elige un rol." });
+const rol = z.enum(["admin", "creador", "aprobador"], { message: "Elige un rol." });
 
 export async function crearUsuario(_prev: EstadoAccion, fd: FormData): Promise<EstadoAccion> {
   try {
