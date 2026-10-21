@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/db";
 import { requerirUsuario } from "@/lib/sesion";
-import { ErrorNegocio, obtenerPresupuesto, pendientesParaListo, type PresupuestoCompleto } from "@/lib/datos";
+import { ErrorNegocio, obtenerPresupuesto, pendientesParaListo, permisosPresupuesto, type PresupuestoCompleto } from "@/lib/datos";
 import { formatear, subtotalItem } from "@/lib/dinero";
 import {
   actualizarPresupuesto,
@@ -35,6 +35,10 @@ export default async function PaginaPresupuesto({ params }: { params: Promise<{ 
   }
 
   const editable = p.estado === "borrador";
+  const permisos = permisosPresupuesto(usuario, p.creadoPor);
+  // Lo que se puede hacer ahora: modificar contenido o decidir (elegir, listo/reabrir).
+  const modificar = editable && permisos.modificar;
+  const decidir = editable && permisos.decidir;
   const pendientes = pendientesParaListo(p);
   const hayInternacional = p.resumen.internacional.USD + p.resumen.internacional.HNL > 0;
   const hayNacional = p.resumen.nacional.USD + p.resumen.nacional.HNL > 0;
@@ -78,30 +82,34 @@ export default async function PaginaPresupuesto({ params }: { params: Promise<{ 
 
         <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-linea-2 pt-4">
           {editable ? (
-            <>
-              <FormAccion action={cambiarEstado} enLinea className="flex flex-wrap items-center">
-                <input type="hidden" name="id" value={p.id} />
-                <input type="hidden" name="estado" value="listo" />
-                <button type="submit" className="btn-primario" disabled={pendientes.length > 0}>
-                  Marcar como listo
-                </button>
-              </FormAccion>
-              {pendientes.length > 0 && (
-                <p className="text-sm text-aviso">
-                  {pendientes.length === 1 ? pendientes[0] : `Faltan ${pendientes.length} partidas por decidir.`}
-                </p>
-              )}
-            </>
+            decidir && (
+              <>
+                <FormAccion action={cambiarEstado} enLinea className="flex flex-wrap items-center">
+                  <input type="hidden" name="id" value={p.id} />
+                  <input type="hidden" name="estado" value="listo" />
+                  <button type="submit" className="btn-primario" disabled={pendientes.length > 0}>
+                    Marcar como listo
+                  </button>
+                </FormAccion>
+                {pendientes.length > 0 && (
+                  <p className="text-sm text-aviso">
+                    {pendientes.length === 1 ? pendientes[0] : `Faltan ${pendientes.length} partidas por decidir.`}
+                  </p>
+                )}
+              </>
+            )
           ) : (
             <>
               <a href={`/api/presupuestos/${p.id}/excel`} className="btn-primario" download>
                 Descargar Excel
               </a>
-              <FormAccion action={cambiarEstado} enLinea className="flex items-center">
-                <input type="hidden" name="id" value={p.id} />
-                <input type="hidden" name="estado" value="borrador" />
-                <button type="submit" className="btn-secundario">Reabrir para editar</button>
-              </FormAccion>
+              {permisos.decidir && (
+                <FormAccion action={cambiarEstado} enLinea className="flex items-center">
+                  <input type="hidden" name="id" value={p.id} />
+                  <input type="hidden" name="estado" value="borrador" />
+                  <button type="submit" className="btn-secundario">Reabrir para editar</button>
+                </FormAccion>
+              )}
               <p className="ayuda">Descarga el archivo y envíalo a Proyectos por correo.</p>
             </>
           )}
@@ -110,11 +118,11 @@ export default async function PaginaPresupuesto({ params }: { params: Promise<{ 
 
       <div className="space-y-10">
         {p.partidas.map((pa) => (
-          <SeccionPartida key={pa.id} presupuestoId={p.id} partida={pa} editable={editable} />
+          <SeccionPartida key={pa.id} presupuestoId={p.id} partida={pa} modificar={modificar} decidir={decidir} />
         ))}
       </div>
 
-      {editable && (
+      {modificar && (
         <section className="mt-10 grid gap-6 lg:grid-cols-2">
           <div className="panel p-5">
             <h2 className="mb-3 font-semibold">Agregar partida</h2>
@@ -148,7 +156,9 @@ export default async function PaginaPresupuesto({ params }: { params: Promise<{ 
   );
 }
 
-function SeccionPartida({ presupuestoId, partida, editable }: { presupuestoId: string; partida: Partida; editable: boolean }) {
+type Permisos = { modificar: boolean; decidir: boolean };
+
+function SeccionPartida({ presupuestoId, partida, modificar, decidir }: { presupuestoId: string; partida: Partida } & Permisos) {
   const elegida = partida.alternativas.find((a) => a.elegida);
   return (
     <section id={`partida-${partida.id}`} aria-labelledby={`t-${partida.id}`} className="scroll-mt-6">
@@ -157,7 +167,7 @@ function SeccionPartida({ presupuestoId, partida, editable }: { presupuestoId: s
           <h2 id={`t-${partida.id}`} className="text-lg font-semibold">{partida.nombre}</h2>
           {!elegida && partida.alternativas.length > 0 && <Etiqueta tipo="aviso">Sin elegir</Etiqueta>}
         </div>
-        {editable && (
+        {modificar && (
           <div className="flex flex-wrap items-center gap-2">
             <Link href={`/presupuestos/${presupuestoId}/alternativas/nueva?partida=${partida.id}`} className="btn-secundario">
               Agregar alternativa
@@ -189,7 +199,7 @@ function SeccionPartida({ presupuestoId, partida, editable }: { presupuestoId: s
       {partida.alternativas.length === 0 ? (
         <p className="ayuda">
           Sin cotizaciones todavía.{" "}
-          {editable && (
+          {modificar && (
             <Link href={`/presupuestos/${presupuestoId}/alternativas/nueva?partida=${partida.id}`} className="underline">
               Sube una cotización o ingrésala a mano.
             </Link>
@@ -198,7 +208,7 @@ function SeccionPartida({ presupuestoId, partida, editable }: { presupuestoId: s
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {partida.alternativas.map((a) => (
-            <TarjetaAlternativa key={a.id} presupuestoId={presupuestoId} a={a} editable={editable} />
+            <TarjetaAlternativa key={a.id} presupuestoId={presupuestoId} a={a} modificar={modificar} decidir={decidir} />
           ))}
         </div>
       )}
@@ -206,7 +216,7 @@ function SeccionPartida({ presupuestoId, partida, editable }: { presupuestoId: s
   );
 }
 
-function TarjetaAlternativa({ presupuestoId, a, editable }: { presupuestoId: string; a: Alternativa; editable: boolean }) {
+function TarjetaAlternativa({ presupuestoId, a, modificar, decidir }: { presupuestoId: string; a: Alternativa } & Permisos) {
   return (
     <article
       className={`flex flex-col rounded-lg bg-papel ${a.elegida ? "border-2 border-tinta" : "border border-linea"}`}
@@ -254,29 +264,35 @@ function TarjetaAlternativa({ presupuestoId, a, editable }: { presupuestoId: str
         {a.notas && <p className="mt-2 text-xs text-suave">{a.notas}</p>}
       </div>
 
-      {editable && (
+      {(decidir || modificar) && (
         <div className="flex flex-wrap items-center gap-1 border-t border-linea-2 px-3 py-2">
-          <FormAccion action={elegirAlternativa} enLinea className="flex items-center">
-            <input type="hidden" name="id" value={a.id} />
-            {a.elegida ? (
-              <>
-                <input type="hidden" name="quitar" value="1" />
-                <button className="btn-texto">Quitar elección</button>
-              </>
-            ) : (
-              <button className="btn-secundario py-1.5">Elegir esta</button>
-            )}
-          </FormAccion>
-          <Link href={`/presupuestos/${presupuestoId}/alternativas/${a.id}`} className="btn-texto">Editar</Link>
-          <FormAccion
-            action={eliminarAlternativa}
-            confirmar={`¿Eliminar la alternativa de ${a.proveedor}?`}
-            enLinea
-            className="ml-auto flex items-center"
-          >
-            <input type="hidden" name="id" value={a.id} />
-            <button className="btn-peligro">Eliminar</button>
-          </FormAccion>
+          {decidir && (
+            <FormAccion action={elegirAlternativa} enLinea className="flex items-center">
+              <input type="hidden" name="id" value={a.id} />
+              {a.elegida ? (
+                <>
+                  <input type="hidden" name="quitar" value="1" />
+                  <button className="btn-texto">Quitar elección</button>
+                </>
+              ) : (
+                <button className="btn-secundario py-1.5">Elegir esta</button>
+              )}
+            </FormAccion>
+          )}
+          {modificar && (
+            <>
+              <Link href={`/presupuestos/${presupuestoId}/alternativas/${a.id}`} className="btn-texto">Editar</Link>
+              <FormAccion
+                action={eliminarAlternativa}
+                confirmar={`¿Eliminar la alternativa de ${a.proveedor}?`}
+                enLinea
+                className="ml-auto flex items-center"
+              >
+                <input type="hidden" name="id" value={a.id} />
+                <button className="btn-peligro">Eliminar</button>
+              </FormAccion>
+            </>
+          )}
         </div>
       )}
     </article>

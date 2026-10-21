@@ -7,6 +7,7 @@ import { auth } from "./auth";
 import { db } from "@/db";
 import { user } from "@/db/schema";
 import type { Rol } from "@/db/schema";
+import { puedeManejarUsuarios } from "./datos";
 
 export type UsuarioActual = {
   id: string;
@@ -34,7 +35,7 @@ export async function requerirUsuario(): Promise<UsuarioActual> {
 /** Para páginas de administración. */
 export async function requerirAdmin(): Promise<UsuarioActual> {
   const u = await requerirUsuario();
-  if (u.role !== "admin") redirect("/presupuestos");
+  if (!puedeManejarUsuarios(u)) redirect("/presupuestos");
   return u;
 }
 
@@ -54,6 +55,6 @@ export async function usuarioOError(): Promise<UsuarioActual> {
 
 export async function adminOError(): Promise<UsuarioActual> {
   const u = await usuarioOError();
-  if (u.role !== "admin") throw new ErrorPermiso();
+  if (!puedeManejarUsuarios(u)) throw new ErrorPermiso();
   return u;
 }

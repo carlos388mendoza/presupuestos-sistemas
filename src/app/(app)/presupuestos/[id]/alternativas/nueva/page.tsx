@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { db } from "@/db";
 import { requerirUsuario } from "@/lib/sesion";
-import { ErrorNegocio, obtenerPresupuesto } from "@/lib/datos";
+import { ErrorNegocio, obtenerPresupuesto, permisosPresupuesto } from "@/lib/datos";
 import { listarEquipos } from "@/lib/catalogo";
 import { EditorAlternativa } from "../EditorAlternativa";
 
@@ -24,7 +24,7 @@ export default async function NuevaAlternativa({
     if (e instanceof ErrorNegocio) notFound();
     throw e;
   }
-  if (p.estado !== "borrador") redirect(`/presupuestos/${id}`);
+  if (p.estado !== "borrador" || !permisosPresupuesto(usuario, p.creadoPor).modificar) redirect(`/presupuestos/${id}`);
   const partida = p.partidas.find((x) => x.id === partidaId);
   if (!partida) notFound();
 

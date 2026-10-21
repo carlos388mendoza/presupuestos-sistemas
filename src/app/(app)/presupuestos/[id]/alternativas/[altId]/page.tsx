@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { db } from "@/db";
 import { requerirUsuario } from "@/lib/sesion";
-import { ErrorNegocio, obtenerAlternativa } from "@/lib/datos";
+import { ErrorNegocio, obtenerAlternativa, permisosPresupuesto } from "@/lib/datos";
 import { listarEquipos } from "@/lib/catalogo";
 import { EditorAlternativa } from "../EditorAlternativa";
 
@@ -19,7 +19,9 @@ export default async function EditarAlternativa({ params }: { params: Promise<{ 
   }
   const { alternativa, partida, presupuesto, items, archivo } = datos;
   if (presupuesto.id !== id) notFound();
-  if (presupuesto.estado !== "borrador") redirect(`/presupuestos/${id}`);
+  if (presupuesto.estado !== "borrador" || !permisosPresupuesto(usuario, presupuesto.creadoPor).modificar) {
+    redirect(`/presupuestos/${id}`);
+  }
 
   const catalogo = (await listarEquipos(db)).map(({ id, nombre, marca, modelo }) => ({ id, nombre, marca, modelo }));
 

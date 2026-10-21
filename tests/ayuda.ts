@@ -2,7 +2,7 @@ import { PGlite } from "@electric-sql/pglite";
 import { PGLiteSocketServer } from "@electric-sql/pglite-socket";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { crearDb, type DB } from "@/db/cliente";
-import { user } from "@/db/schema";
+import { user, type Rol } from "@/db/schema";
 import type { Actor } from "@/lib/datos";
 
 let puerto = 55000 + Math.floor(Math.random() * 1000);
@@ -26,11 +26,17 @@ export async function dbDePrueba() {
     await pglite.close();
   });
 
-  const mk = async (id: string, role: "admin" | "creador"): Promise<Actor> => {
+  const mk = async (id: string, role: Rol): Promise<Actor> => {
     await db.insert(user).values({ id, name: id, email: `${id}@prueba.hn`, role });
     return { id, role };
   };
-  return { db, admin: await mk("admin", "admin"), ana: await mk("ana", "creador"), beto: await mk("beto", "creador") };
+  return {
+    db,
+    admin: await mk("admin", "admin"),
+    ana: await mk("ana", "creador"),
+    beto: await mk("beto", "creador"),
+    damaris: await mk("damaris", "aprobador"),
+  };
 }
 
 export async function cerrarTodo() {

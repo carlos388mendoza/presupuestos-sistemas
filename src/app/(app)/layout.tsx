@@ -3,6 +3,7 @@ import Link from "next/link";
 import { db } from "@/db";
 import { requerirUsuario } from "@/lib/sesion";
 import { contarPendientes } from "@/lib/catalogo";
+import { NOMBRES_ROL, puedeManejarUsuarios } from "@/lib/datos";
 import { BotonSalir } from "./BotonSalir";
 import { EnlaceNav } from "./EnlaceNav";
 
@@ -37,12 +38,12 @@ export default async function LayoutApp({ children }: { children: React.ReactNod
                 </span>
               )}
             </EnlaceNav>
-            {usuario.role === "admin" && <EnlaceNav href="/admin/usuarios">Usuarios</EnlaceNav>}
+            {puedeManejarUsuarios(usuario) && <EnlaceNav href="/admin/usuarios">Usuarios</EnlaceNav>}
           </nav>
           <div className="mt-auto hidden border-t border-linea-2 pt-4 md:block">
             <div className="truncate text-sm font-medium">{usuario.name}</div>
             <div className="mb-2 truncate text-xs text-suave">
-              {usuario.role === "admin" ? "Administrador" : "Creador de presupuestos"}
+              {NOMBRES_ROL[usuario.role]}
             </div>
             <BotonSalir />
           </div>

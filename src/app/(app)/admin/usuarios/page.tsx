@@ -1,6 +1,7 @@
 import { db } from "@/db";
 import { requerirAdmin } from "@/lib/sesion";
 import { listarUsuarios } from "@/lib/usuarios";
+import { NOMBRES_ROL } from "@/lib/datos";
 import { cambiarActivo, cambiarRol, crearUsuario, restablecerContrasena } from "@/actions/usuarios";
 import { FormAccion } from "@/components/FormAccion";
 import { Etiqueta } from "@/components/Etiqueta";
@@ -13,7 +14,10 @@ export default async function PaginaUsuarios() {
     <>
       <div className="mb-6">
         <h1 className="titulo-pagina">Usuarios</h1>
-        <p className="ayuda">Los creadores de presupuestos solo ven los suyos. Los administradores ven todos y manejan usuarios.</p>
+        <p className="ayuda">
+          Los creadores de presupuestos solo ven los suyos. Los aprobadores ven todos, eligen las alternativas, marcan
+          como listo y descargan el Excel, pero no editan. Los administradores ven todo y manejan usuarios.
+        </p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
@@ -33,6 +37,7 @@ export default async function PaginaUsuarios() {
                   <label className="sr-only" htmlFor={`rol-${u.id}`}>Rol de {u.name}</label>
                   <select id={`rol-${u.id}`} name="role" defaultValue={u.role} className="campo w-auto py-1.5">
                     <option value="creador">Creador</option>
+                    <option value="aprobador">Aprobador</option>
                     <option value="admin">Administrador</option>
                   </select>
                   <button className="btn-texto">Cambiar</button>
@@ -81,8 +86,9 @@ export default async function PaginaUsuarios() {
             <div>
               <label className="etiqueta" htmlFor="u-role">Rol</label>
               <select id="u-role" name="role" defaultValue="creador" className="campo">
-                <option value="creador">Creador de presupuestos</option>
-                <option value="admin">Administrador</option>
+                <option value="creador">{NOMBRES_ROL.creador}</option>
+                <option value="aprobador">{NOMBRES_ROL.aprobador}</option>
+                <option value="admin">{NOMBRES_ROL.admin}</option>
               </select>
             </div>
             <button className="btn-primario w-full">Crear usuario</button>
