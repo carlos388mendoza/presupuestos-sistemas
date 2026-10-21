@@ -33,8 +33,10 @@ No establezcas manualmente `Content-Type`: el navegador agrega el boundary corre
 
 El selector que ya existe no necesita reemplazarse por `UploadButton`: manda el archivo a la ruta autenticada de la aplicación, que lo sube al servidor de UploadThing con `UTApi`. La misma ruta conserva la copia temporal en memoria para la lectura opcional de la cotización. Este patrón evita duplicar la lógica de permisos y extracción. UploadThing también permite `FileRouter` y componentes propios; aquí se conserva la interfaz ya conectada.
 
+**Requisito del plan:** UploadThing confirma que los archivos privados solo están disponibles en planes de pago. El plan gratuito publica los archivos y cualquier persona que tenga su URL puede abrirlos; no lo uses para las cotizaciones internas de esta aplicación. Consulta [regiones y controles ACL de UploadThing](https://docs.uploadthing.com/concepts/regions-acl). Para mantener los archivos privados sin pagar un plan de UploadThing, usa Cloudflare R2 o AWS S3 siguiendo las secciones de abajo.
+
 1. Entra al [dashboard de UploadThing](https://uploadthing.com/dashboard), crea una aplicación y copia su token.
-2. En la configuración de la aplicación, habilita los overrides de ACL y deja los archivos privados. La app solicita `acl: "private"` al subir.
+2. Usa un plan que admita archivos privados. En la configuración de la aplicación, habilita los overrides de ACL y deja los archivos privados. La app solicita `acl: "private"` al subir.
 3. En `.env` local (y luego en las variables del entorno donde se despliega), configura:
 
    ```dotenv
