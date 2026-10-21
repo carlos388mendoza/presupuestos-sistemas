@@ -34,7 +34,9 @@ export function FormAccion({ action, children, className, confirmar, limpiarAlTe
         if (confirmar && !window.confirm(confirmar)) e.preventDefault();
       }}
     >
-      <fieldset disabled={pendiente} className={enLinea ? "contents" : "min-w-0"}>
+      {/* `contents`: el fieldset solo desactiva los campos mientras se envía; el diseño
+          (flex, grid, gap, clase `formulario`) del <form> se aplica directo a los campos. */}
+      <fieldset disabled={pendiente} className="contents">
         {children}
       </fieldset>
       {estado?.error && (

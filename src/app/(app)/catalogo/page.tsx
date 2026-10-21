@@ -11,7 +11,7 @@ type Equipo = Awaited<ReturnType<typeof listarEquipos>>[number];
 
 function CamposEquipo({ e, prefijo }: { e?: Equipo; prefijo: string }) {
   return (
-    <div className="grid gap-3 sm:grid-cols-2">
+    <div className="grid gap-x-4 gap-y-5 sm:grid-cols-2">
       <div className="sm:col-span-2">
         <label className="etiqueta" htmlFor={`${prefijo}-nombre`}>Nombre</label>
         <input id={`${prefijo}-nombre`} name="nombre" required maxLength={200} defaultValue={e?.nombre} className="campo" />
@@ -95,11 +95,11 @@ export default async function PaginaCatalogo({
                       </span>
                     </summary>
                     <div className="space-y-4 border-t border-linea-2 bg-papel px-4 py-4">
-                      <FormAccion action={actualizarEquipo} className="space-y-3">
+                      <FormAccion action={actualizarEquipo} className="formulario">
                         <input type="hidden" name="id" value={e.id} />
                         {!e.revisado && <input type="hidden" name="aprobar" value="1" />}
                         <CamposEquipo e={e} prefijo={e.id} />
-                        <button className="btn-secundario">{e.revisado ? "Guardar" : "Guardar y marcar como revisado"}</button>
+                        <button className="btn-secundario self-start">{e.revisado ? "Guardar" : "Guardar y marcar como revisado"}</button>
                       </FormAccion>
                       {!e.revisado && (
                         <FormAccion action={aprobarEquipo} enLinea className="flex items-center">
@@ -135,7 +135,7 @@ export default async function PaginaCatalogo({
 
         <aside className="panel h-fit p-5 lg:sticky lg:top-8">
           <ModalFormulario titulo="Agregar equipo">
-            <FormAccion action={crearEquipo} limpiarAlTerminar className="space-y-3">
+            <FormAccion action={crearEquipo} limpiarAlTerminar className="formulario">
               <CamposEquipo prefijo="nuevo" />
               <button className="btn-primario w-full">Agregar al catálogo</button>
             </FormAccion>
