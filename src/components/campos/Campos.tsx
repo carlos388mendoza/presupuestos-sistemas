@@ -119,6 +119,66 @@ function Marca({ tipo, etiqueta, descripcion, classNameContenedor, className, ..
   );
 }
 
+export type Opcion<V extends string = string> = { valor: V; etiqueta: ReactNode; descripcion?: ReactNode };
+
+type GrupoOpcionesProps<V extends string> = {
+  name: string;
+  /** Título del grupo (legend). */
+  etiqueta: ReactNode;
+  opciones: Opcion<V>[];
+  /** Sin estado: valor inicial. */
+  defaultValue?: V;
+  /** Con estado: valor actual y cambio. */
+  value?: V;
+  onChange?: (valor: V) => void;
+  required?: boolean;
+  /** Opciones lado a lado desde tamaño `sm` (por defecto) o una debajo de otra. */
+  enColumnas?: boolean;
+  className?: string;
+};
+
+/** Choice box: opciones excluyentes como tarjetas seleccionables (radios accesibles por dentro). */
+export function GrupoOpciones<V extends string>({
+  name,
+  etiqueta,
+  opciones,
+  defaultValue,
+  value,
+  onChange,
+  required,
+  enColumnas = true,
+  className,
+}: GrupoOpcionesProps<V>) {
+  return (
+    <fieldset className={className}>
+      <legend className="etiqueta">{etiqueta}</legend>
+      <div className={unir("grid gap-2", enColumnas && "sm:grid-cols-2")}>
+        {opciones.map((o) => (
+          <label
+            key={o.valor}
+            className="flex cursor-pointer items-start justify-between gap-3 rounded-md border border-linea bg-papel px-3.5 py-3 text-sm transition-colors hover:border-tinta-2 has-[:checked]:border-tinta has-[:checked]:bg-fondo/60 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-hnl"
+          >
+            <span className="min-w-0">
+              <span className="block font-medium">{o.etiqueta}</span>
+              {o.descripcion && <span className="block text-suave">{o.descripcion}</span>}
+            </span>
+            <input
+              type="radio"
+              name={name}
+              value={o.valor}
+              required={required}
+              className="opcion-radio mt-0.5 focus-visible:outline-none"
+              {...(value !== undefined
+                ? { checked: value === o.valor, onChange: () => onChange?.(o.valor) }
+                : { defaultChecked: defaultValue === o.valor })}
+            />
+          </label>
+        ))}
+      </div>
+    </fieldset>
+  );
+}
+
 export function Casilla(props: MarcaProps) {
   return <Marca tipo="checkbox" {...props} />;
 }

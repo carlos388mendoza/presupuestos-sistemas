@@ -6,6 +6,7 @@ import type { Moneda, TipoCompra } from "@/db/schema";
 import { aCentavos, centavosATexto, formatear, subtotalItem, totalesVacios } from "@/lib/dinero";
 import type { BorradorAlternativa, RespuestaExtraccion } from "@/lib/tipos";
 import { MENSAJE_ARCHIVO_GRANDE, TAMANO_MAXIMO_ARCHIVO } from "@/lib/limites";
+import { GrupoOpciones } from "@/components/campos";
 import { guardarAlternativa, type EntradaAlternativa } from "@/actions/presupuestos";
 import { Etiqueta } from "@/components/Etiqueta";
 
@@ -276,17 +277,17 @@ export function EditorAlternativa({
           <label htmlFor="proveedor" className="etiqueta">Proveedor</label>
           <input id="proveedor" required maxLength={150} className="campo" value={proveedor} onChange={(e) => setProveedor(e.target.value)} />
         </div>
-        <fieldset>
-          <legend className="etiqueta">Tipo de compra</legend>
-          <div className="flex gap-4 pt-2">
-            {(["nacional", "internacional"] as TipoCompra[]).map((t) => (
-              <label key={t} className="flex items-center gap-2 text-sm">
-                <input type="radio" name="tipoCompra" checked={tipoCompra === t} onChange={() => setTipoCompra(t)} />
-                {t === "nacional" ? "Nacional" : "Internacional"}
-              </label>
-            ))}
-          </div>
-        </fieldset>
+        <GrupoOpciones<TipoCompra>
+          name="tipoCompra"
+          etiqueta="Tipo de compra"
+          value={tipoCompra}
+          onChange={setTipoCompra}
+          enColumnas={false}
+          opciones={[
+            { valor: "nacional", etiqueta: "Nacional", descripcion: "Proveedor en Honduras." },
+            { valor: "internacional", etiqueta: "Internacional", descripcion: "Proveedor del exterior." },
+          ]}
+        />
         <div className="sm:col-span-2">
           <label htmlFor="notas" className="etiqueta">Notas <span className="font-normal text-suave">(opcional)</span></label>
           <input id="notas" maxLength={2000} className="campo" value={notas} onChange={(e) => setNotas(e.target.value)}
