@@ -16,7 +16,7 @@ export default async function NuevoPresupuesto() {
     <div className="max-w-2xl">
       <Link href="/presupuestos" className="btn-texto -ml-1.5 mb-2">Volver a presupuestos</Link>
       <h1 className="titulo-pagina mb-6">Nuevo presupuesto</h1>
-      <FormAccion action={crearPresupuesto} className="panel space-y-5 p-6">
+      <FormAccion action={crearPresupuesto} className="panel formulario p-6">
         <CamposPresupuesto />
         <SelectorCreable
           name="partidas"
@@ -26,7 +26,7 @@ export default async function NuevoPresupuesto() {
           placeholder="Escribe una partida o elige una sugerida"
           ayuda="Cada partida es algo que hay que comprar y puede tener varias cotizaciones. Escribe una nueva y presiona Enter. Puedes cambiarlas después."
         />
-        <button type="submit" className="btn-primario">Crear presupuesto</button>
+        <button type="submit" className="btn-primario self-start">Crear presupuesto</button>
       </FormAccion>
     </div>
   );

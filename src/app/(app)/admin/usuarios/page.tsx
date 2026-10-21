@@ -70,7 +70,7 @@ export default async function PaginaUsuarios() {
 
         <aside className="panel h-fit p-5">
           <ModalFormulario titulo="Nuevo usuario">
-            <FormAccion action={crearUsuario} limpiarAlTerminar className="space-y-3">
+            <FormAccion action={crearUsuario} limpiarAlTerminar className="formulario">
               <div>
                 <label className="etiqueta" htmlFor="u-name">Nombre</label>
                 <input id="u-name" name="name" required maxLength={120} className="campo" />
@@ -82,7 +82,7 @@ export default async function PaginaUsuarios() {
               <div>
                 <label className="etiqueta" htmlFor="u-pass">Contraseña temporal</label>
                 <input id="u-pass" name="password" type="text" minLength={8} required autoComplete="off" className="campo" />
-                <p className="ayuda mt-1">Mínimo 8 caracteres.</p>
+                <p className="ayuda mt-1.5">Mínimo 8 caracteres.</p>
               </div>
               <div>
                 <label className="etiqueta" htmlFor="u-role">Rol</label>

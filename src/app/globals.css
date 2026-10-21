@@ -68,7 +68,11 @@ body {
   @apply size-4 shrink-0 cursor-pointer appearance-none rounded-full border border-linea bg-papel transition-colors checked:border-[5px] checked:border-tinta disabled:cursor-not-allowed disabled:opacity-50;
 }
 @utility etiqueta {
-  @apply mb-1 block text-sm font-medium text-tinta;
+  @apply mb-1.5 block text-sm font-medium text-tinta;
+}
+/* Formulario vertical: espacio uniforme entre campos, ayudas y botones. */
+@utility formulario {
+  @apply flex flex-col gap-5;
 }
 @utility panel {
   @apply rounded-lg border border-linea bg-papel;

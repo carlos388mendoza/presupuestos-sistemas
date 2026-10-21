@@ -136,10 +136,10 @@ export default async function PaginaPresupuesto({ params }: { params: Promise<{ 
 
           <details className="panel p-5">
             <summary className="cursor-pointer font-semibold">Editar datos del presupuesto</summary>
-            <FormAccion action={actualizarPresupuesto} className="mt-4 space-y-4">
+            <FormAccion action={actualizarPresupuesto} className="formulario mt-4">
               <input type="hidden" name="id" value={p.id} />
               <CamposPresupuesto valores={p} />
-              <button type="submit" className="btn-secundario">Guardar cambios</button>
+              <button type="submit" className="btn-secundario self-start">Guardar cambios</button>
             </FormAccion>
             <FormAccion
               action={eliminarPresupuesto}
