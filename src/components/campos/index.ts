@@ -9,3 +9,5 @@
 export { Campo, CampoTexto, AreaTexto, CampoSelect, Casilla, OpcionRadio, GrupoOpciones } from "./Campos";
 export type { CampoTextoProps, AreaTextoProps, CampoSelectProps, Opcion } from "./Campos";
 export { CampoContrasena } from "./CampoContrasena";
+//   <SelectorCreable name="partidas" etiqueta="Partidas" sugeridas={[...]} defaultSeleccion={[...]} />
+export { SelectorCreable } from "./SelectorCreable";

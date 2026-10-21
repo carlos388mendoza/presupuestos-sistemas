@@ -4,6 +4,7 @@ import { requerirUsuario } from "@/lib/sesion";
 import { puedeCrearPresupuestos } from "@/lib/datos";
 import { crearPresupuesto } from "@/actions/presupuestos";
 import { FormAccion } from "@/components/FormAccion";
+import { SelectorCreable } from "@/components/campos";
 import { CamposPresupuesto } from "../CamposPresupuesto";
 
 const SUGERIDAS = ["Red y cableado", "Puntos de venta", "Cámaras de seguridad", "Impresoras", "Telefonía", "Licencias"];
@@ -17,20 +18,14 @@ export default async function NuevoPresupuesto() {
       <h1 className="titulo-pagina mb-6">Nuevo presupuesto</h1>
       <FormAccion action={crearPresupuesto} className="panel space-y-5 p-6">
         <CamposPresupuesto />
-        <div>
-          <label htmlFor="partidas" className="etiqueta">Partidas iniciales</label>
-          <textarea
-            id="partidas"
-            name="partidas"
-            rows={6}
-            className="campo"
-            defaultValue={SUGERIDAS.join("\n")}
-          />
-          <p className="ayuda mt-1">
-            Una por línea. Cada partida es algo que hay que comprar y puede tener varias cotizaciones. Puedes cambiarlas
-            después.
-          </p>
-        </div>
+        <SelectorCreable
+          name="partidas"
+          etiqueta="Partidas iniciales"
+          sugeridas={SUGERIDAS}
+          defaultSeleccion={SUGERIDAS}
+          placeholder="Escribe una partida o elige una sugerida"
+          ayuda="Cada partida es algo que hay que comprar y puede tener varias cotizaciones. Escribe una nueva y presiona Enter. Puedes cambiarlas después."
+        />
         <button type="submit" className="btn-primario">Crear presupuesto</button>
       </FormAccion>
     </div>
