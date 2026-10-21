@@ -33,7 +33,7 @@ Llena el `.env`:
 | `OPENROUTER_MODEL` | ID de un modelo con visión/PDF y structured outputs |
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NAME` | Primer administrador |
 
-Las cotizaciones se guardan localmente por defecto. Para producción puedes configurar un bucket privado de AWS S3 o Cloudflare R2 con `ARCHIVOS_STORAGE=s3`; pasos, permisos y variables están en la [guía de almacenamiento para Next.js](docs/almacenamiento-archivos-nextjs.md).
+Las cotizaciones se guardan localmente por defecto. Para producción puedes configurar UploadThing con `ARCHIVOS_STORAGE=uploadthing`, o un bucket AWS S3/Cloudflare R2 con `ARCHIVOS_STORAGE=s3`; pasos, permisos y variables están en la [guía de almacenamiento para Next.js](docs/almacenamiento-archivos-nextjs.md).
 
 Luego:
 

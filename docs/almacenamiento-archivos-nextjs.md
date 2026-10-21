@@ -1,6 +1,6 @@
-# Guardar cotizaciones en S3 o Cloudflare R2
+# Guardar cotizaciones en UploadThing, S3 o Cloudflare R2
 
-La aplicación puede guardar las cotizaciones en el disco local o en un bucket compatible con S3. Cloudflare R2 y AWS S3 funcionan con el mismo código. El bucket permanece privado: las descargas pasan por `/api/archivos/[id]`, que comprueba la sesión y los permisos del presupuesto antes de leer el objeto.
+La aplicación puede guardar las cotizaciones localmente, en UploadThing o en un bucket compatible con S3 como Cloudflare R2 o AWS S3. Las descargas siempre pasan por `/api/archivos/[id]`, que comprueba la sesión y los permisos del presupuesto antes de leer el archivo.
 
 ## Componentes que ya vienen listos
 
@@ -9,7 +9,7 @@ La pantalla de alternativas ya incluye el control de selección, el estado de su
 - `src/app/(app)/presupuestos/[id]/alternativas/EditorAlternativa.tsx`: componente de interfaz; manda el archivo como `FormData`.
 - `src/app/api/cotizaciones/extraer/route.ts`: valida sesión, tipo y tamaño, guarda el archivo y opcionalmente extrae los datos de la cotización.
 - `src/app/api/archivos/[id]/route.ts`: sirve el archivo solo después de validar acceso.
-- `src/lib/archivos.ts`: adaptador de almacenamiento local/S3.
+- `src/lib/archivos.ts`: adaptador de almacenamiento local/UploadThing/S3.
 
 El componente existente ya usa el flujo. Para una pantalla propia de Next.js, el patrón de subida es:
 
@@ -28,6 +28,24 @@ async function subirCotizacion(file: File) {
 ```
 
 No establezcas manualmente `Content-Type`: el navegador agrega el boundary correcto para `FormData`. La ruta devuelve un `archivoId`; al guardar la alternativa, la base de datos lo asocia con ella. El enlace de lectura es `/api/archivos/<archivoId>`.
+
+## UploadThing
+
+El selector que ya existe no necesita reemplazarse por `UploadButton`: manda el archivo a la ruta autenticada de la aplicación, que lo sube al servidor de UploadThing con `UTApi`. La misma ruta conserva la copia temporal en memoria para la lectura opcional de la cotización. Este patrón evita duplicar la lógica de permisos y extracción. UploadThing también permite `FileRouter` y componentes propios; aquí se conserva la interfaz ya conectada.
+
+1. Entra al [dashboard de UploadThing](https://uploadthing.com/dashboard), crea una aplicación y copia su token.
+2. En la configuración de la aplicación, habilita los overrides de ACL y deja los archivos privados. La app solicita `acl: "private"` al subir.
+3. En `.env` local (y luego en las variables del entorno donde se despliega), configura:
+
+   ```dotenv
+   ARCHIVOS_STORAGE=uploadthing
+   UPLOADTHING_TOKEN=<token-de-la-app>
+   ```
+
+4. Mantén el token solo del lado servidor. No lo publiques en el repositorio ni lo pongas en una variable `NEXT_PUBLIC_*`.
+5. Aplica la migración con `npm run db:migrate` y reinicia/despliega la app.
+
+La ruta registra la clave que devuelve UploadThing en la base. Al descargar, primero comprueba los permisos, genera un enlace privado temporal de 60 segundos en el servidor y transmite el archivo por `/api/archivos/[id]`. `UTApi.uploadFiles()` permite este flujo de carga directa desde el servidor sin montar un `FileRouter` adicional.
 
 ## Cloudflare R2
 
@@ -70,14 +88,14 @@ Después de instalar una versión que incluya la migración, aplica el esquema a
 npm run db:migrate
 ```
 
-Despliega la aplicación con las variables del bucket configuradas. Las nuevas subidas irán al bucket. Cada registro guarda su ubicación (`local` o `s3`), así que cambiar la configuración no hace que la aplicación busque archivos antiguos en el proveedor equivocado. Los archivos locales anteriores deben conservarse en el disco original o copiarse al bucket antes de retirar ese disco.
+Despliega la aplicación con las variables del proveedor configuradas. Las nuevas subidas usarán ese proveedor. Cada registro guarda su ubicación (`local`, `s3` o `uploadthing`), así que cambiar la configuración no hace que la aplicación busque archivos antiguos en el proveedor equivocado. Los archivos locales anteriores deben conservarse en el disco original o migrarse antes de retirar ese disco.
 
 `ARCHIVOS_STORAGE` vale `local` por defecto para desarrollo. El límite actual sigue siendo 10 MB y los tipos permitidos son PDF, JPG, PNG y WEBP. Si OpenRouter está configurado, el contenido también se envía al proveedor de IA para extraer los datos de la cotización.
 
 ## Seguridad y operación
 
-- Mantén las claves `S3_*` solo en variables de entorno del servidor; no uses el prefijo `NEXT_PUBLIC_`.
+- Mantén `S3_*` y `UPLOADTHING_TOKEN` solo en variables de entorno del servidor; no uses el prefijo `NEXT_PUBLIC_`.
 - Usa un bucket privado, TLS y claves de mínimo privilegio.
-- Las descargas no usan URL pública ni URL prefirmada: la ruta de Next.js comprueba acceso antes de enviar el contenido.
-- `ARCHIVOS_STORAGE=s3` sin bucket o credenciales falla con un mensaje de configuración en el servidor.
+- La ruta protegida de Next.js comprueba acceso antes de enviar el contenido; UploadThing usa un enlace privado de corta duración solo entre el servidor y el proveedor.
+- `ARCHIVOS_STORAGE=s3` sin bucket o credenciales, o `ARCHIVOS_STORAGE=uploadthing` sin token, falla con un mensaje de configuración en el servidor.
 - Los archivos nuevos se guardan con una clave aleatoria, sin usar el nombre recibido del navegador.

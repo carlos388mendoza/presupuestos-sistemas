@@ -1,5 +1,6 @@
 import "server-only";
 import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { UTApi } from "uploadthing/server";
 import fs from "node:fs/promises";
 import path from "node:path";
 
@@ -13,13 +14,21 @@ export const TIPOS_PERMITIDOS: Record<string, string> = {
   "image/webp": "webp",
 };
 
-export type AlmacenamientoArchivo = "local" | "s3";
+export type AlmacenamientoArchivo = "local" | "s3" | "uploadthing";
 let clienteS3Cache: S3Client | undefined;
+let clienteUploadThingCache: UTApi | undefined;
 
 function almacenamientoConfigurado(): AlmacenamientoArchivo {
   const valor = process.env.ARCHIVOS_STORAGE ?? "local";
-  if (valor === "local" || valor === "s3") return valor;
-  throw new Error("ARCHIVOS_STORAGE debe ser 'local' o 's3'.");
+  if (valor === "local" || valor === "s3" || valor === "uploadthing") return valor;
+  throw new Error("ARCHIVOS_STORAGE debe ser 'local', 's3' o 'uploadthing'.");
+}
+
+function clienteUploadThing() {
+  const token = process.env.UPLOADTHING_TOKEN;
+  if (!token) throw new Error("Configura UPLOADTHING_TOKEN para guardar archivos en UploadThing.");
+  if (!clienteUploadThingCache) clienteUploadThingCache = new UTApi({ token });
+  return clienteUploadThingCache;
 }
 
 function clienteS3() {
@@ -60,9 +69,16 @@ export async function guardarArchivo(
   if (almacenamiento === "local") {
     await fs.mkdir(CARPETA_UPLOADS, { recursive: true });
     await fs.writeFile(path.join(CARPETA_UPLOADS, nombreGuardado), buffer);
-  } else {
+  } else if (almacenamiento === "s3") {
     const { bucket, cliente } = clienteS3();
     await cliente.send(new PutObjectCommand({ Bucket: bucket, Key: nombreGuardado, Body: buffer, ContentType: mime }));
+  } else {
+    const resultado = await clienteUploadThing().uploadFiles(
+      new File([new Uint8Array(buffer)], nombreGuardado, { type: mime }),
+      { acl: "private" },
+    );
+    if (resultado.error) throw new Error(`UploadThing no pudo guardar el archivo: ${resultado.error.message}`);
+    return { nombreGuardado: resultado.data.key, almacenamiento };
   }
 
   return { nombreGuardado, almacenamiento };
@@ -74,10 +90,17 @@ export async function leerArchivo(nombreGuardado: string, almacenamiento: Almace
     return fs.readFile(path.join(CARPETA_UPLOADS, path.basename(nombreGuardado)));
   }
 
-  const { bucket, cliente } = clienteS3();
-  const respuesta = await cliente.send(new GetObjectCommand({ Bucket: bucket, Key: nombreGuardado }));
-  if (!respuesta.Body) throw new Error("El objeto no tiene contenido.");
-  return Buffer.from(await respuesta.Body.transformToByteArray());
+  if (almacenamiento === "s3") {
+    const { bucket, cliente } = clienteS3();
+    const respuesta = await cliente.send(new GetObjectCommand({ Bucket: bucket, Key: nombreGuardado }));
+    if (!respuesta.Body) throw new Error("El objeto no tiene contenido.");
+    return Buffer.from(await respuesta.Body.transformToByteArray());
+  }
+
+  const { ufsUrl } = await clienteUploadThing().generateSignedURL(nombreGuardado, { expiresIn: 60 });
+  const respuesta = await fetch(ufsUrl, { cache: "no-store" });
+  if (!respuesta.ok) throw new Error(`UploadThing no pudo devolver el archivo (${respuesta.status}).`);
+  return Buffer.from(await respuesta.arrayBuffer());
 }
 
 export async function borrarArchivo(nombreGuardado: string, almacenamiento: AlmacenamientoArchivo): Promise<void> {
@@ -86,6 +109,12 @@ export async function borrarArchivo(nombreGuardado: string, almacenamiento: Alma
     return;
   }
 
-  const { bucket, cliente } = clienteS3();
-  await cliente.send(new DeleteObjectCommand({ Bucket: bucket, Key: nombreGuardado }));
+  if (almacenamiento === "s3") {
+    const { bucket, cliente } = clienteS3();
+    await cliente.send(new DeleteObjectCommand({ Bucket: bucket, Key: nombreGuardado }));
+    return;
+  }
+
+  const resultado = await clienteUploadThing().deleteFiles(nombreGuardado);
+  if (!resultado.success) throw new Error("UploadThing no pudo eliminar el archivo.");
 }

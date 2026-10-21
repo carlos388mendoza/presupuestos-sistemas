@@ -118,7 +118,7 @@ export const archivos = pgTable("archivos", {
   id: id(),
   nombreOriginal: text("nombre_original").notNull(),
   nombreGuardado: text("nombre_guardado").notNull().unique(),
-  almacenamiento: text("almacenamiento", { enum: ["local", "s3"] }).notNull().default("local"),
+  almacenamiento: text("almacenamiento", { enum: ["local", "s3", "uploadthing"] }).notNull().default("local"),
   mime: text("mime").notNull(),
   tamano: integer("tamano").notNull(),
   subidoPor: text("subido_por")
