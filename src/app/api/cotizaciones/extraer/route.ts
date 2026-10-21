@@ -7,9 +7,11 @@ import { ErrorExtraccion, extraccionDisponible, extraerCotizacion } from "@/lib/
 import { buscarCoincidencia } from "@/lib/coincidencias";
 import { listarEquipos } from "@/lib/catalogo";
 import { aCentavos } from "@/lib/dinero";
+import { MENSAJE_ARCHIVO_GRANDE } from "@/lib/limites";
 import type { BorradorAlternativa } from "@/lib/tipos";
 
-export const maxDuration = 120;
+// Máximo del plan gratis (Hobby) de Vercel con Fluid compute: 300 segundos.
+export const maxDuration = 300;
 
 /**
  * Recibe el archivo de una cotización, lo guarda y (si la IA está configurada)
@@ -30,7 +32,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Formato no permitido. Sube un PDF, JPG, PNG o WEBP." }, { status: 400 });
   }
   if (archivo.size > TAMANO_MAXIMO) {
-    return NextResponse.json({ error: "El archivo pasa de 10 MB." }, { status: 400 });
+    return NextResponse.json({ error: MENSAJE_ARCHIVO_GRANDE }, { status: 400 });
   }
 
   const buffer = Buffer.from(await archivo.arrayBuffer());

@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { Moneda, TipoCompra } from "@/db/schema";
 import { aCentavos, centavosATexto, formatear, subtotalItem, totalesVacios } from "@/lib/dinero";
 import type { BorradorAlternativa, RespuestaExtraccion } from "@/lib/tipos";
+import { MENSAJE_ARCHIVO_GRANDE, TAMANO_MAXIMO_ARCHIVO } from "@/lib/limites";
 import { guardarAlternativa, type EntradaAlternativa } from "@/actions/presupuestos";
 import { Etiqueta } from "@/components/Etiqueta";
 
@@ -142,13 +143,22 @@ export function EditorAlternativa({
   }
 
   async function leerCotizacion(file: File) {
-    setLeyendo(true);
     setAviso(null);
     setError(null);
+    if (file.size > TAMANO_MAXIMO_ARCHIVO) {
+      setError(MENSAJE_ARCHIVO_GRANDE);
+      if (inputArchivo.current) inputArchivo.current.value = "";
+      return;
+    }
+    setLeyendo(true);
     try {
       const fd = new FormData();
       fd.append("archivo", file);
       const res = await fetch("/api/cotizaciones/extraer", { method: "POST", body: fd });
+      if (res.status === 413) {
+        setError(MENSAJE_ARCHIVO_GRANDE);
+        return;
+      }
       const r = (await res.json()) as RespuestaExtraccion;
       if (!res.ok || r.error) {
         setError(r.error ?? "No se pudo subir el archivo.");
@@ -225,7 +235,8 @@ export function EditorAlternativa({
           <div>
             <h2 id="t-archivo" className="font-semibold">Cotización del proveedor</h2>
             <p className="ayuda">
-              Sube el PDF o una foto y se llenarán los ítems automáticamente. También puedes ingresarlos a mano.
+              Sube el PDF o una foto (máximo 4 MB) y se llenarán los ítems automáticamente. También puedes
+              ingresarlos a mano.
             </p>
           </div>
           <div className="flex items-center gap-3">

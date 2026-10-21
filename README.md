@@ -28,12 +28,12 @@ Llena el `.env`:
 | --- | --- |
 | `DATABASE_URL` | Dirección de conexión de Neon (`postgresql://...?sslmode=require`, versión *pooled*) |
 | `BETTER_AUTH_SECRET` | Texto largo y aleatorio (`openssl rand -base64 32`) |
-| `BETTER_AUTH_URL` | `http://localhost:3000` en desarrollo |
+| `BETTER_AUTH_URL` | `http://localhost:3000` en desarrollo; la dirección pública `https://...` en producción |
 | `OPENROUTER_API_KEY` | Llave de openrouter.ai (con límite de crédito) |
 | `OPENROUTER_MODEL` | ID de un modelo con visión/PDF y structured outputs |
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NAME` | Primer administrador |
 
-Las cotizaciones se guardan localmente por defecto. Para producción puedes configurar UploadThing con `ARCHIVOS_STORAGE=uploadthing`, o un bucket AWS S3/Cloudflare R2 con `ARCHIVOS_STORAGE=s3`; pasos, permisos y variables están en la [guía de almacenamiento para Next.js](docs/almacenamiento-archivos-nextjs.md).
+Las cotizaciones se guardan en la carpeta `uploads/` en desarrollo y en **Vercel Blob privado** al publicar en Vercel (`ARCHIVOS_STORAGE=blob`, es el valor por defecto dentro de Vercel). También se puede usar UploadThing (`uploadthing`) o AWS S3/Cloudflare R2 (`s3`); pasos y variables en la [guía de almacenamiento](docs/almacenamiento-archivos-nextjs.md). En todos los casos los archivos se ven solo por `/api/archivos/[id]`, que revisa que seas el dueño o administrador. Tamaño máximo por archivo: 4 MB (Vercel no acepta envíos de más de 4.5 MB).
 
 Luego:
 
@@ -45,6 +45,16 @@ npm run dev     # http://localhost:3000
 Los dos desarrolladores pueden usar la misma base de Neon (ven los mismos datos) o cada uno una *branch* de Neon propia para hacer pruebas sin afectar al otro.
 
 Sin las variables de OpenRouter la app funciona igual; los archivos se adjuntan y los ítems se ingresan a mano.
+
+## Publicación en Vercel
+
+La app está publicada en Vercel (proyecto `presupuestos-grupo-comidas`), conectado a GitHub: cada cambio que entra a `main` se publica solo; cada Pull Request genera una vista previa.
+
+- **Variables en Vercel** (Settings → Environment Variables): `DATABASE_URL`, `BETTER_AUTH_SECRET` (distinto al de desarrollo), `BETTER_AUTH_URL` (dirección pública con `https://`), `OPENROUTER_API_KEY`, `OPENROUTER_MODEL` y `ARCHIVOS_STORAGE=blob`.
+- **Vercel Blob**: almacenamiento privado conectado al proyecto (pestaña Storage). Vercel agrega solo sus credenciales; no hay que copiarlas.
+- **Migraciones**: si cambia `src/db/schema.ts`, corre `npm run db:migrate` con la `DATABASE_URL` de Neon antes o justo después de unir el cambio a `main`.
+- **Límites del plan gratis (Hobby)**: la lectura con IA puede tardar hasta 300 segundos; los archivos, hasta 4 MB.
+- Better-auth usa cookies seguras (solo HTTPS) cuando `BETTER_AUTH_URL` empieza con `https://`, y acepta inicios de sesión desde esa dirección y desde las vistas previas de Vercel.
 
 ## Scripts
 

@@ -7,7 +7,27 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import * as schema from "@/db/schema";
 
+const https = (dominio?: string) => (dominio ? `https://${dominio}` : undefined);
+
+// Dirección pública. En Vercel, si falta BETTER_AUTH_URL, se usa el dominio de producción.
+const urlPublica = process.env.BETTER_AUTH_URL || https(process.env.VERCEL_PROJECT_PRODUCTION_URL);
+
+// Orígenes desde los que se acepta iniciar sesión: la dirección pública y,
+// en Vercel, la dirección propia de cada despliegue (vistas previas).
+const origenesPermitidos = [
+  urlPublica,
+  https(process.env.VERCEL_PROJECT_PRODUCTION_URL),
+  https(process.env.VERCEL_BRANCH_URL),
+  https(process.env.VERCEL_URL),
+].filter((o): o is string => Boolean(o));
+
 export const auth = betterAuth({
+  baseURL: urlPublica,
+  trustedOrigins: [...new Set(origenesPermitidos)],
+  advanced: {
+    // Cookies solo por HTTPS cuando la app está publicada.
+    useSecureCookies: urlPublica?.startsWith("https://") ?? false,
+  },
   database: drizzleAdapter(db, {
     provider: "pg",
     schema: {

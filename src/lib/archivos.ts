@@ -1,11 +1,13 @@
 import "server-only";
 import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { del as borrarBlob, get as leerBlob, put as subirBlob } from "@vercel/blob";
 import { UTApi } from "uploadthing/server";
 import fs from "node:fs/promises";
 import path from "node:path";
+import { TAMANO_MAXIMO_ARCHIVO } from "@/lib/limites";
 
 export const CARPETA_UPLOADS = path.join(process.cwd(), "uploads");
-export const TAMANO_MAXIMO = 10 * 1024 * 1024; // 10 MB
+export const TAMANO_MAXIMO = TAMANO_MAXIMO_ARCHIVO;
 
 export const TIPOS_PERMITIDOS: Record<string, string> = {
   "application/pdf": "pdf",
@@ -14,15 +16,20 @@ export const TIPOS_PERMITIDOS: Record<string, string> = {
   "image/webp": "webp",
 };
 
-export type AlmacenamientoArchivo = "local" | "s3" | "uploadthing";
+export type AlmacenamientoArchivo = "local" | "s3" | "uploadthing" | "blob";
 let clienteS3Cache: S3Client | undefined;
 let clienteUploadThingCache: UTApi | undefined;
 
 function almacenamientoConfigurado(): AlmacenamientoArchivo {
-  const valor = process.env.ARCHIVOS_STORAGE ?? "local";
-  if (valor === "local" || valor === "s3" || valor === "uploadthing") return valor;
-  throw new Error("ARCHIVOS_STORAGE debe ser 'local', 's3' o 'uploadthing'.");
+  // En Vercel el disco no persiste: si no se indica otra cosa, se usa Vercel Blob.
+  const valor = process.env.ARCHIVOS_STORAGE || (process.env.VERCEL ? "blob" : "local");
+  if (valor === "local" || valor === "s3" || valor === "uploadthing" || valor === "blob") return valor;
+  throw new Error("ARCHIVOS_STORAGE debe ser 'local', 'blob', 's3' o 'uploadthing'.");
 }
+
+// Vercel Blob en modo privado: nadie puede abrir el archivo con su URL; solo
+// el servidor lo lee y lo entrega por /api/archivos/[id] después de validar permisos.
+const CARPETA_BLOB = "cotizaciones";
 
 function clienteUploadThing() {
   const token = process.env.UPLOADTHING_TOKEN;
@@ -72,6 +79,13 @@ export async function guardarArchivo(
   } else if (almacenamiento === "s3") {
     const { bucket, cliente } = clienteS3();
     await cliente.send(new PutObjectCommand({ Bucket: bucket, Key: nombreGuardado, Body: buffer, ContentType: mime }));
+  } else if (almacenamiento === "blob") {
+    const blob = await subirBlob(`${CARPETA_BLOB}/${nombreGuardado}`, buffer, {
+      access: "private",
+      contentType: mime,
+      addRandomSuffix: false,
+    });
+    return { nombreGuardado: blob.pathname, almacenamiento };
   } else {
     const resultado = await clienteUploadThing().uploadFiles(
       new File([new Uint8Array(buffer)], nombreGuardado, { type: mime }),
@@ -97,6 +111,12 @@ export async function leerArchivo(nombreGuardado: string, almacenamiento: Almace
     return Buffer.from(await respuesta.Body.transformToByteArray());
   }
 
+  if (almacenamiento === "blob") {
+    const resultado = await leerBlob(nombreGuardado, { access: "private" });
+    if (resultado?.statusCode !== 200) throw new Error("El archivo no existe en Vercel Blob.");
+    return Buffer.from(await new Response(resultado.stream).arrayBuffer());
+  }
+
   const { ufsUrl } = await clienteUploadThing().generateSignedURL(nombreGuardado, { expiresIn: 60 });
   const respuesta = await fetch(ufsUrl, { cache: "no-store" });
   if (!respuesta.ok) throw new Error(`UploadThing no pudo devolver el archivo (${respuesta.status}).`);
@@ -112,6 +132,11 @@ export async function borrarArchivo(nombreGuardado: string, almacenamiento: Alma
   if (almacenamiento === "s3") {
     const { bucket, cliente } = clienteS3();
     await cliente.send(new DeleteObjectCommand({ Bucket: bucket, Key: nombreGuardado }));
+    return;
+  }
+
+  if (almacenamiento === "blob") {
+    await borrarBlob(nombreGuardado);
     return;
   }
 
