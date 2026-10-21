@@ -30,6 +30,20 @@ body {
   font-size: 15px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  /* La interfaz no se selecciona al hacer clic o doble clic (#16). */
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Sí se pueden seleccionar y copiar: campos de texto, cifras/totales y lo marcado con `seleccionable`.
+   Safari no deja escribir en un input que hereda user-select: none, por eso se declara explícito. */
+input,
+textarea,
+[contenteditable="true"],
+.cifra,
+.seleccionable {
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 /* Cifras alineadas en columnas */
