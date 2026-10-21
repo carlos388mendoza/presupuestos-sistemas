@@ -33,6 +33,8 @@ Llena el `.env`:
 | `OPENROUTER_MODEL` | ID de un modelo con visión/PDF y structured outputs |
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NAME` | Primer administrador |
 
+Las cotizaciones se guardan localmente por defecto. Para producción puedes configurar UploadThing con `ARCHIVOS_STORAGE=uploadthing`, o un bucket AWS S3/Cloudflare R2 con `ARCHIVOS_STORAGE=s3`; pasos, permisos y variables están en la [guía de almacenamiento para Next.js](docs/almacenamiento-archivos-nextjs.md).
+
 Luego:
 
 ```bash
@@ -90,7 +92,7 @@ drizzle/                        Migraciones SQL
 - El total del presupuesto usa solo las alternativas elegidas.
 - Un presupuesto se marca como "listo" solo si todas sus partidas tienen alternativa elegida. Listo = no editable hasta reabrirlo.
 - El Excel solo se descarga con el presupuesto listo.
-- Los archivos de cotización se guardan en la carpeta `uploads/` del servidor (no en la base de datos).
+- Los archivos de cotización se guardan en `uploads/` localmente o en un bucket S3/R2 privado; la base guarda sus metadatos y proveedor.
 - Quien crea el presupuesto elige las alternativas. El administrador puede ver y editar todos.
 
 ## Trabajo en equipo

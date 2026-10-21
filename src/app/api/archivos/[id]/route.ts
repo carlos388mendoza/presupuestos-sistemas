@@ -3,7 +3,7 @@ import { db } from "@/db";
 import { archivos } from "@/db/schema";
 import { obtenerUsuario } from "@/lib/sesion";
 import { puedeVerArchivo } from "@/lib/datos";
-import { leerDeDisco } from "@/lib/archivos";
+import { leerArchivo } from "@/lib/archivos";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const usuario = await obtenerUsuario();
@@ -13,7 +13,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
   const [a] = await db.select().from(archivos).where(eq(archivos.id, id));
   try {
-    const contenido = await leerDeDisco(a.nombreGuardado);
+    const contenido = await leerArchivo(a.nombreGuardado, a.almacenamiento);
     return new Response(new Uint8Array(contenido), {
       headers: {
         "Content-Type": a.mime,
