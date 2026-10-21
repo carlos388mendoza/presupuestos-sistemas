@@ -25,34 +25,38 @@ export default async function PaginaUsuarios() {
         <ul className="panel h-fit divide-y divide-linea-2">
           {usuarios.map((u) => (
             <li key={u.id} className={`px-4 py-4 ${u.activo ? "" : "opacity-60"}`}>
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                <div className="min-w-0 flex-1">
-                  <div className="font-medium">
-                    {u.name} {u.id === actual.id && <span className="text-sm font-normal text-suave">(tú)</span>}
+              {/* Celular: datos arriba y acciones debajo. Desde sm: en una sola fila. */}
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+                <div className="min-w-0 sm:flex-1">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <span className="font-medium">{u.name}</span>
+                    {u.id === actual.id && <span className="text-sm text-suave">(tú)</span>}
+                    {!u.activo && <Etiqueta tipo="aviso">Desactivado</Etiqueta>}
                   </div>
-                  <div className="truncate text-sm text-suave">{u.email}</div>
+                  <div className="text-sm break-all text-suave sm:truncate">{u.email}</div>
                 </div>
-                {!u.activo && <Etiqueta tipo="aviso">Desactivado</Etiqueta>}
-                <FormAccion action={cambiarRol} enLinea className="flex items-center gap-2">
-                  <input type="hidden" name="id" value={u.id} />
-                  <label className="sr-only" htmlFor={`rol-${u.id}`}>Rol de {u.name}</label>
-                  <select id={`rol-${u.id}`} name="role" defaultValue={u.role} className="campo w-auto py-1.5">
-                    <option value="creador">Creador</option>
-                    <option value="aprobador">Aprobador</option>
-                    <option value="admin">Administrador</option>
-                  </select>
-                  <button className="btn-texto">Cambiar</button>
-                </FormAccion>
-                <FormAccion
-                  action={cambiarActivo}
-                  enLinea
-                  className="flex items-center"
-                  confirmar={u.activo ? `¿Desactivar a ${u.name}? Se cerrarán sus sesiones.` : undefined}
-                >
-                  <input type="hidden" name="id" value={u.id} />
-                  <input type="hidden" name="activo" value={u.activo ? "0" : "1"} />
-                  <button className={u.activo ? "btn-peligro" : "btn-texto"}>{u.activo ? "Desactivar" : "Activar"}</button>
-                </FormAccion>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                  <FormAccion action={cambiarRol} enLinea className="flex items-center gap-2">
+                    <input type="hidden" name="id" value={u.id} />
+                    <label className="sr-only" htmlFor={`rol-${u.id}`}>Rol de {u.name}</label>
+                    <select id={`rol-${u.id}`} name="role" defaultValue={u.role} className="campo w-auto py-1.5">
+                      <option value="creador">Creador</option>
+                      <option value="aprobador">Aprobador</option>
+                      <option value="admin">Administrador</option>
+                    </select>
+                    <button className="btn-texto">Cambiar</button>
+                  </FormAccion>
+                  <FormAccion
+                    action={cambiarActivo}
+                    enLinea
+                    className="flex items-center"
+                    confirmar={u.activo ? `¿Desactivar a ${u.name}? Se cerrarán sus sesiones.` : undefined}
+                  >
+                    <input type="hidden" name="id" value={u.id} />
+                    <input type="hidden" name="activo" value={u.activo ? "0" : "1"} />
+                    <button className={u.activo ? "btn-peligro" : "btn-texto"}>{u.activo ? "Desactivar" : "Activar"}</button>
+                  </FormAccion>
+                </div>
               </div>
               <details className="mt-2">
                 <summary className="btn-texto cursor-pointer px-0">Cambiar contraseña</summary>
@@ -68,7 +72,8 @@ export default async function PaginaUsuarios() {
           ))}
         </ul>
 
-        <aside className="panel h-fit p-5">
+        {/* En celular el botón de nuevo usuario va antes de la lista. */}
+        <aside className="panel order-first h-fit p-5 lg:order-none">
           <ModalFormulario titulo="Nuevo usuario">
             <FormAccion action={crearUsuario} limpiarAlTerminar className="formulario">
               <div>
