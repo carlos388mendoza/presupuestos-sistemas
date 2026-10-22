@@ -9,6 +9,7 @@ import { MENSAJE_ARCHIVO_GRANDE, TAMANO_MAXIMO_ARCHIVO } from "@/lib/limites";
 import { GrupoOpciones } from "@/components/campos";
 import { guardarAlternativa, type EntradaAlternativa } from "@/actions/presupuestos";
 import { Etiqueta } from "@/components/Etiqueta";
+import { SelectorEquipo } from "@/components/campos/SelectorEquipo";
 
 export type EquipoOpcion = { id: string; nombre: string; marca: string; modelo: string };
 
@@ -301,7 +302,7 @@ export function EditorAlternativa({
           <h2 id="t-items" className="font-semibold">Ítems</h2>
           <p className="ayuda hidden sm:block">Cada precio queda en su moneda; no se convierten.</p>
         </div>
-        <div className="overflow-x-auto">
+        <div className="min-w-0 overflow-x-auto">
           <table className="w-full min-w-[980px] text-sm">
             <thead>
               <tr className="text-left text-suave">
@@ -325,22 +326,12 @@ export function EditorAlternativa({
                 return (
                   <tr key={f.clave} className="border-t border-linea-2 align-top">
                     <td className="px-3 py-2">
-                      <select
-                        aria-label={`Equipo del ítem ${i + 1}`}
-                        className="campo"
+                      <SelectorEquipo
+                        opciones={catalogo}
                         value={f.equipo}
-                        onChange={(e) => elegirEquipo(f, e.target.value)}
-                      >
-                        <option value="">Sin vincular</option>
-                        <option value={NUEVO}>Agregar al catálogo</option>
-                        <optgroup label="Catálogo">
-                          {catalogo.map((e) => (
-                            <option key={e.id} value={e.id}>
-                              {e.nombre}{e.modelo ? ` (${e.modelo})` : ""}
-                            </option>
-                          ))}
-                        </optgroup>
-                      </select>
+                        etiqueta={`Equipo del ítem ${i + 1}`}
+                        onChange={(valor) => elegirEquipo(f, valor)}
+                      />
                       {f.equipo === NUEVO && (
                         <div className="mt-1">
                           <Etiqueta tipo="nuevo">Nuevo en el catálogo</Etiqueta>
