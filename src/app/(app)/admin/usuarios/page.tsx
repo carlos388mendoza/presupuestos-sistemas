@@ -2,10 +2,10 @@ import { db } from "@/db";
 import { requerirAdmin } from "@/lib/sesion";
 import { listarUsuarios } from "@/lib/usuarios";
 import { NOMBRES_ROL } from "@/lib/datos";
-import { cambiarActivo, cambiarRol, crearUsuario, restablecerContrasena } from "@/actions/usuarios";
+import { crearUsuario } from "@/actions/usuarios";
 import { FormAccion } from "@/components/FormAccion";
-import { Etiqueta } from "@/components/Etiqueta";
 import { ModalFormulario } from "@/components/ModalFormulario";
+import { ListaUsuarios } from "./ListaUsuarios";
 
 export default async function PaginaUsuarios() {
   const actual = await requerirAdmin();
@@ -15,66 +15,16 @@ export default async function PaginaUsuarios() {
     <>
       <div className="mb-6">
         <h1 className="titulo-pagina">Usuarios</h1>
-        <p className="ayuda">
-          Los creadores de presupuestos solo ven los suyos. Los aprobadores ven todos, eligen las alternativas, marcan
-          como listo y descargan el Excel, pero no editan. Los administradores ven todo y manejan usuarios.
-        </p>
+        <p className="ayuda mt-1 max-w-3xl">Administra las cuentas, sus roles y el acceso al sistema.</p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
-        <ul className="panel h-fit divide-y divide-linea-2">
-          {usuarios.map((u) => (
-            <li key={u.id} className={`px-4 py-4 ${u.activo ? "" : "opacity-60"}`}>
-              {/* Celular: datos arriba y acciones debajo. Desde sm: en una sola fila. */}
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-                <div className="min-w-0 sm:flex-1">
-                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                    <span className="font-medium">{u.name}</span>
-                    {u.id === actual.id && <span className="text-sm text-suave">(tú)</span>}
-                    {!u.activo && <Etiqueta tipo="aviso">Desactivado</Etiqueta>}
-                  </div>
-                  <div className="text-sm break-all text-suave sm:truncate">{u.email}</div>
-                </div>
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                  <FormAccion action={cambiarRol} enLinea className="flex items-center gap-2">
-                    <input type="hidden" name="id" value={u.id} />
-                    <label className="sr-only" htmlFor={`rol-${u.id}`}>Rol de {u.name}</label>
-                    <select id={`rol-${u.id}`} name="role" defaultValue={u.role} className="campo w-auto py-1.5">
-                      <option value="creador">Creador</option>
-                      <option value="aprobador">Aprobador</option>
-                      <option value="admin">Administrador</option>
-                    </select>
-                    <button className="btn-texto">Cambiar</button>
-                  </FormAccion>
-                  <FormAccion
-                    action={cambiarActivo}
-                    enLinea
-                    className="flex items-center"
-                    confirmar={u.activo ? `¿Desactivar a ${u.name}? Se cerrarán sus sesiones.` : undefined}
-                  >
-                    <input type="hidden" name="id" value={u.id} />
-                    <input type="hidden" name="activo" value={u.activo ? "0" : "1"} />
-                    <button className={u.activo ? "btn-peligro" : "btn-texto"}>{u.activo ? "Desactivar" : "Activar"}</button>
-                  </FormAccion>
-                </div>
-              </div>
-              <details className="mt-2">
-                <summary className="btn-texto cursor-pointer px-0">Cambiar contraseña</summary>
-                <FormAccion action={restablecerContrasena} limpiarAlTerminar className="mt-2 flex max-w-md gap-2">
-                  <input type="hidden" name="id" value={u.id} />
-                  <label className="sr-only" htmlFor={`p-${u.id}`}>Nueva contraseña</label>
-                  <input id={`p-${u.id}`} name="password" type="text" minLength={8} required autoComplete="off"
-                    placeholder="Nueva contraseña" className="campo" />
-                  <button className="btn-secundario shrink-0">Guardar</button>
-                </FormAccion>
-              </details>
-            </li>
-          ))}
-        </ul>
-
-        {/* En celular el botón de nuevo usuario va antes de la lista. */}
-        <aside className="panel order-first h-fit p-5 lg:order-none">
-          <ModalFormulario titulo="Nuevo usuario">
+      <section className="panel overflow-hidden">
+        <header className="flex flex-wrap items-center justify-between gap-4 border-b border-linea-2 p-5">
+          <div>
+            <h2 className="font-semibold">Cuentas</h2>
+            <p className="ayuda">Gestiona roles, acceso y contraseñas.</p>
+          </div>
+          <ModalFormulario titulo="Nuevo usuario" trigger="+ Nuevo usuario" triggerClassName="btn-primario min-h-11 px-5">
             <FormAccion action={crearUsuario} limpiarAlTerminar className="formulario">
               <div>
                 <label className="etiqueta" htmlFor="u-name">Nombre</label>
@@ -100,8 +50,9 @@ export default async function PaginaUsuarios() {
               <button className="btn-primario w-full">Crear usuario</button>
             </FormAccion>
           </ModalFormulario>
-        </aside>
-      </div>
+        </header>
+        <ListaUsuarios usuarios={usuarios} actualId={actual.id} />
+      </section>
     </>
   );
 }
