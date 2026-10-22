@@ -38,7 +38,7 @@ export function NavegacionApp({ children, usuario, pendientes, puedeCrear, puede
   ];
   return <div className="min-h-screen">
     <aside className="hidden xl:fixed xl:inset-y-0 xl:left-0 xl:z-40 xl:flex xl:w-80 xl:flex-col xl:border-r xl:border-linea xl:bg-papel">
-      <div className="flex shrink-0 items-center gap-3 border-b border-linea-2 px-4 py-4">
+      <div className="flex h-16 shrink-0 items-center gap-3 border-b border-linea-2 px-4 xl:py-0">
         <Image src="/logo-grupo-comidas-circulo-96.png" alt="Grupo Comidas" width={96} height={96} className="size-11 shrink-0"/>
         <span className="min-w-0"><span className="block truncate text-lg font-semibold">Presupuestos</span><span className="block truncate text-sm text-suave">Grupo Comidas · Sistemas</span></span>
       </div>
