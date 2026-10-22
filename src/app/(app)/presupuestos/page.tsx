@@ -43,16 +43,8 @@ export default async function PaginaPresupuestos({ searchParams }: { searchParam
             {verTodo ? "Todos los presupuestos del departamento." : "Tus presupuestos de aperturas y remodelaciones."}
           </p>
         </div>
-        {puedeCrear && <Link href="/presupuestos/nuevo" className="btn-primario">Nuevo presupuesto</Link>}
+        {puedeCrear && <Link href="/presupuestos/nuevo" className="btn-primario hidden xl:inline-flex">Nuevo presupuesto</Link>}
       </div>
-
-      <form action="/presupuestos" className="mb-5 hidden max-w-xl lg:block">
-        <label htmlFor="buscar-presupuesto" className="sr-only">Buscar en presupuestos</label>
-        <div className="relative">
-          <svg aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 size-5 -translate-y-1/2 text-suave" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
-          <input id="buscar-presupuesto" name="buscar" defaultValue={termino} placeholder="Buscar presupuesto, restaurante, partida, proveedor o equipo…" className="w-full rounded-lg border border-linea bg-papel py-3 pl-10 pr-4 text-sm outline-none focus:border-tinta" />
-        </div>
-      </form>
 
       {consulta && <p className="ayuda mb-3">{resultados.length} {resultados.length === 1 ? "resultado" : "resultados"} para “{termino}”</p>}
 
@@ -65,7 +57,7 @@ export default async function PaginaPresupuestos({ searchParams }: { searchParam
                 Crea uno por cada apertura o remodelación. Dentro agregas las partidas (por ejemplo, red, puntos de venta o
                 cámaras) y las cotizaciones de cada proveedor.
               </p>
-              <Link href="/presupuestos/nuevo" className="btn-primario mt-4">Crear el primero</Link>
+              <Link href="/presupuestos/nuevo" className="btn-primario mt-4 hidden xl:inline-flex">Crear el primero</Link>
             </>
           ) : (
             <p className="ayuda mt-1 max-w-prose">
@@ -77,7 +69,7 @@ export default async function PaginaPresupuestos({ searchParams }: { searchParam
         <div className="panel p-8 text-center"><p className="font-semibold">No encontramos coincidencias</p><p className="ayuda mt-1">Prueba con otro nombre, proveedor, partida o equipo.</p></div>
       ) : (
         <>
-        <div className="grid gap-3 lg:hidden">
+        <div className="grid gap-3 xl:hidden">
           {resultados.map((p) => <Link key={p.id} href={`/presupuestos/${p.id}`} className="panel block p-4 transition-colors hover:bg-papel">
             <div className="flex items-start justify-between gap-3"><span className="font-semibold">{p.nombre}{p.id === ejemploCafeteriaLaCeiba.id && " · Ejemplo"}</span><Etiqueta tipo={p.estado}>{p.estado === "listo" ? "Listo" : "Borrador"}</Etiqueta></div>
             <p className="mt-1 text-sm text-suave">{p.restaurante} · {p.tipo === "apertura" ? "Apertura" : "Remodelación"}</p>
@@ -85,7 +77,7 @@ export default async function PaginaPresupuestos({ searchParams }: { searchParam
             <p className="mt-2 text-xs text-suave">{verTodo ? `Creado por ${p.autor}` : `Actualizado ${fecha.format(p.updatedAt)}`}</p>
           </Link>)}
         </div>
-        <div className="panel hidden overflow-x-auto lg:block">
+        <div className="panel hidden overflow-x-auto xl:block">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-linea text-left text-suave">
