@@ -9,7 +9,8 @@ import { FilaPresupuesto } from "./FilaPresupuesto";
 
 const fecha = new Intl.DateTimeFormat("es-HN", { day: "numeric", month: "short", year: "numeric" });
 
-export default async function PaginaPresupuestos() {
+export default async function PaginaPresupuestos({ searchParams }: { searchParams: Promise<{ buscar?: string }> }) {
+  const { buscar: termino = "" } = await searchParams;
   const usuario = await requerirUsuario();
   const presupuestosGuardados = await listarPresupuestos(db, usuario);
   const lista = [
@@ -24,9 +25,12 @@ export default async function PaginaPresupuestos() {
       autor: "Ejemplo ficticio",
       resumen: resumenPresupuesto(ejemploCafeteriaLaCeiba.partidas),
       partidas: ejemploCafeteriaLaCeiba.partidas.length,
+      textoBusqueda: [ejemploCafeteriaLaCeiba.nombre, ejemploCafeteriaLaCeiba.restaurante, "ejemplo ficticio", ...ejemploCafeteriaLaCeiba.partidas.flatMap((p) => [p.nombre, ...p.alternativas.flatMap((a) => [a.proveedor, ...a.items.map((i) => i.descripcion)])])].join(" ").toLocaleLowerCase("es-HN"),
     },
     ...presupuestosGuardados.filter((p) => p.id !== ejemploCafeteriaLaCeiba.id),
   ];
+  const consulta = termino.trim().toLocaleLowerCase("es-HN");
+  const resultados = consulta ? lista.filter((p) => p.textoBusqueda.includes(consulta)) : lista;
   const verTodo = puedeVerTodo(usuario);
   const puedeCrear = puedeCrearPresupuestos(usuario);
 
@@ -41,6 +45,16 @@ export default async function PaginaPresupuestos() {
         </div>
         {puedeCrear && <Link href="/presupuestos/nuevo" className="btn-primario">Nuevo presupuesto</Link>}
       </div>
+
+      <form action="/presupuestos" className="mb-5 hidden max-w-xl lg:block">
+        <label htmlFor="buscar-presupuesto" className="sr-only">Buscar en presupuestos</label>
+        <div className="relative">
+          <svg aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 size-5 -translate-y-1/2 text-suave" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+          <input id="buscar-presupuesto" name="buscar" defaultValue={termino} placeholder="Buscar presupuesto, restaurante, partida, proveedor o equipo…" className="w-full rounded-lg border border-linea bg-papel py-3 pl-10 pr-4 text-sm outline-none focus:border-tinta" />
+        </div>
+      </form>
+
+      {consulta && <p className="ayuda mb-3">{resultados.length} {resultados.length === 1 ? "resultado" : "resultados"} para “{termino}”</p>}
 
       {lista.length === 0 ? (
         <div className="panel p-8">
@@ -59,9 +73,20 @@ export default async function PaginaPresupuestos() {
             </p>
           )}
         </div>
+      ) : resultados.length === 0 ? (
+        <div className="panel p-8 text-center"><p className="font-semibold">No encontramos coincidencias</p><p className="ayuda mt-1">Prueba con otro nombre, proveedor, partida o equipo.</p></div>
       ) : (
-        <div className="panel overflow-x-auto">
-          <table className="w-full min-w-[720px] text-sm">
+        <>
+        <div className="grid gap-3 lg:hidden">
+          {resultados.map((p) => <Link key={p.id} href={`/presupuestos/${p.id}`} className="panel block p-4 transition-colors hover:bg-papel">
+            <div className="flex items-start justify-between gap-3"><span className="font-semibold">{p.nombre}{p.id === ejemploCafeteriaLaCeiba.id && " · Ejemplo"}</span><Etiqueta tipo={p.estado}>{p.estado === "listo" ? "Listo" : "Borrador"}</Etiqueta></div>
+            <p className="mt-1 text-sm text-suave">{p.restaurante} · {p.tipo === "apertura" ? "Apertura" : "Remodelación"}</p>
+            <div className="mt-4 flex flex-wrap gap-x-5 gap-y-1 text-sm"><span className="cifra text-usd">{formatear(p.resumen.total.USD, "USD")}</span><span className="cifra text-hnl">{formatear(p.resumen.total.HNL, "HNL")}</span></div>
+            <p className="mt-2 text-xs text-suave">{verTodo ? `Creado por ${p.autor}` : `Actualizado ${fecha.format(p.updatedAt)}`}</p>
+          </Link>)}
+        </div>
+        <div className="panel hidden overflow-x-auto lg:block">
+          <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-linea text-left text-suave">
                 <th className="px-4 py-3 font-medium">Presupuesto</th>
@@ -72,7 +97,7 @@ export default async function PaginaPresupuestos() {
               </tr>
             </thead>
             <tbody>
-              {lista.map((p) => (
+              {resultados.map((p) => (
                 <FilaPresupuesto key={p.id} href={`/presupuestos/${p.id}`} nombre={p.nombre}>
                   <td className="px-4 py-3">
                     <Link href={`/presupuestos/${p.id}`} className="font-semibold hover:underline">
@@ -95,6 +120,7 @@ export default async function PaginaPresupuestos() {
             </tbody>
           </table>
         </div>
+        </>
       )}
     </>
   );

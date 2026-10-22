@@ -131,6 +131,7 @@ export async function listarPresupuestos(db: DB, actor: Actor) {
       restaurante: presupuestos.restaurante,
       tipo: presupuestos.tipo,
       estado: presupuestos.estado,
+      notas: presupuestos.notas,
       updatedAt: presupuestos.updatedAt,
       creadoPor: presupuestos.creadoPor,
       autor: user.name,
@@ -143,7 +144,14 @@ export async function listarPresupuestos(db: DB, actor: Actor) {
   return Promise.all(
     filas.map(async (f) => {
       const completo = await cargarDetalle(db, f.id);
-      return { ...f, resumen: resumenPresupuesto(completo.partidas), partidas: completo.partidas.length };
+      const textoBusqueda = [
+        f.nombre, f.restaurante, f.tipo, f.estado, f.notas, f.autor,
+        ...completo.partidas.flatMap((p) => [p.nombre, ...p.alternativas.flatMap((a) => [
+          a.proveedor, a.notas, a.archivoNombre ?? "",
+          ...a.items.flatMap((i) => [i.descripcion, i.equipoNombre ?? "", i.equipoMarca ?? "", i.equipoModelo ?? "", i.equipoDescripcion ?? "", i.equipoCategoria ?? ""]),
+        ])]),
+      ].join(" ").toLocaleLowerCase("es-HN");
+      return { ...f, textoBusqueda, resumen: resumenPresupuesto(completo.partidas), partidas: completo.partidas.length };
     }),
   );
 }
@@ -171,7 +179,7 @@ async function cargarDetalle(db: DB, presupuestoId: string) {
 
   const items = altIds.length
     ? await db
-        .select({ item: itemsAlternativa, equipoNombre: equipos.nombre })
+        .select({ item: itemsAlternativa, equipoNombre: equipos.nombre, equipoMarca: equipos.marca, equipoModelo: equipos.modelo, equipoDescripcion: equipos.descripcion, equipoCategoria: equipos.categoria })
         .from(itemsAlternativa)
         .leftJoin(equipos, eq(equipos.id, itemsAlternativa.equipoId))
         .where(inArray(itemsAlternativa.alternativaId, altIds))
@@ -186,7 +194,7 @@ async function cargarDetalle(db: DB, presupuestoId: string) {
         .map(({ alternativa, archivoNombre }) => {
           const its = items
             .filter((i) => i.item.alternativaId === alternativa.id)
-            .map((i) => ({ ...i.item, equipoNombre: i.equipoNombre }));
+          .map((i) => ({ ...i.item, equipoNombre: i.equipoNombre, equipoMarca: i.equipoMarca, equipoModelo: i.equipoModelo, equipoDescripcion: i.equipoDescripcion, equipoCategoria: i.equipoCategoria }));
           return { ...alternativa, archivoNombre, items: its, totales: totalesDeItems(its) };
         }),
     })),
