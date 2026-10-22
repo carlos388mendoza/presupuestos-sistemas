@@ -69,8 +69,10 @@ export async function POST(req: Request) {
   }
 
   try {
-    const datos = await extraerCotizacion(buffer, archivo.type, archivo.name);
-    const catalogo = await listarEquipos(db);
+    const [datos, catalogo] = await Promise.all([
+      extraerCotizacion(buffer, archivo.type, archivo.name),
+      listarEquipos(db),
+    ]);
     const borrador: BorradorAlternativa = {
       proveedor: datos.proveedor,
       tipoCompra: datos.tipoCompra,

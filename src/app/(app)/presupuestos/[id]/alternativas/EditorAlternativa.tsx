@@ -303,7 +303,7 @@ export function EditorAlternativa({
             <button type="button" className="btn-texto" onClick={() => setArchivo(null)}>Quitar</button>
           </p>
         )}
-        {leyendo && <p className="mt-3 text-sm text-suave" role="status">Esto puede tardar hasta un minuto.</p>}
+        {leyendo && <p className="mt-3 text-sm text-suave" role="status">Leyendo el archivo. Si el servicio de IA no responde, el archivo quedará adjunto para ingresar los datos manualmente.</p>}
         {aviso && <p className="mt-3 rounded-md bg-aviso-claro px-3 py-2 text-sm text-aviso" role="status">{aviso}</p>}
       </section>
 

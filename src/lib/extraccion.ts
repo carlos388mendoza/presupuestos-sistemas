@@ -72,8 +72,10 @@ export async function extraerCotizacion(archivo: Buffer, mime: string, nombre: s
   const cliente = new OpenAI({
     baseURL: "https://openrouter.ai/api/v1",
     apiKey: process.env.OPENROUTER_API_KEY,
-    timeout: 90_000,
-    maxRetries: 1,
+    // La extracción de una cotización no necesita razonamiento extenso ni reintentos
+    // que mantengan al usuario esperando si el proveedor gratuito está saturado.
+    timeout: 45_000,
+    maxRetries: 0,
     defaultHeaders: { "X-Title": "Presupuestos Sistemas" },
   });
 
@@ -88,6 +90,8 @@ export async function extraerCotizacion(archivo: Buffer, mime: string, nombre: s
     const res = await cliente.chat.completions.create({
       model: process.env.OPENROUTER_MODEL!,
       temperature: 0,
+      reasoning_effort: "none",
+      max_completion_tokens: 3000,
       messages: [
         { role: "system", content: INSTRUCCIONES },
         {
