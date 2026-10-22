@@ -259,7 +259,7 @@ export function EditorAlternativa({
               </span>
             </div>
             <p className="ayuda">
-              Suelta un PDF o una foto para extraer proveedor, productos, cantidades y precios. Revisa los datos antes de guardar.
+              Suelta un PDF, una foto, un Excel (.xlsx) o un Word (.docx) para extraer proveedor, productos, cantidades y precios. Revisa los datos antes de guardar.
             </p>
           </div>
         </div>
@@ -275,7 +275,7 @@ export function EditorAlternativa({
           <input
             ref={inputArchivo}
             type="file"
-            accept="application/pdf,image/jpeg,image/png,image/webp"
+            accept="application/pdf,image/jpeg,image/png,image/webp,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
             className="sr-only"
             id="archivo"
             onChange={(e) => e.target.files?.[0] && leerCotizacion(e.target.files[0])}
@@ -285,7 +285,7 @@ export function EditorAlternativa({
             <path d="M12 16V4m0 0L7 9m5-5 5 5"/><path d="M20 16.5v2A1.5 1.5 0 0 1 18.5 20h-13A1.5 1.5 0 0 1 4 18.5v-2"/>
           </svg>
           <p className="text-sm font-medium">{leyendo ? "Leyendo cotización…" : arrastrandoArchivo ? "Suelta el archivo para subirlo" : "Arrastra y suelta tu cotización aquí"}</p>
-          <p className="mt-1 text-xs text-suave">PDF, JPG, PNG o WEBP · máximo 4 MB</p>
+          <p className="mt-1 text-xs text-suave">PDF, JPG, PNG, WEBP, Excel (.xlsx) o Word (.docx) · máximo 4 MB</p>
           <label
             htmlFor="archivo"
             aria-disabled={leyendo}
