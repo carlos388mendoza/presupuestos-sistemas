@@ -7,12 +7,11 @@ import { aCentavos, centavosATexto, formatear, subtotalItem, totalesVacios } fro
 import type { BorradorAlternativa, RespuestaExtraccion } from "@/lib/tipos";
 import { MENSAJE_ARCHIVO_GRANDE, TAMANO_MAXIMO_ARCHIVO } from "@/lib/limites";
 import { GrupoOpciones } from "@/components/campos";
+import type { EquipoOpcion } from "@/components/campos";
 import { guardarAlternativa, type EntradaAlternativa } from "@/actions/presupuestos";
 import { Etiqueta } from "@/components/Etiqueta";
 import { SelectorEquipo } from "@/components/campos/SelectorEquipo";
 import { DialogoConfirmar } from "@/components/DialogoConfirmar";
-
-export type EquipoOpcion = { id: string; nombre: string; marca: string; modelo: string };
 
 type Fila = {
   clave: string;

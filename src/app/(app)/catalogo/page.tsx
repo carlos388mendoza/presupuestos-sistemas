@@ -6,6 +6,7 @@ import { actualizarEquipo, aprobarEquipo, crearEquipo, eliminarEquipo, fusionarE
 import { FormAccion } from "@/components/FormAccion";
 import { Etiqueta } from "@/components/Etiqueta";
 import { ModalFormulario } from "@/components/ModalFormulario";
+import { ComboboxEquipo } from "@/components/campos";
 
 type Equipo = Awaited<ReturnType<typeof listarEquipos>>[number];
 
@@ -112,12 +113,12 @@ export default async function PaginaCatalogo({
                         <input type="hidden" name="id" value={e.id} />
                         <div className="min-w-56 flex-1">
                           <label className="etiqueta" htmlFor={`f-${e.id}`}>Es un duplicado de</label>
-                          <select id={`f-${e.id}`} name="destinoId" className="campo" defaultValue="">
-                            <option value="" disabled>Elige el equipo correcto</option>
-                            {todos.filter((o) => o.id !== e.id).map((o) => (
-                              <option key={o.id} value={o.id}>{o.nombre}{o.modelo ? ` (${o.modelo})` : ""}</option>
-                            ))}
-                          </select>
+                          <ComboboxEquipo
+                            catalogo={todos.filter((o) => o.id !== e.id).map(({ id, nombre, marca, modelo }) => ({ id, nombre, marca, modelo }))}
+                            name="destinoId"
+                            defaultValue=""
+                            ariaLabel="Equipo destino para fusionar"
+                          />
                         </div>
                         <button className="btn-secundario">Fusionar</button>
                       </FormAccion>
