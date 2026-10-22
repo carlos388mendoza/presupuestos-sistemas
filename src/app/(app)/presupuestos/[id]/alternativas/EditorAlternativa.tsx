@@ -9,6 +9,8 @@ import { MENSAJE_ARCHIVO_GRANDE, TAMANO_MAXIMO_ARCHIVO } from "@/lib/limites";
 import { GrupoOpciones } from "@/components/campos";
 import { guardarAlternativa, type EntradaAlternativa } from "@/actions/presupuestos";
 import { Etiqueta } from "@/components/Etiqueta";
+import { SelectorEquipo } from "@/components/campos/SelectorEquipo";
+import { DialogoConfirmar } from "@/components/DialogoConfirmar";
 
 export type EquipoOpcion = { id: string; nombre: string; marca: string; modelo: string };
 
@@ -91,6 +93,7 @@ export function EditorAlternativa({
   const [leyendo, setLeyendo] = useState(false);
   const [aviso, setAviso] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [borradorPendiente, setBorradorPendiente] = useState<BorradorAlternativa | null>(null);
   const [guardando, iniciarGuardado] = useTransition();
   const inputArchivo = useRef<HTMLInputElement>(null);
 
@@ -121,7 +124,7 @@ export function EditorAlternativa({
     }
   }
 
-  function aplicarBorrador(b: BorradorAlternativa) {
+  function aplicarBorrador(b: BorradorAlternativa, reemplazar = false) {
     const nuevas: Fila[] = b.items.map((it) => ({
       clave: clave(),
       equipo: it.equipoId ?? (it.nuevo ? NUEVO : ""),
@@ -134,11 +137,11 @@ export function EditorAlternativa({
       moneda: it.moneda,
     }));
     const soloVacias = filas.every(filaEstaVacia);
-    if (!soloVacias && !window.confirm("La cotización trae ítems nuevos. ¿Reemplazar los ítems que ya tienes en la tabla?")) {
-      setFilas((fs) => [...fs.filter((f) => !filaEstaVacia(f)), ...nuevas]);
-    } else {
-      setFilas(nuevas.length ? nuevas : [filaVacia("HNL")]);
+    if (!soloVacias && !reemplazar) {
+      setBorradorPendiente(b);
+      return;
     }
+    setFilas(nuevas.length ? nuevas : [filaVacia("HNL")]);
     if (!proveedor.trim()) setProveedor(b.proveedor);
     setTipoCompra(b.tipoCompra);
   }
@@ -230,6 +233,10 @@ export function EditorAlternativa({
 
   return (
     <form onSubmit={guardar} className="space-y-6">
+      <DialogoConfirmar abierto={!!borradorPendiente} titulo="Reemplazar los ítems actuales?"
+        descripcion="La cotización trae ítems nuevos. Puedes reemplazar los que ya tienes en la tabla."
+        textoConfirmar="Reemplazar ítems" onCancelar={() => setBorradorPendiente(null)}
+        onConfirmar={() => { if (borradorPendiente) aplicarBorrador(borradorPendiente, true); setBorradorPendiente(null); }} />
       {/* Subida y lectura de la cotización */}
       <section className="panel p-5" aria-labelledby="t-archivo">
         <div className="flex flex-wrap items-center justify-between gap-4">
@@ -301,7 +308,7 @@ export function EditorAlternativa({
           <h2 id="t-items" className="font-semibold">Ítems</h2>
           <p className="ayuda hidden sm:block">Cada precio queda en su moneda; no se convierten.</p>
         </div>
-        <div className="overflow-x-auto">
+        <div className="min-w-0 overflow-x-auto">
           <table className="w-full min-w-[980px] text-sm">
             <thead>
               <tr className="text-left text-suave">
@@ -325,22 +332,12 @@ export function EditorAlternativa({
                 return (
                   <tr key={f.clave} className="border-t border-linea-2 align-top">
                     <td className="px-3 py-2">
-                      <select
-                        aria-label={`Equipo del ítem ${i + 1}`}
-                        className="campo"
+                      <SelectorEquipo
+                        opciones={catalogo}
                         value={f.equipo}
-                        onChange={(e) => elegirEquipo(f, e.target.value)}
-                      >
-                        <option value="">Sin vincular</option>
-                        <option value={NUEVO}>Agregar al catálogo</option>
-                        <optgroup label="Catálogo">
-                          {catalogo.map((e) => (
-                            <option key={e.id} value={e.id}>
-                              {e.nombre}{e.modelo ? ` (${e.modelo})` : ""}
-                            </option>
-                          ))}
-                        </optgroup>
-                      </select>
+                        etiqueta={`Equipo del ítem ${i + 1}`}
+                        onChange={(valor) => elegirEquipo(f, valor)}
+                      />
                       {f.equipo === NUEVO && (
                         <div className="mt-1">
                           <Etiqueta tipo="nuevo">Nuevo en el catálogo</Etiqueta>

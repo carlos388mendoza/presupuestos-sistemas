@@ -12,7 +12,7 @@ export default async function LayoutApp({ children }: { children: React.ReactNod
   const pendientes = await contarPendientes(db);
 
   return (
-    <div className="min-h-screen md:grid md:grid-cols-[15rem_1fr]">
+    <div className="min-h-screen md:grid md:grid-cols-[15rem_minmax(0,1fr)]">
       <aside className="border-b border-linea bg-papel md:sticky md:top-0 md:h-screen md:border-r md:border-b-0">
         <div className="flex h-full flex-col gap-6 p-4 md:p-5">
           <Link href="/presupuestos" className="flex items-center gap-3">
