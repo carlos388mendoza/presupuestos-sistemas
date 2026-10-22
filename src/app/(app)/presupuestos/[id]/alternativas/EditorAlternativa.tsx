@@ -6,11 +6,10 @@ import type { Moneda, TipoCompra } from "@/db/schema";
 import { aCentavos, centavosATexto, formatear, subtotalItem, totalesVacios } from "@/lib/dinero";
 import type { BorradorAlternativa, RespuestaExtraccion } from "@/lib/tipos";
 import { MENSAJE_ARCHIVO_GRANDE, TAMANO_MAXIMO_ARCHIVO } from "@/lib/limites";
-import { GrupoOpciones } from "@/components/campos";
+import { ComboboxEquipo, GrupoOpciones } from "@/components/campos";
+import type { EquipoOpcion } from "@/components/campos";
 import { guardarAlternativa, type EntradaAlternativa } from "@/actions/presupuestos";
 import { Etiqueta } from "@/components/Etiqueta";
-
-export type EquipoOpcion = { id: string; nombre: string; marca: string; modelo: string };
 
 type Fila = {
   clave: string;
@@ -325,22 +324,12 @@ export function EditorAlternativa({
                 return (
                   <tr key={f.clave} className="border-t border-linea-2 align-top">
                     <td className="px-3 py-2">
-                      <select
-                        aria-label={`Equipo del ítem ${i + 1}`}
-                        className="campo"
+                      <ComboboxEquipo
+                        catalogo={catalogo}
                         value={f.equipo}
-                        onChange={(e) => elegirEquipo(f, e.target.value)}
-                      >
-                        <option value="">Sin vincular</option>
-                        <option value={NUEVO}>Agregar al catálogo</option>
-                        <optgroup label="Catálogo">
-                          {catalogo.map((e) => (
-                            <option key={e.id} value={e.id}>
-                              {e.nombre}{e.modelo ? ` (${e.modelo})` : ""}
-                            </option>
-                          ))}
-                        </optgroup>
-                      </select>
+                        onChange={(v) => elegirEquipo(f, v)}
+                        ariaLabel={`Equipo del ítem ${i + 1}`}
+                      />
                       {f.equipo === NUEVO && (
                         <div className="mt-1">
                           <Etiqueta tipo="nuevo">Nuevo en el catálogo</Etiqueta>

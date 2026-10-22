@@ -28,7 +28,7 @@ export default async function LayoutApp({ children }: { children: React.ReactNod
               <div className="text-sm text-suave">Departamento de Sistemas</div>
             </div>
           </Link>
-          <nav className="flex gap-1 overflow-x-auto md:flex-col" aria-label="Principal">
+          <nav className="flex gap-1 overflow-x-auto md:flex-col md:overflow-visible" aria-label="Principal">
             <EnlaceNav href="/presupuestos">Presupuestos</EnlaceNav>
             <EnlaceNav href="/catalogo">
               Catálogo de equipos

@@ -12,3 +12,5 @@ export { CampoContrasena } from "./CampoContrasena";
 //   <SelectorCreable name="partidas" etiqueta="Partidas" sugeridas={[...]} defaultSeleccion={[...]} />
 export { SelectorCreable } from "./SelectorCreable";
 export { ComboboxRestaurante } from "./ComboboxRestaurante";
+export { ComboboxEquipo } from "./ComboboxEquipo";
+export type { EquipoOpcion } from "./ComboboxEquipo";

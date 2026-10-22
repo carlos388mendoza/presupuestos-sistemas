@@ -23,6 +23,11 @@
 html {
   background: var(--color-fondo);
   color: var(--color-tinta);
+  overflow-x: hidden;
+}
+
+body {
+  overflow-x: hidden;
 }
 
 body {
