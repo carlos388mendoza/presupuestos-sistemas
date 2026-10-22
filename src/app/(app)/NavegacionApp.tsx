@@ -37,8 +37,25 @@ export function NavegacionApp({ children, usuario, pendientes, puedeCrear, puede
     ...(puedeUsuarios ? [{ titulo: "ADMINISTRACIÓN", enlaces: [{ href: "/admin/usuarios", texto: "Usuarios", icono: "users" as const, badge: undefined }] }] : []),
   ];
   return <div className="min-h-screen">
-    <header className="sticky top-0 z-40 flex min-h-16 items-center justify-between gap-3 border-b border-linea bg-papel px-3 sm:px-5">
-      <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+    <aside className="hidden xl:fixed xl:inset-y-0 xl:left-0 xl:z-40 xl:flex xl:w-80 xl:flex-col xl:border-r xl:border-linea xl:bg-papel">
+      <div className="flex shrink-0 items-center gap-3 border-b border-linea-2 px-4 py-4">
+        <Image src="/logo-grupo-comidas-circulo-96.png" alt="Grupo Comidas" width={96} height={96} className="size-11 shrink-0"/>
+        <span className="min-w-0"><span className="block truncate text-lg font-semibold">Presupuestos</span><span className="block truncate text-sm text-suave">Grupo Comidas · Sistemas</span></span>
+      </div>
+      {puedeCrear && <div className="shrink-0 px-4 pt-4"><Link href="/presupuestos/nuevo" className="flex h-11 items-center justify-center gap-2 rounded-lg bg-tinta px-3 text-sm font-semibold text-white transition-colors hover:bg-tinta-2"><Icono tipo="plus" className="size-4"/>Nuevo presupuesto</Link></div>}
+      <nav aria-label="Navegación principal" className="min-h-0 flex-1 space-y-5 overflow-y-auto px-3 py-5">
+        {secciones.map((seccion) => <section key={seccion.titulo}>
+          <h2 className="px-3 pb-2 text-[11px] font-semibold tracking-wide text-suave">{seccion.titulo}</h2>
+          <div className="space-y-1">{seccion.enlaces.map((e) => <Link key={e.href} href={e.href} aria-current={ruta === e.href ? "page" : undefined} className={`flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm transition-colors ${ruta === e.href ? "bg-hnl-claro font-medium text-hnl" : "text-tinta-2 hover:bg-fondo"}`}><Icono tipo={e.icono} className="size-[18px]"/><span className="min-w-0 flex-1 truncate">{e.texto}</span>{!!e.badge && <span className="rounded-full bg-fondo px-2 py-0.5 text-xs text-suave">{e.badge}</span>}</Link>)}</div>
+        </section>)}
+      </nav>
+      <footer className="shrink-0 border-t border-linea px-4 py-3">
+        <div className="mb-3 flex min-w-0 items-center gap-3"><span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-hnl text-sm font-semibold text-white">{usuario.name.slice(0,1).toLocaleUpperCase()}</span><span className="min-w-0"><span className="block truncate text-sm font-semibold">{usuario.name}</span><span className="block truncate text-xs text-suave">{usuario.email} · {NOMBRES_ROL[usuario.role]}</span></span></div>
+        <BotonSalir/>
+      </footer>
+    </aside>
+    <header className="sticky top-0 z-40 flex min-h-16 items-center justify-between gap-3 border-b border-linea bg-papel px-3 sm:px-5 xl:ml-80">
+      <div className="flex min-w-0 items-center gap-2 sm:gap-3 xl:hidden">
         <button type="button" aria-label={menuMovil ? "Cerrar menú" : "Abrir menú"} aria-expanded={menuMovil} onClick={() => setMenuMovil(!menuMovil)} className="shrink-0 rounded-md p-2 text-tinta hover:bg-fondo"><Icono tipo={menuMovil ? "close" : "menu"}/></button>
         <Link href="/presupuestos" className="flex min-w-0 items-center gap-2"><Image src="/logo-grupo-comidas-circulo-96.png" alt="Grupo Comidas" width={96} height={96} className="size-9 shrink-0"/><span className="truncate font-semibold">Presupuestos</span></Link>
       </div>
@@ -56,7 +73,7 @@ export function NavegacionApp({ children, usuario, pendientes, puedeCrear, puede
         <button type="button" aria-label={buscar ? "Cerrar búsqueda" : "Buscar presupuestos"} onClick={() => setBuscar(!buscar)} className="shrink-0 rounded-md p-2 text-tinta hover:bg-fondo xl:hidden"><Icono tipo={buscar ? "close" : "search"}/></button>
       </div>
     </header>
-    <main className="min-w-0 px-4 pb-24 pt-5 sm:px-6 xl:px-8 xl:py-7">
+    <main className="min-w-0 px-4 pb-24 pt-5 sm:px-6 xl:ml-80 xl:px-8 xl:py-7">
       {menuMovil && <div className="fixed inset-0 z-50">
         <button type="button" aria-label="Cerrar menú" className="absolute inset-0 bg-black/40" onClick={() => setMenuMovil(false)}/>
         <nav aria-label="Menú de navegación" className="absolute inset-y-0 left-0 flex w-[min(84vw,21rem)] flex-col border-r border-linea bg-papel shadow-2xl">
