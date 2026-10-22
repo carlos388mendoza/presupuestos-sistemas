@@ -43,11 +43,17 @@ export function NavegacionApp({ children, usuario, pendientes, puedeCrear, puede
         <Link href="/presupuestos" className="flex min-w-0 items-center gap-2"><Image src="/logo-grupo-comidas-circulo-96.png" alt="Grupo Comidas" width={96} height={96} className="size-9 shrink-0"/><span className="truncate font-semibold">Presupuestos</span></Link>
       </div>
       <div className="flex items-center gap-2">
-        {buscar && <form action="/presupuestos" className="flex items-center">
-          <input autoFocus name="buscar" placeholder="Buscar en presupuestos…" aria-label="Buscar en presupuestos" className="w-[min(55vw,24rem)] rounded-lg border border-linea bg-papel px-3 py-2 text-sm outline-none focus:border-tinta"/>
+        <form action="/presupuestos" className="hidden h-11 w-[min(22rem,32vw)] items-center gap-2 rounded-full border border-linea px-4 xl:flex">
+          <Icono tipo="search" className="size-[18px] shrink-0 text-suave"/>
+          <input name="buscar" placeholder="Buscar" aria-label="Buscar en presupuestos" className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-suave"/>
+          <button className="sr-only">Buscar</button>
+        </form>
+        {buscar && <form action="/presupuestos" className="flex h-10 min-w-0 items-center gap-1 rounded-full border border-linea px-3 xl:hidden">
+          <Icono tipo="search" className="size-4 shrink-0 text-suave"/>
+          <input autoFocus name="buscar" placeholder="Buscar" aria-label="Buscar en presupuestos" className="w-[min(40vw,18rem)] min-w-0 bg-transparent text-sm outline-none placeholder:text-suave"/>
           <button className="sr-only">Buscar</button>
         </form>}
-        <button type="button" aria-label={buscar ? "Cerrar búsqueda" : "Buscar presupuestos"} onClick={() => setBuscar(!buscar)} className="shrink-0 rounded-md p-2 text-tinta hover:bg-fondo"><Icono tipo={buscar ? "close" : "search"}/></button>
+        <button type="button" aria-label={buscar ? "Cerrar búsqueda" : "Buscar presupuestos"} onClick={() => setBuscar(!buscar)} className="shrink-0 rounded-md p-2 text-tinta hover:bg-fondo xl:hidden"><Icono tipo={buscar ? "close" : "search"}/></button>
       </div>
     </header>
     <main className="min-w-0 px-4 pb-24 pt-5 sm:px-6 xl:px-8 xl:py-7">
