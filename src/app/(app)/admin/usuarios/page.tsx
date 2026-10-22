@@ -18,7 +18,7 @@ export default async function PaginaUsuarios() {
         <p className="ayuda mt-1 max-w-3xl">Administra las cuentas, sus roles y el acceso al sistema.</p>
       </div>
 
-      <section className="panel overflow-hidden">
+      <section className="panel">
         <header className="flex flex-wrap items-center justify-between gap-4 border-b border-linea-2 p-5">
           <div>
             <h2 className="font-semibold">Cuentas</h2>

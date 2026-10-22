@@ -125,7 +125,7 @@ export function ListaUsuarios({ usuarios, actualId }: { usuarios: Usuario[]; act
 
       <div className="hidden xl:block">
         <table className="w-full table-fixed text-left text-sm">
-          <colgroup><col className="w-[34%]"/><col className="w-[31%]"/><col className="w-[18%]"/><col className="w-[12%]"/><col className="w-[5%]"/></colgroup>
+          <colgroup><col className="w-[32%]"/><col className="w-[28%]"/><col className="w-[18%]"/><col className="w-[12%]"/><col className="w-16"/></colgroup>
           <thead className="bg-fondo text-suave">
             <tr>
               <th scope="col" className="px-5 py-3 font-medium">Usuario</th>
