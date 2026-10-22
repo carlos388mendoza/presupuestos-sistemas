@@ -7,7 +7,24 @@ import { FormAccion } from "@/components/FormAccion";
 import { SelectorCreable } from "@/components/campos";
 import { CamposPresupuesto } from "../CamposPresupuesto";
 
-const SUGERIDAS = ["Red y cableado", "Puntos de venta", "Cámaras de seguridad", "Impresoras", "Telefonía", "Licencias"];
+const PARTIDAS_INICIALES = ["Red y cableado", "Puntos de venta", "Cámaras de seguridad", "Impresoras", "Telefonía", "Licencias"];
+const SUGERIDAS = [
+  "Red y cableado",
+  "Puntos de venta",
+  "Cámaras de seguridad",
+  "Impresoras",
+  "Telefonía",
+  "Licencias",
+  "Computadoras y laptops",
+  "Monitores y periféricos",
+  "Servidores y almacenamiento",
+  "Energía y UPS",
+  "Software y suscripciones",
+  "Seguridad informática",
+  "Audio y videoconferencia",
+  "Instalación y configuración",
+  "Mantenimiento y soporte",
+];
 
 export default async function NuevoPresupuesto() {
   const usuario = await requerirUsuario();
@@ -22,7 +39,7 @@ export default async function NuevoPresupuesto() {
           name="partidas"
           etiqueta="Partidas iniciales"
           sugeridas={SUGERIDAS}
-          defaultSeleccion={SUGERIDAS}
+          defaultSeleccion={PARTIDAS_INICIALES}
           placeholder="Escribe una partida o elige una sugerida"
           ayuda="Cada partida es algo que hay que comprar y puede tener varias cotizaciones. Escribe una nueva y presiona Enter. Puedes cambiarlas después."
         />
