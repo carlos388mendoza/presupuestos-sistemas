@@ -30,7 +30,7 @@ export default async function NuevoPresupuesto() {
   const usuario = await requerirUsuario();
   if (!puedeCrearPresupuestos(usuario)) redirect("/presupuestos");
   return (
-    <div className="max-w-2xl">
+    <div className="w-full max-w-4xl">
       <Link href="/presupuestos" className="btn-texto -ml-1.5 mb-2">Volver a presupuestos</Link>
       <h1 className="titulo-pagina mb-6">Nuevo presupuesto</h1>
       <FormAccion action={crearPresupuesto} className="panel formulario p-6">

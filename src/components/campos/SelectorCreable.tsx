@@ -123,13 +123,13 @@ export function SelectorCreable({
       <label htmlFor={`${id}-input`} className="etiqueta">{etiqueta}</label>
       <input type="hidden" name={name} value={seleccion.join("\n")} />
       <div
-        className="campo flex min-h-10 flex-wrap items-center gap-1.5 py-1.5 focus-within:border-tinta"
+        className="campo flex min-h-14 w-full flex-wrap items-center gap-2 px-3 py-2 focus-within:border-tinta"
         onClick={() => input.current?.focus()}
       >
         {seleccion.length > 0 && (
           <ul className="contents" aria-label={`${etiqueta} elegidas`}>
             {seleccion.map((s) => (
-              <li key={s} className="flex items-center gap-1 rounded bg-fondo py-0.5 pr-0.5 pl-2 text-sm">
+              <li key={s} className="flex items-center gap-1 rounded-md border border-linea-2 bg-fondo py-1 pr-1 pl-3 text-sm leading-6">
                 {s}
                 <button
                   type="button"
@@ -138,7 +138,7 @@ export function SelectorCreable({
                     quitar(s);
                   }}
                   aria-label={`Quitar ${s}`}
-                  className="flex size-6 items-center justify-center rounded text-suave hover:bg-linea hover:text-tinta"
+                  className="flex size-7 items-center justify-center rounded text-suave hover:bg-linea hover:text-tinta"
                 >
                   <svg aria-hidden width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                     <path d="M18 6 6 18M6 6l12 12" />
@@ -148,7 +148,7 @@ export function SelectorCreable({
             ))}
           </ul>
         )}
-        <div className="relative min-w-40 flex-1">
+        <div className="relative min-w-[220px] flex-1">
           <input
             ref={input}
             id={`${id}-input`}

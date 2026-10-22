@@ -249,10 +249,17 @@ export function EditorAlternativa({
       <section className="panel p-5" aria-labelledby="t-archivo">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h2 id="t-archivo" className="font-semibold">Cotización del proveedor</h2>
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 id="t-archivo" className="font-semibold">Cotización del proveedor</h2>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-hnl-claro px-2.5 py-1 text-xs font-medium text-hnl">
+                <svg aria-hidden="true" className="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m12 3 1.9 5.8L20 11l-6.1 2.2L12 19l-1.9-5.8L4 11l6.1-2.2L12 3Z"/><path d="m19 14 1.1 2.9L23 18l-2.9 1.1L19 22l-1.1-2.9L15 18l2.9-1.1L19 14Z"/>
+                </svg>
+                Lectura con IA
+              </span>
+            </div>
             <p className="ayuda">
-              Sube el PDF o una foto (máximo 4 MB) para llenar los ítems automáticamente. También puedes
-              ingresarlos a mano.
+              Suelta un PDF o una foto para extraer proveedor, productos, cantidades y precios. Revisa los datos antes de guardar.
             </p>
           </div>
         </div>
