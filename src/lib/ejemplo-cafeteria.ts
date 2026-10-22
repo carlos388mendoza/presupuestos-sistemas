@@ -1,6 +1,6 @@
 export const ejemploCafeteriaLaCeiba = {
   id: "ejemplo-presupuesto-cafeteria-ceiba",
-  nombre: "Ejemplo: remodelación Cafetería Brisa del Caribe",
+  nombre: "KFC ceiba ejemplo",
   restaurante: "Cafetería Brisa del Caribe (ficticia) · La Ceiba",
   tipo: "remodelacion" as const,
   estado: "borrador" as const,
