@@ -76,3 +76,21 @@ export async function fusionarEquipo(_prev: EstadoAccion, fd: FormData): Promise
     return aEstado(e);
   }
 }
+
+export async function actuarEquiposEnLote(_prev: EstadoAccion, fd: FormData): Promise<EstadoAccion> {
+  try {
+    await usuarioOError();
+    const ids = z.array(z.string().uuid()).min(1, "Selecciona al menos un equipo.").max(200, "Selecciona como máximo 200 equipos.").parse(fd.getAll("id"));
+    const operacion = z.enum(["aprobar", "eliminar"]).parse(fd.get("operacion"));
+    if (operacion === "aprobar") {
+      await catalogo.aprobarEquipos(db, ids);
+      revalidatePath("/catalogo");
+      return { ok: `${ids.length} equipo(s) marcados como revisados.` };
+    }
+    await catalogo.eliminarEquipos(db, ids);
+    revalidatePath("/catalogo");
+    return { ok: `${ids.length} equipo(s) eliminados del catálogo.` };
+  } catch (e) {
+    return aEstado(e);
+  }
+}

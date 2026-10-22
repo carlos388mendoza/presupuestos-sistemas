@@ -337,7 +337,44 @@ export function EditorAlternativa({
           <h2 id="t-items" className="font-semibold">Ítems</h2>
           <p className="ayuda hidden sm:block">Cada precio queda en su moneda; no se convierten.</p>
         </div>
-        <div className="min-w-0 overflow-x-auto">
+        <div className="space-y-3 p-3 sm:p-4 xl:hidden">
+          {filas.map((f, i) => {
+            const c = Number(f.cantidad);
+            const p = aCentavos(f.precio);
+            const sub = Number.isFinite(c) && c > 0 && p !== null ? subtotalItem(c, p) : null;
+            const vinculado = f.equipo && f.equipo !== NUEVO;
+            return (
+              <article key={f.clave} className="rounded-lg border border-linea-2 bg-papel p-3 shadow-sm">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <h3 className="text-sm font-semibold">Ítem {i + 1}</h3>
+                  {sub !== null && <span className={`cifra text-sm font-semibold ${f.moneda === "USD" ? "text-usd" : "text-hnl"}`}>{formatear(sub, f.moneda)}</span>}
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <label className="etiqueta">Equipo del catálogo</label>
+                    <SelectorEquipo opciones={catalogo} value={f.equipo} etiqueta={`Equipo del ítem ${i + 1}`} onChange={(valor) => elegirEquipo(f, valor)} />
+                    {f.equipo === NUEVO && <div className="mt-1"><Etiqueta tipo="nuevo">Nuevo en el catálogo</Etiqueta></div>}
+                  </div>
+                  <div>
+                    <label className="etiqueta" htmlFor={`descripcion-m-${f.clave}`}>Descripción</label>
+                    <input id={`descripcion-m-${f.clave}`} className="campo" value={f.descripcion} onChange={(e) => cambiarFila(f.clave, { descripcion: e.target.value })} />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div><label className="etiqueta" htmlFor={`marca-m-${f.clave}`}>Marca</label><input id={`marca-m-${f.clave}`} className="campo" value={f.marca} disabled={!!vinculado} onChange={(e) => cambiarFila(f.clave, { marca: e.target.value })} /></div>
+                    <div><label className="etiqueta" htmlFor={`modelo-m-${f.clave}`}>Modelo</label><input id={`modelo-m-${f.clave}`} className="campo" value={f.modelo} disabled={!!vinculado} onChange={(e) => cambiarFila(f.clave, { modelo: e.target.value })} /></div>
+                    <div><label className="etiqueta" htmlFor={`cantidad-m-${f.clave}`}>Cantidad</label><input id={`cantidad-m-${f.clave}`} className="campo cifra" inputMode="decimal" value={f.cantidad} onChange={(e) => cambiarFila(f.clave, { cantidad: e.target.value })} /></div>
+                    <div><label className="etiqueta" htmlFor={`precio-m-${f.clave}`}>Precio unitario</label><input id={`precio-m-${f.clave}`} className="campo cifra" inputMode="decimal" placeholder="0.00" value={f.precio} onChange={(e) => cambiarFila(f.clave, { precio: e.target.value })} /></div>
+                  </div>
+                  <div className="flex items-end gap-3">
+                    <div className="min-w-0 flex-1"><label className="etiqueta" htmlFor={`moneda-m-${f.clave}`}>Moneda</label><select id={`moneda-m-${f.clave}`} className="campo" value={f.moneda} onChange={(e) => cambiarFila(f.clave, { moneda: e.target.value as Moneda })}><option value="HNL">HNL</option><option value="USD">USD</option></select></div>
+                    <button type="button" className="btn-peligro" aria-label={`Quitar ítem ${i + 1}`} onClick={() => setFilas((fs) => (fs.length > 1 ? fs.filter((x) => x.clave !== f.clave) : [filaVacia(f.moneda)]))}>Quitar</button>
+                  </div>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+        <div className="hidden min-w-0 overflow-x-auto xl:block">
           <table className="w-full min-w-[980px] text-sm">
             <thead>
               <tr className="text-left text-suave">
