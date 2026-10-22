@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { db } from "@/db";
 import { requerirUsuario } from "@/lib/sesion";
 import { contarPendientes, listarEquipos } from "@/lib/catalogo";
@@ -7,6 +6,7 @@ import { FormAccion } from "@/components/FormAccion";
 import { Etiqueta } from "@/components/Etiqueta";
 import { ModalFormulario } from "@/components/ModalFormulario";
 import { ComboboxEquipo } from "@/components/campos";
+import { FiltrosCatalogo } from "./FiltrosCatalogo";
 
 type Equipo = Awaited<ReturnType<typeof listarEquipos>>[number];
 
@@ -67,16 +67,12 @@ export default async function PaginaCatalogo({
 
       <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
         <div className="min-w-0">
-          <form className="mb-4 flex flex-wrap items-center gap-3" role="search">
-            <label htmlFor="q" className="sr-only">Buscar</label>
-            <input id="q" name="q" defaultValue={q} placeholder="Buscar por nombre, marca, modelo o categoría" className="campo max-w-sm" />
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" name="pendientes" value="1" defaultChecked={soloPendientes} />
-              Solo por revisar ({totalPendientes})
-            </label>
-            <button className="btn-secundario">Filtrar</button>
-            {(q || soloPendientes) && <Link href="/catalogo" className="btn-texto">Limpiar</Link>}
-          </form>
+          <FiltrosCatalogo
+            key={`${q}|${soloPendientes}`}
+            busquedaInicial={q}
+            soloPendientesInicial={soloPendientes}
+            totalPendientes={totalPendientes}
+          />
 
           {equipos.length === 0 ? (
             <div className="panel p-6 text-sm text-suave">
