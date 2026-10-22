@@ -2,7 +2,8 @@ import Link from "next/link";
 import { db } from "@/db";
 import { requerirUsuario } from "@/lib/sesion";
 import { listarPresupuestos, puedeCrearPresupuestos, puedeVerTodo } from "@/lib/datos";
-import { formatear } from "@/lib/dinero";
+import { formatear, resumenPresupuesto } from "@/lib/dinero";
+import { ejemploCafeteriaLaCeiba } from "@/lib/ejemplo-cafeteria";
 import { Etiqueta } from "@/components/Etiqueta";
 import { FilaPresupuesto } from "./FilaPresupuesto";
 
@@ -10,7 +11,22 @@ const fecha = new Intl.DateTimeFormat("es-HN", { day: "numeric", month: "short",
 
 export default async function PaginaPresupuestos() {
   const usuario = await requerirUsuario();
-  const lista = await listarPresupuestos(db, usuario);
+  const presupuestosGuardados = await listarPresupuestos(db, usuario);
+  const lista = [
+    {
+      id: ejemploCafeteriaLaCeiba.id,
+      nombre: ejemploCafeteriaLaCeiba.nombre,
+      restaurante: ejemploCafeteriaLaCeiba.restaurante,
+      tipo: ejemploCafeteriaLaCeiba.tipo,
+      estado: ejemploCafeteriaLaCeiba.estado,
+      updatedAt: new Date("2026-10-22T00:00:00Z"),
+      creadoPor: "ejemplo-ficticio",
+      autor: "Ejemplo ficticio",
+      resumen: resumenPresupuesto(ejemploCafeteriaLaCeiba.partidas),
+      partidas: ejemploCafeteriaLaCeiba.partidas.length,
+    },
+    ...presupuestosGuardados.filter((p) => p.id !== ejemploCafeteriaLaCeiba.id),
+  ];
   const verTodo = puedeVerTodo(usuario);
   const puedeCrear = puedeCrearPresupuestos(usuario);
 
@@ -60,7 +76,7 @@ export default async function PaginaPresupuestos() {
                 <FilaPresupuesto key={p.id} href={`/presupuestos/${p.id}`} nombre={p.nombre}>
                   <td className="px-4 py-3">
                     <Link href={`/presupuestos/${p.id}`} className="font-semibold hover:underline">
-                      {p.nombre}
+                      {p.nombre}{p.id === ejemploCafeteriaLaCeiba.id && " · Ejemplo"}
                     </Link>
                     <div className="text-suave">
                       {p.restaurante} · {p.tipo === "apertura" ? "Apertura" : "Remodelación"}
