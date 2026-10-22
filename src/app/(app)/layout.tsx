@@ -9,7 +9,7 @@ export default async function LayoutApp({ children }: { children: React.ReactNod
   const pendientes = await contarPendientes(db);
 
   return <NavegacionApp
-    usuario={{ name: usuario.name, role: usuario.role }}
+    usuario={{ name: usuario.name, email: usuario.email, role: usuario.role }}
     pendientes={pendientes}
     puedeCrear={puedeCrearPresupuestos(usuario)}
     puedeUsuarios={puedeManejarUsuarios(usuario)}
