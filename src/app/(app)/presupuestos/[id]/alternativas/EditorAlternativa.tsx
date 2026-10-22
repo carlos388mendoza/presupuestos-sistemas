@@ -90,6 +90,7 @@ export function EditorAlternativa({
   );
 
   const [leyendo, setLeyendo] = useState(false);
+  const [arrastrandoArchivo, setArrastrandoArchivo] = useState(false);
   const [aviso, setAviso] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [borradorPendiente, setBorradorPendiente] = useState<BorradorAlternativa | null>(null);
@@ -186,6 +187,14 @@ export function EditorAlternativa({
     }
   }
 
+  function soltarArchivo(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    setArrastrandoArchivo(false);
+    if (leyendo) return;
+    const file = e.dataTransfer.files[0];
+    if (file) void leerCotizacion(file);
+  }
+
   function guardar(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -242,27 +251,41 @@ export function EditorAlternativa({
           <div>
             <h2 id="t-archivo" className="font-semibold">Cotización del proveedor</h2>
             <p className="ayuda">
-              Sube el PDF o una foto (máximo 4 MB) y se llenarán los ítems automáticamente. También puedes
+              Sube el PDF o una foto (máximo 4 MB) para llenar los ítems automáticamente. También puedes
               ingresarlos a mano.
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <input
-              ref={inputArchivo}
-              type="file"
-              accept="application/pdf,image/jpeg,image/png,image/webp"
-              className="sr-only"
-              id="archivo"
-              onChange={(e) => e.target.files?.[0] && leerCotizacion(e.target.files[0])}
-              disabled={leyendo}
-            />
-            <label
-              htmlFor="archivo"
-              className={`btn-primario cursor-pointer ${leyendo ? "pointer-events-none opacity-60" : ""}`}
-            >
-              {leyendo ? "Leyendo cotización…" : archivo ? "Subir otra cotización" : "Subir cotización"}
-            </label>
-          </div>
+        </div>
+        <div
+          onDragEnter={(e) => { e.preventDefault(); if (!leyendo) setArrastrandoArchivo(true); }}
+          onDragOver={(e) => { e.preventDefault(); if (!leyendo) setArrastrandoArchivo(true); }}
+          onDragLeave={(e) => { e.preventDefault(); setArrastrandoArchivo(false); }}
+          onDrop={soltarArchivo}
+          className={`mt-4 flex min-h-36 flex-col items-center justify-center rounded-lg border-2 border-dashed px-4 py-6 text-center transition-colors ${
+            leyendo ? "cursor-wait border-linea bg-fondo opacity-70" : arrastrandoArchivo ? "border-hnl bg-hnl-claro" : "border-linea hover:border-hnl hover:bg-fondo"
+          }`}
+        >
+          <input
+            ref={inputArchivo}
+            type="file"
+            accept="application/pdf,image/jpeg,image/png,image/webp"
+            className="sr-only"
+            id="archivo"
+            onChange={(e) => e.target.files?.[0] && leerCotizacion(e.target.files[0])}
+            disabled={leyendo}
+          />
+          <svg aria-hidden="true" className="mb-2 size-7 text-hnl" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 16V4m0 0L7 9m5-5 5 5"/><path d="M20 16.5v2A1.5 1.5 0 0 1 18.5 20h-13A1.5 1.5 0 0 1 4 18.5v-2"/>
+          </svg>
+          <p className="text-sm font-medium">{leyendo ? "Leyendo cotización…" : arrastrandoArchivo ? "Suelta el archivo para subirlo" : "Arrastra y suelta tu cotización aquí"}</p>
+          <p className="mt-1 text-xs text-suave">PDF, JPG, PNG o WEBP · máximo 4 MB</p>
+          <label
+            htmlFor="archivo"
+            aria-disabled={leyendo}
+            className={`mt-3 btn-secundario cursor-pointer ${leyendo ? "pointer-events-none opacity-60" : ""}`}
+          >
+            {archivo ? "Elegir otra cotización" : "Seleccionar archivo"}
+          </label>
         </div>
         {archivo && (
           <p className="mt-3 text-sm">
