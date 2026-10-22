@@ -29,7 +29,6 @@ export function NavegacionApp({ children, usuario, pendientes, puedeCrear, puede
   const ruta = usePathname();
   const [menuMovil, setMenuMovil] = useState(false);
   const [menuUsuario, setMenuUsuario] = useState(false);
-  const [colapsada, setColapsada] = useState(true);
   const [buscar, setBuscar] = useState(false);
   const inicio = ruta === "/presupuestos";
   const enlaces = [
@@ -37,44 +36,22 @@ export function NavegacionApp({ children, usuario, pendientes, puedeCrear, puede
     { href: "/catalogo", texto: "Catálogo de equipos", icono: "box" as const, badge: pendientes },
     ...(puedeUsuarios ? [{ href: "/admin/usuarios", texto: "Usuarios", icono: "users" as const }] : []),
   ];
-  return <div className={`min-h-screen lg:grid ${colapsada ? "lg:grid-cols-[4.5rem_minmax(0,1fr)]" : "lg:grid-cols-[15rem_minmax(0,1fr)]"}`}>
-    <aside className="hidden border-r border-linea bg-papel lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:gap-6 lg:p-3">
-      <div className={`flex items-center ${colapsada ? "justify-center" : "justify-between"}`}>
-        <Link href="/presupuestos" title="Presupuestos" className="flex min-w-0 items-center gap-3">
-          <Image src="/logo-grupo-comidas-circulo-96.png" alt="Grupo Comidas" width={96} height={96} className={colapsada ? "size-9 shrink-0" : "size-10 shrink-0"} />
-          {!colapsada && <span className="min-w-0"><span className="block font-semibold">Presupuestos</span><span className="block text-sm text-suave">Departamento de Sistemas</span></span>}
-        </Link>
-        {!colapsada && <button type="button" aria-label="Contraer menú" onClick={() => setColapsada(true)} className="rounded-md p-2 text-suave hover:bg-fondo"><Icono tipo="right" className="size-4 rotate-180"/></button>}
-        {colapsada && <button type="button" aria-label="Expandir menú" onClick={() => setColapsada(false)} className="mx-auto rounded-md p-2 text-suave hover:bg-fondo"><Icono tipo="right" className="size-4"/></button>}
+  return <div className="min-h-screen">
+    <header className="sticky top-0 z-40 flex min-h-16 items-center justify-between gap-3 border-b border-linea bg-papel px-3 sm:px-5">
+      <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+        <button type="button" aria-label={menuMovil ? "Cerrar menú" : "Abrir menú"} aria-expanded={menuMovil} onClick={() => setMenuMovil(!menuMovil)} className="shrink-0 rounded-md p-2 text-tinta hover:bg-fondo"><Icono tipo={menuMovil ? "close" : "menu"}/></button>
+        <Link href="/presupuestos" className="flex min-w-0 items-center gap-2"><Image src="/logo-grupo-comidas-circulo-96.png" alt="Grupo Comidas" width={96} height={96} className="size-9 shrink-0"/><span className="truncate font-semibold">Presupuestos</span></Link>
       </div>
-      <nav aria-label="Principal" className="flex flex-col gap-1">
-        {enlaces.map((e) => <Link key={e.href} href={e.href} title={colapsada ? e.texto : undefined} aria-current={ruta === e.href ? "page" : undefined} className={`flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium ${ruta === e.href ? "bg-tinta text-white" : "text-tinta hover:bg-fondo"}`}>
-          <Icono tipo={e.icono}/>{!colapsada && <span className="flex-1">{e.texto}</span>}{!colapsada && !!e.badge && <span className="rounded bg-aviso-claro px-1.5 text-xs text-aviso">{e.badge}</span>}
-        </Link>)}
-      </nav>
-      <div className="relative mt-auto border-t border-linea-2 pt-3">
-        {menuUsuario && <div className="panel absolute bottom-full left-0 z-50 mb-2 w-full min-w-52 p-2 shadow-xl">
-          <div className="border-b border-linea-2 px-3 py-2"><div className="truncate text-sm font-semibold">{usuario.name}</div><div className="text-xs text-suave">{NOMBRES_ROL[usuario.role]}</div></div>
-          {puedeUsuarios && <Link href="/admin/usuarios" onClick={() => setMenuUsuario(false)} className="flex items-center gap-2 rounded px-3 py-2.5 text-sm hover:bg-fondo"><Icono tipo="users" className="size-4"/>Usuarios y cuentas</Link>}
-          <div className="px-3 py-2"><BotonSalir/></div>
-        </div>}
-        <button type="button" title={colapsada ? usuario.name : undefined} aria-label="Abrir menú de cuenta" aria-expanded={menuUsuario} onClick={() => setMenuUsuario(!menuUsuario)} className={`flex w-full items-center gap-3 rounded-md p-2 text-left hover:bg-fondo ${colapsada ? "justify-center" : ""}`}>
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-tinta text-sm font-semibold text-white">{usuario.name.slice(0,1).toLocaleUpperCase()}</span>
-          {!colapsada && <span className="min-w-0 flex-1"><span className="block truncate text-sm font-semibold">{usuario.name}</span><span className="block text-xs text-suave">{NOMBRES_ROL[usuario.role]}</span></span>}
-          {!colapsada && <Icono tipo="chevron" className={`size-4 text-suave transition-transform ${menuUsuario ? "rotate-180" : ""}`}/ >}
-        </button>
+      <div className="flex items-center gap-2">
+        {buscar && <form action="/presupuestos" className="flex items-center">
+          <input autoFocus name="buscar" placeholder="Buscar en presupuestos…" aria-label="Buscar en presupuestos" className="w-[min(55vw,24rem)] rounded-lg border border-linea bg-papel px-3 py-2 text-sm outline-none focus:border-tinta"/>
+          <button className="sr-only">Buscar</button>
+        </form>}
+        <button type="button" aria-label={buscar ? "Cerrar búsqueda" : "Buscar presupuestos"} onClick={() => setBuscar(!buscar)} className="shrink-0 rounded-md p-2 text-tinta hover:bg-fondo"><Icono tipo={buscar ? "close" : "search"}/></button>
       </div>
-    </aside>
-    <main className="min-w-0 px-4 pb-24 pt-4 lg:px-8 lg:py-6">
-      <div className="mb-3 flex items-center justify-between gap-3 lg:hidden">
-        <div className="flex min-w-0 items-center gap-3">
-          <button type="button" aria-label={menuMovil ? "Cerrar menú" : "Abrir menú"} aria-expanded={menuMovil} onClick={() => setMenuMovil(!menuMovil)} className="shrink-0 rounded-md p-2 text-tinta"><Icono tipo={menuMovil ? "close" : "menu"}/></button>
-          <Link href="/presupuestos" className="flex min-w-0 items-center gap-2"><Image src="/logo-grupo-comidas-circulo-96.png" alt="Grupo Comidas" width={96} height={96} className="size-8 shrink-0"/><span className="truncate font-semibold">Presupuestos</span></Link>
-        </div>
-        <button type="button" aria-label={buscar ? "Cerrar búsqueda" : "Buscar presupuestos"} onClick={() => setBuscar(!buscar)} className="shrink-0 rounded-md p-2 text-tinta"><Icono tipo={buscar ? "close" : "search"}/></button>
-      </div>
-      {buscar && <form action="/presupuestos" className="mb-4 lg:hidden"><input autoFocus name="buscar" placeholder="Buscar presupuestos…" aria-label="Buscar en presupuestos" className="w-full rounded-lg border border-linea bg-papel px-4 py-3 text-sm outline-none focus:border-tinta"/><button className="sr-only">Buscar</button></form>}
-      {menuMovil && <div className="fixed inset-0 z-50 lg:hidden">
+    </header>
+    <main className="min-w-0 px-4 pb-24 pt-5 sm:px-6 xl:px-8 xl:py-7">
+      {menuMovil && <div className="fixed inset-0 z-50">
         <button type="button" aria-label="Cerrar menú" className="absolute inset-0 bg-black/40" onClick={() => setMenuMovil(false)}/>
         <nav aria-label="Menú móvil" className="absolute inset-y-0 left-0 flex w-[min(88vw,22rem)] flex-col gap-5 overflow-y-auto border-r border-linea bg-fondo p-4 shadow-2xl">
           <div className="flex items-center justify-between">
@@ -88,13 +65,13 @@ export function NavegacionApp({ children, usuario, pendientes, puedeCrear, puede
       </div>}
       <div className="mx-auto max-w-6xl">{children}</div>
     </main>
-    <nav aria-label="Navegación móvil" className="fixed inset-x-0 bottom-0 z-40 grid h-[4.5rem] grid-cols-4 border-t border-linea bg-papel/95 px-2 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden">
+    <nav aria-label="Navegación móvil" className="fixed inset-x-0 bottom-0 z-40 grid h-[4.5rem] grid-cols-4 border-t border-linea bg-papel/95 px-2 pb-[env(safe-area-inset-bottom)] backdrop-blur xl:hidden">
       <Link href="/presupuestos" aria-label="Inicio, presupuestos" className={`flex flex-col items-center justify-center gap-0.5 ${inicio ? "text-[#d6001c]" : "text-suave"}`}><span className={inicio ? "flex size-9 items-center justify-center rounded-full bg-[#fdebed]" : "flex size-9 items-center justify-center"}><Icono tipo="home"/></span><span className="text-[11px]">Inicio</span></Link>
-      <div className="flex items-center justify-center">{puedeCrear ? <Link href="/presupuestos/nuevo" aria-label="Crear presupuesto" className="-mt-5 flex size-14 items-center justify-center rounded-full bg-tinta text-white shadow-lg ring-4 ring-papel"><Icono tipo="plus" className="size-7"/></Link> : <span aria-hidden className="size-14"/>}</div>
+      <div className="flex items-center justify-center">{puedeCrear ? <Link href="/presupuestos/nuevo" aria-label="Nuevo presupuesto" className="-mt-5 flex flex-col items-center justify-center gap-0.5 text-tinta"><span className="flex size-14 items-center justify-center rounded-full bg-tinta text-white shadow-lg ring-4 ring-papel"><Icono tipo="plus" className="size-7"/></span><span className="text-[11px]">Nuevo</span></Link> : <span aria-hidden className="size-14"/>}</div>
       <Link href="/catalogo" aria-label="Catálogo de equipos" className={`flex flex-col items-center justify-center gap-0.5 ${ruta.startsWith("/catalogo") ? "text-[#d6001c]" : "text-suave"}`}><span className={ruta.startsWith("/catalogo") ? "flex size-9 items-center justify-center rounded-full bg-[#fdebed]" : "flex size-9 items-center justify-center"}><Icono tipo="box"/></span><span className="text-[11px]">Catálogo</span></Link>
       <button type="button" aria-label="Menú de cuenta" aria-expanded={menuUsuario} onClick={() => setMenuUsuario(!menuUsuario)} className={`flex flex-col items-center justify-center gap-0.5 ${menuUsuario ? "text-[#d6001c]" : "text-suave"}`}><span className={menuUsuario ? "flex size-9 items-center justify-center rounded-full bg-[#fdebed]" : "flex size-9 items-center justify-center"}><Icono tipo="users"/></span><span className="text-[11px]">Cuenta</span></button>
     </nav>
-    {menuUsuario && <div className="fixed inset-0 z-[60] lg:hidden">
+    {menuUsuario && <div className="fixed inset-0 z-[60] xl:hidden">
       <button type="button" aria-label="Cerrar menú de cuenta" onClick={() => setMenuUsuario(false)} className="absolute inset-0 bg-black/40"/>
       <section role="dialog" aria-modal="true" aria-label="Menú de cuenta" className="absolute inset-x-0 bottom-0 rounded-t-2xl border border-linea bg-papel p-5 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] shadow-2xl">
         <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-linea"/>
