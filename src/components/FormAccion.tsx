@@ -1,7 +1,8 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import type { EstadoAccion } from "@/lib/tipos";
+import { DialogoConfirmar } from "@/components/DialogoConfirmar";
 
 type Props = {
   action: (prev: EstadoAccion, fd: FormData) => Promise<EstadoAccion>;
@@ -19,6 +20,8 @@ type Props = {
 export function FormAccion({ action, children, className, confirmar, limpiarAlTerminar, enLinea }: Props) {
   const [estado, accion, pendiente] = useActionState(action, null);
   const ref = useRef<HTMLFormElement>(null);
+  const confirmarTrasDialogo = useRef(false);
+  const [confirmacionAbierta, setConfirmacionAbierta] = useState(false);
 
   useEffect(() => {
     if (estado?.ok && limpiarAlTerminar) ref.current?.reset();
@@ -31,7 +34,14 @@ export function FormAccion({ action, children, className, confirmar, limpiarAlTe
       className={className}
       aria-busy={pendiente}
       onSubmit={(e) => {
-        if (confirmar && !window.confirm(confirmar)) e.preventDefault();
+        if (confirmarTrasDialogo.current) {
+          confirmarTrasDialogo.current = false;
+          return;
+        }
+        if (confirmar) {
+          e.preventDefault();
+          setConfirmacionAbierta(true);
+        }
       }}
     >
       {/* `contents`: el fieldset solo desactiva los campos mientras se envía; el diseño
@@ -48,6 +58,20 @@ export function FormAccion({ action, children, className, confirmar, limpiarAlTe
         <p role="status" className="mt-2 text-sm text-usd">
           {estado.ok}
         </p>
+      )}
+      {confirmar && (
+        <DialogoConfirmar
+          abierto={confirmacionAbierta}
+          titulo="¿Estás seguro?"
+          descripcion={confirmar}
+          textoConfirmar="Continuar"
+          onCancelar={() => setConfirmacionAbierta(false)}
+          onConfirmar={() => {
+            setConfirmacionAbierta(false);
+            confirmarTrasDialogo.current = true;
+            ref.current?.requestSubmit();
+          }}
+        />
       )}
     </form>
   );
