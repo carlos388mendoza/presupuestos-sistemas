@@ -189,6 +189,122 @@ const ejemplos: Ejemplo[] = [
       },
     ],
   },
+  {
+    id: "ejemplo-presupuesto-kfc",
+    nombre: "KFC ejemplo",
+    restaurante: "KFC · Tegucigalpa (local ficticio)",
+    tipo: "apertura",
+    estado: "borrador",
+    notas: "Presupuesto totalmente ficticio para demostración. Proveedores y precios no corresponden a cotizaciones reales.",
+    partidas: [
+      {
+        id: "ejemplo-kfc-red",
+        nombre: "Red y cableado",
+        alternativas: [
+          {
+            id: "ejemplo-kfc-red-nacional",
+            proveedor: "Redes Catracho (ejemplo)",
+            tipoCompra: "nacional",
+            elegida: true,
+            notas: "Precios de demostración en lempiras.",
+            items: [
+              { descripcion: "Cableado Cat 6 instalado", cantidad: 18, precioUnitarioCentavos: 168000, moneda: "HNL" },
+              { descripcion: "Switch PoE administrable de 24 puertos", cantidad: 1, precioUnitarioCentavos: 4250000, moneda: "HNL" },
+              { descripcion: "Gabinete de comunicaciones", cantidad: 1, precioUnitarioCentavos: 1380000, moneda: "HNL" },
+            ],
+          },
+          {
+            id: "ejemplo-kfc-red-importada",
+            proveedor: "Conectividad Global (ejemplo)",
+            tipoCompra: "internacional",
+            elegida: false,
+            notas: "Alternativa ficticia en dólares; no incluye impuestos ni flete.",
+            items: [{ descripcion: "Kit de red para restaurante", cantidad: 1, precioUnitarioCentavos: 285000, moneda: "USD" }],
+          },
+        ],
+      },
+      {
+        id: "ejemplo-kfc-pos",
+        nombre: "Puntos de venta y cocina",
+        alternativas: [
+          {
+            id: "ejemplo-kfc-pos-nacional",
+            proveedor: "Punto Ágil (ejemplo)",
+            tipoCompra: "nacional",
+            elegida: false,
+            notas: "Alternativa ficticia con instalación y configuración.",
+            items: [
+              { descripcion: "Terminal POS para caja", cantidad: 4, precioUnitarioCentavos: 2980000, moneda: "HNL" },
+              { descripcion: "Impresora de recibos", cantidad: 4, precioUnitarioCentavos: 625000, moneda: "HNL" },
+              { descripcion: "Pantalla de preparación de pedidos (KDS)", cantidad: 3, precioUnitarioCentavos: 2350000, moneda: "HNL" },
+            ],
+          },
+          {
+            id: "ejemplo-kfc-pos-importado",
+            proveedor: "Restaurant Tech Demo (ejemplo)",
+            tipoCompra: "internacional",
+            elegida: true,
+            notas: "Precios de demostración en dólares.",
+            items: [
+              { descripcion: "Terminal POS para caja", cantidad: 4, precioUnitarioCentavos: 137500, moneda: "USD" },
+              { descripcion: "Pantalla de preparación de pedidos (KDS)", cantidad: 3, precioUnitarioCentavos: 89500, moneda: "USD" },
+            ],
+          },
+        ],
+      },
+      {
+        id: "ejemplo-kfc-seguridad",
+        nombre: "Cámaras y seguridad",
+        alternativas: [
+          {
+            id: "ejemplo-kfc-seguridad-nacional",
+            proveedor: "Vigilancia Segura HN (ejemplo)",
+            tipoCompra: "nacional",
+            elegida: true,
+            notas: "Sistema ficticio con instalación.",
+            items: [
+              { descripcion: "Cámara IP interior", cantidad: 10, precioUnitarioCentavos: 685000, moneda: "HNL" },
+              { descripcion: "Grabador de video de 16 canales", cantidad: 1, precioUnitarioCentavos: 2150000, moneda: "HNL" },
+              { descripcion: "Instalación y configuración", cantidad: 1, precioUnitarioCentavos: 1250000, moneda: "HNL" },
+            ],
+          },
+          {
+            id: "ejemplo-kfc-seguridad-importada",
+            proveedor: "Secure Vision (ejemplo)",
+            tipoCompra: "internacional",
+            elegida: false,
+            notas: "Alternativa ficticia en dólares.",
+            items: [{ descripcion: "Paquete de cámaras IP y grabador", cantidad: 1, precioUnitarioCentavos: 168000, moneda: "USD" }],
+          },
+        ],
+      },
+      {
+        id: "ejemplo-kfc-respaldo",
+        nombre: "Respaldo eléctrico",
+        alternativas: [
+          {
+            id: "ejemplo-kfc-respaldo-nacional",
+            proveedor: "Energía Lista (ejemplo)",
+            tipoCompra: "nacional",
+            elegida: false,
+            notas: "Alternativa ficticia para proteger caja y comunicaciones.",
+            items: [
+              { descripcion: "UPS de 1500 VA", cantidad: 4, precioUnitarioCentavos: 1640000, moneda: "HNL" },
+              { descripcion: "Instalación eléctrica regulada", cantidad: 1, precioUnitarioCentavos: 1980000, moneda: "HNL" },
+            ],
+          },
+          {
+            id: "ejemplo-kfc-respaldo-importado",
+            proveedor: "Power Backup Demo (ejemplo)",
+            tipoCompra: "internacional",
+            elegida: true,
+            notas: "Precio de demostración en dólares.",
+            items: [{ descripcion: "UPS en línea para equipo de red y cajas", cantidad: 4, precioUnitarioCentavos: 84500, moneda: "USD" }],
+          },
+        ],
+      },
+    ],
+  },
 ];
 
 function urlDeDesarrollo(): string {
