@@ -30,7 +30,7 @@ export function ComboboxRestaurante({ defaultValue = "", maxLength = 200 }: { de
   }, [valor]);
 
   const opciones = grupos.flatMap((grupo) => grupo.opciones);
-  const idActiva = abierta && activa >= 0 && activa < opciones.length ? `${id}-opcion-${activa}` : undefined;
+  const idActiva = abierto && activa >= 0 && activa < opciones.length ? `${id}-opcion-${activa}` : undefined;
 
   function seleccionar(opcion: string) {
     setValor(opcion);
