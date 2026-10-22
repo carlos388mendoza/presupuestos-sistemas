@@ -1,4 +1,4 @@
-import { AreaTexto, CampoTexto, GrupoOpciones } from "@/components/campos";
+import { AreaTexto, CampoTexto, ComboboxRestaurante, GrupoOpciones } from "@/components/campos";
 
 type Valores = { nombre?: string; restaurante?: string; tipo?: string; notas?: string };
 
@@ -6,8 +6,7 @@ export function CamposPresupuesto({ valores = {} }: { valores?: Valores }) {
   return (
     <>
       <div className="grid gap-x-4 gap-y-5 sm:grid-cols-2">
-        <CampoTexto name="restaurante" etiqueta="Restaurante" required maxLength={200}
-          defaultValue={valores.restaurante} placeholder="Ej. Sucursal City Mall" />
+        <ComboboxRestaurante defaultValue={valores.restaurante} maxLength={200} />
         <CampoTexto name="nombre" etiqueta="Nombre del presupuesto" required maxLength={200}
           defaultValue={valores.nombre} placeholder="Ej. Apertura 2026" />
       </div>

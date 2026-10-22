@@ -2,7 +2,15 @@
 
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 
-export function ModalFormulario({ titulo, children }: { titulo: string; children: ReactNode }) {
+type Props = {
+  titulo: string;
+  children: ReactNode;
+  trigger?: ReactNode;
+  triggerClassName?: string;
+  triggerAriaLabel?: string;
+};
+
+export function ModalFormulario({ titulo, children, trigger, triggerClassName, triggerAriaLabel }: Props) {
   const [abierto, setAbierto] = useState(false);
   const idTitulo = useId();
   const dialogo = useRef<HTMLDialogElement>(null);
@@ -23,8 +31,14 @@ export function ModalFormulario({ titulo, children }: { titulo: string; children
 
   return (
     <>
-      <button ref={botonAbrir} type="button" className="btn-primario w-full" onClick={() => setAbierto(true)}>
-        {titulo}
+      <button
+        ref={botonAbrir}
+        type="button"
+        className={triggerClassName ?? "btn-primario w-full"}
+        aria-label={triggerAriaLabel}
+        onClick={() => setAbierto(true)}
+      >
+        {trigger ?? titulo}
       </button>
       <dialog
         ref={dialogo}

@@ -15,6 +15,8 @@ import {
   renombrarPartida,
 } from "@/actions/presupuestos";
 import { FormAccion } from "@/components/FormAccion";
+import { CampoTexto } from "@/components/campos";
+import { ModalFormulario } from "@/components/ModalFormulario";
 import { Totales } from "@/components/Totales";
 import { Etiqueta } from "@/components/Etiqueta";
 import { CamposPresupuesto } from "../CamposPresupuesto";
@@ -52,10 +54,36 @@ export default async function PaginaPresupuesto({ params }: { params: Promise<{ 
           <p className="text-sm text-suave">
             {p.restaurante} · {p.tipo === "apertura" ? "Apertura" : "Remodelación"} · {p.autor}
           </p>
-          <h1 className="titulo-pagina flex flex-wrap items-center gap-3">
-            {p.nombre}
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="titulo-pagina">{p.nombre}</h1>
             <Etiqueta tipo={p.estado}>{p.estado === "listo" ? "Listo" : "Borrador"}</Etiqueta>
-          </h1>
+            {modificar && (
+              <ModalFormulario
+                titulo="Editar presupuesto"
+                triggerClassName="btn-texto rounded-full p-2"
+                triggerAriaLabel="Editar presupuesto"
+                trigger={(
+                  <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" className="size-5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m13.8 3.7 2.5 2.5M4 16l3.8-.8L16 7a1.8 1.8 0 0 0-2.5-2.5l-8.2 8.2L4 16Z" />
+                  </svg>
+                )}
+              >
+                <FormAccion action={actualizarPresupuesto} className="formulario">
+                  <input type="hidden" name="id" value={p.id} />
+                  <CamposPresupuesto valores={p} />
+                  <button type="submit" className="btn-primario self-start">Guardar cambios</button>
+                </FormAccion>
+                <FormAccion
+                  action={eliminarPresupuesto}
+                  confirmar="¿Eliminar este presupuesto con todas sus partidas y alternativas? No se puede deshacer."
+                  className="mt-6 border-t border-linea-2 pt-4"
+                >
+                  <input type="hidden" name="id" value={p.id} />
+                  <button type="submit" className="btn-peligro px-0">Eliminar presupuesto</button>
+                </FormAccion>
+              </ModalFormulario>
+            )}
+          </div>
           {p.notas && <p className="ayuda mt-1 max-w-prose whitespace-pre-line">{p.notas}</p>}
         </div>
       </header>
@@ -116,42 +144,34 @@ export default async function PaginaPresupuesto({ params }: { params: Promise<{ 
         </div>
       </section>
 
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-linea pb-2">
+        <h2 className="text-lg font-semibold">Partidas</h2>
+        {modificar && (
+          <ModalFormulario
+            titulo="Nueva partida"
+            triggerClassName="btn-texto rounded-full p-2"
+            triggerAriaLabel="Agregar partida"
+            trigger={(
+              <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" className="size-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10 4v12M4 10h12" />
+              </svg>
+            )}
+          >
+            <FormAccion action={crearPartida} limpiarAlTerminar className="formulario">
+              <input type="hidden" name="presupuestoId" value={p.id} />
+              <CampoTexto id="nueva-partida" name="nombre" etiqueta="Nombre de la partida" required maxLength={120}
+                placeholder="Ej. Pantallas de cocina" />
+              <button type="submit" className="btn-primario self-start">Agregar partida</button>
+            </FormAccion>
+          </ModalFormulario>
+        )}
+      </div>
+
       <div className="space-y-10">
         {p.partidas.map((pa) => (
           <SeccionPartida key={pa.id} presupuestoId={p.id} partida={pa} modificar={modificar} decidir={decidir} />
         ))}
       </div>
-
-      {modificar && (
-        <section className="mt-10 grid gap-6 lg:grid-cols-2">
-          <div className="panel p-5">
-            <h2 className="mb-3 font-semibold">Agregar partida</h2>
-            <FormAccion action={crearPartida} limpiarAlTerminar className="flex gap-2">
-              <input type="hidden" name="presupuestoId" value={p.id} />
-              <label htmlFor="nueva-partida" className="sr-only">Nombre de la partida</label>
-              <input id="nueva-partida" name="nombre" required maxLength={120} placeholder="Ej. Pantallas de cocina" className="campo" />
-              <button type="submit" className="btn-secundario shrink-0">Agregar</button>
-            </FormAccion>
-          </div>
-
-          <details className="panel p-5">
-            <summary className="cursor-pointer font-semibold">Editar datos del presupuesto</summary>
-            <FormAccion action={actualizarPresupuesto} className="formulario mt-4">
-              <input type="hidden" name="id" value={p.id} />
-              <CamposPresupuesto valores={p} />
-              <button type="submit" className="btn-secundario self-start">Guardar cambios</button>
-            </FormAccion>
-            <FormAccion
-              action={eliminarPresupuesto}
-              confirmar="¿Eliminar este presupuesto con todas sus partidas y alternativas? No se puede deshacer."
-              className="mt-6 border-t border-linea-2 pt-4"
-            >
-              <input type="hidden" name="id" value={p.id} />
-              <button type="submit" className="btn-peligro px-0">Eliminar presupuesto</button>
-            </FormAccion>
-          </details>
-        </section>
-      )}
     </>
   );
 }
