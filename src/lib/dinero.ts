@@ -6,15 +6,22 @@ export type TotalesPorMoneda = Record<Moneda, number>; // en centavos
 
 export const totalesVacios = (): TotalesPorMoneda => ({ USD: 0, HNL: 0 });
 
+/** Precio unitario máximo que admite la columna `precio_unitario_centavos` (entero de 32 bits). */
+export const MAXIMO_CENTAVOS = 2_147_483_647;
+
+// n * 100 en coma flotante puede quedar justo debajo de .5 (1.005 * 100 = 100.4999…);
+// se redondea primero a 15 cifras significativas para obtener el centavo correcto.
+const multiplicarPor100 = (n: number) => Math.round(Number((n * 100).toPrecision(15)));
+
 /** Convierte un texto como "1,234.50" a centavos enteros. Devuelve null si no es válido. */
 export function aCentavos(valor: string | number): number | null {
   if (typeof valor === "number") {
-    return Number.isFinite(valor) ? Math.round(valor * 100) : null;
+    return Number.isFinite(valor) ? multiplicarPor100(valor) : null;
   }
   const limpio = valor.replace(/[\s,]/g, "").replace(/^(L|\$|USD|HNL)/i, "");
   if (limpio === "" || !/^-?\d*(\.\d+)?$/.test(limpio)) return null;
   const n = Number(limpio);
-  return Number.isFinite(n) ? Math.round(n * 100) : null;
+  return Number.isFinite(n) ? multiplicarPor100(n) : null;
 }
 
 /** Centavos a texto editable, sin separadores de miles: 123450 -> "1234.50" */

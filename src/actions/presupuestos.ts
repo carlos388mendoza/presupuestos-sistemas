@@ -8,6 +8,9 @@ import { usuarioOError } from "@/lib/sesion";
 import * as datos from "@/lib/datos";
 import type { EstadoAccion } from "@/lib/tipos";
 import { aEstado, datosDe, texto, textoOpcional } from "./util";
+import { MAXIMO_CENTAVOS } from "@/lib/dinero";
+
+const MENSAJE_PRECIO_MAXIMO = datos.MENSAJE_PRECIO_MAXIMO;
 
 const esquemaPresupuesto = z.object({
   nombre: texto("El nombre"),
@@ -150,7 +153,8 @@ const esquemaAlternativa = z.object({
         precioUnitarioCentavos: z
           .number({ message: "Revisa los precios." })
           .int()
-          .nonnegative("Los precios no pueden ser negativos."),
+          .nonnegative("Los precios no pueden ser negativos.")
+          .max(MAXIMO_CENTAVOS, MENSAJE_PRECIO_MAXIMO),
         moneda: z.enum(["USD", "HNL"]),
       }),
     )
@@ -191,7 +195,7 @@ const esquemaAlternativasAgrupadas = z.object({
       marca: textoOpcional(120),
       modelo: textoOpcional(120),
       cantidad: z.number().positive("Las cantidades deben ser mayores que cero."),
-      precioUnitarioCentavos: z.number().int().nonnegative("Los precios no pueden ser negativos."),
+      precioUnitarioCentavos: z.number().int().nonnegative("Los precios no pueden ser negativos.").max(MAXIMO_CENTAVOS, MENSAJE_PRECIO_MAXIMO),
       moneda: z.enum(["USD", "HNL"]),
     })).min(1),
   })).min(1),

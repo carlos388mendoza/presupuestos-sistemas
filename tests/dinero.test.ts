@@ -10,6 +10,16 @@ describe("dinero", () => {
     expect(aCentavos("")).toBeNull();
   });
 
+  it("redondea al centavo correcto aunque el decimal no sea exacto en coma flotante", () => {
+    // 1.005 * 100 = 100.49999… en coma flotante; debe dar 101 centavos.
+    expect(aCentavos("1.005")).toBe(101);
+    expect(aCentavos(1.005)).toBe(101);
+    expect(aCentavos("8.675")).toBe(868);
+    expect(aCentavos("19.99")).toBe(1999);
+    expect(aCentavos(0.1 + 0.2)).toBe(30);
+    expect(aCentavos("1,234,567.89")).toBe(123456789);
+  });
+
   it("suma por moneda sin convertir", () => {
     const t = totalesDeItems([
       { cantidad: 2, precioUnitarioCentavos: 10000, moneda: "USD" },

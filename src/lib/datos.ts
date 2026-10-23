@@ -17,7 +17,7 @@ import {
   type Rol,
   type TipoCompra,
 } from "@/db/schema";
-import { resumenPresupuesto, totalesDeItems } from "./dinero";
+import { MAXIMO_CENTAVOS, resumenPresupuesto, totalesDeItems } from "./dinero";
 
 export type Actor = { id: string; role: Rol };
 
@@ -312,11 +312,19 @@ export type AlternativaEntrada = {
   items: ItemEntrada[];
 };
 
+export const MENSAJE_PRECIO_MAXIMO = "Un precio unitario es demasiado alto (máximo 21,474,836.47).";
+
+/** La base guarda el precio unitario como entero de 32 bits; un precio mayor la haría fallar. */
+function validarPrecios(items: { precioUnitarioCentavos: number }[]) {
+  if (items.some((it) => it.precioUnitarioCentavos > MAXIMO_CENTAVOS)) throw new ErrorNegocio(MENSAJE_PRECIO_MAXIMO);
+}
+
 export async function guardarAlternativa(db: DB, actor: Actor, entrada: AlternativaEntrada): Promise<string> {
   const { presupuesto } = await partidaAccesible(db, actor, entrada.partidaId);
   await presupuestoEditable(db, actor, presupuesto.id);
 
   if (entrada.items.length === 0) throw new ErrorNegocio("Agrega al menos un ítem a la alternativa.");
+  validarPrecios(entrada.items);
 
   let archivoActual: string | null = null;
   if (entrada.id) {
@@ -405,6 +413,7 @@ export async function guardarAlternativasAgrupadas(
   for (const entrada of entradas) {
     if (!idsValidos.has(entrada.partidaId)) throw new ErrorNegocio("Una partida no pertenece a este presupuesto.");
     if (entrada.items.length === 0) throw new ErrorNegocio("Cada alternativa debe tener al menos un ítem.");
+    validarPrecios(entrada.items);
   }
   if (entradas.some((entrada) => entrada.archivoId !== entradas[0]?.archivoId)) {
     throw new ErrorNegocio("Las alternativas deben usar el mismo archivo de cotización.");
