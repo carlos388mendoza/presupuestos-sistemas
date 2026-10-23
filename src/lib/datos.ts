@@ -3,7 +3,7 @@
  * para que páginas, acciones y APIs no puedan saltárselas.
  * Recibe `db` como parámetro para poder probarse con una base de prueba.
  */
-import { and, asc, desc, eq, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, inArray, or } from "drizzle-orm";
 import type { DB } from "@/db/cliente";
 import {
   alternativas,
@@ -525,29 +525,75 @@ export type ResultadoBusquedaGlobal = {
 };
 
 export async function buscarGlobal(db: DB, actor: Actor, consulta: string): Promise<ResultadoBusquedaGlobal> {
-  const q = consulta.trim().toLowerCase();
-  const todosPresupuestos = await listarPresupuestos(db, actor);
-  const presupuestos = todosPresupuestos
-    .filter((p) => !q || p.textoBusqueda.includes(q))
-    .slice(0, 8)
-    .map((p) => ({ id: p.id, nombre: p.nombre, restaurante: p.restaurante, estado: p.estado, autor: p.autor }));
+  const q = consulta.trim();
+  const patron = `%${q}%`;
 
-  const todosEquipos = await (await import("./catalogo")).listarEquipos(db, q ? { q: consulta.trim() } : {});
-  const equipos = todosEquipos.slice(0, 8).map((e) => ({
-    id: e.id, nombre: e.nombre, marca: e.marca, modelo: e.modelo, categoria: e.categoria, revisado: e.revisado,
-  }));
+  const condicionesPresupuestos = [];
+  if (!puedeVerTodo(actor)) condicionesPresupuestos.push(eq(presupuestos.creadoPor, actor.id));
+  if (q) {
+    condicionesPresupuestos.push(
+      or(
+        ilike(presupuestos.nombre, patron),
+        ilike(presupuestos.restaurante, patron),
+        ilike(presupuestos.tipo, patron),
+        ilike(presupuestos.estado, patron),
+        ilike(presupuestos.notas, patron),
+        ilike(user.name, patron),
+      ),
+    );
+  }
+
+  const filasPresupuestos = await db
+    .select({
+      id: presupuestos.id,
+      nombre: presupuestos.nombre,
+      restaurante: presupuestos.restaurante,
+      estado: presupuestos.estado,
+      autor: user.name,
+    })
+    .from(presupuestos)
+    .innerJoin(user, eq(user.id, presupuestos.creadoPor))
+    .where(condicionesPresupuestos.length ? and(...condicionesPresupuestos) : undefined)
+    .orderBy(desc(presupuestos.updatedAt))
+    .limit(8);
+
+  const condicionesEquipos = q
+    ? [or(
+        ilike(equipos.nombre, patron),
+        ilike(equipos.marca, patron),
+        ilike(equipos.modelo, patron),
+        ilike(equipos.categoria, patron),
+      )]
+    : [];
+
+  const filasEquipos = await db
+    .select({
+      id: equipos.id,
+      nombre: equipos.nombre,
+      marca: equipos.marca,
+      modelo: equipos.modelo,
+      categoria: equipos.categoria,
+      revisado: equipos.revisado,
+    })
+    .from(equipos)
+    .where(condicionesEquipos.length ? and(...condicionesEquipos) : undefined)
+    .orderBy(asc(equipos.nombre))
+    .limit(8);
 
   let usuarios: ResultadoBusquedaGlobal["usuarios"] = [];
   if (actor.role === "admin") {
-    const { listarUsuarios } = await import("./usuarios");
-    const todos = await listarUsuarios(db);
-    usuarios = todos
-      .filter((u) => !q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q))
-      .slice(0, 8)
-      .map((u) => ({ id: u.id, name: u.name, email: u.email, role: u.role }));
+    const condicionesUsuarios = q
+      ? [or(ilike(user.name, patron), ilike(user.email, patron))]
+      : [];
+    usuarios = await db
+      .select({ id: user.id, name: user.name, email: user.email, role: user.role })
+      .from(user)
+      .where(condicionesUsuarios.length ? and(...condicionesUsuarios) : undefined)
+      .orderBy(asc(user.name))
+      .limit(8);
   }
 
-  return { presupuestos, equipos, usuarios };
+  return { presupuestos: filasPresupuestos, equipos: filasEquipos, usuarios };
 }
 
 export async function puedeVerArchivo(db: DB, actor: Actor, archivoId: string): Promise<boolean> {

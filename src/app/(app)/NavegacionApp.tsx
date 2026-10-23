@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { NOMBRES_ROL } from "@/lib/datos";
 import { BotonSalir } from "./BotonSalir";
 import { BusquedaGlobal } from "@/components/BusquedaGlobal";
+import { SelectorTema } from "@/components/SelectorTema";
 import { iniciarTema } from "@/lib/tema";
 
 type Rol = keyof typeof NOMBRES_ROL;
@@ -106,6 +107,7 @@ export function NavegacionApp({ children, usuario, pendientes, puedeCrear, puede
       </nav>
       <footer className="shrink-0 border-t border-linea px-4 py-3">
         <div className="mb-3 flex min-w-0 items-center gap-3"><span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-hnl text-sm font-semibold text-white">{usuario.name.slice(0,1).toLocaleUpperCase()}</span><span className="min-w-0"><span className="block truncate text-sm font-semibold">{usuario.name}</span><span className="block truncate text-xs text-suave">{usuario.email} · {NOMBRES_ROL[usuario.role]}</span></span></div>
+        <div className="mb-3"><SelectorTema/></div>
         <BotonSalir/>
       </footer>
     </aside>
@@ -145,6 +147,7 @@ export function NavegacionApp({ children, usuario, pendientes, puedeCrear, puede
               <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-hnl text-sm font-semibold text-white">{usuario.name.slice(0,1).toLocaleUpperCase()}</span>
               <span className="min-w-0"><span className="block truncate text-sm font-semibold">{usuario.name}</span><span className="block truncate text-xs text-suave">{usuario.email} · {NOMBRES_ROL[usuario.role]}</span></span>
             </div>
+            <div className="mb-3 px-3"><SelectorTema/></div>
             <BotonSalir/>
           </footer>
         </nav>
@@ -163,6 +166,7 @@ export function NavegacionApp({ children, usuario, pendientes, puedeCrear, puede
         <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-linea"/>
         <div className="mb-3 flex items-center gap-3 rounded-lg bg-fondo p-3"><span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-hnl font-semibold text-white">{usuario.name.slice(0,1).toLocaleUpperCase()}</span><span className="min-w-0"><span className="block truncate font-semibold">{usuario.name}</span><span className="block truncate text-xs text-suave">{usuario.email} · {NOMBRES_ROL[usuario.role]}</span></span></div>
         {puedeUsuarios && <Link href="/admin/usuarios" onClick={() => setMenuUsuario(false)} className="flex items-center gap-3 rounded-md px-3 py-3 hover:bg-fondo"><Icono tipo="users"/>Administrar usuarios y crear cuentas</Link>}
+        <div className="mt-1 px-3 py-2"><SelectorTema/></div>
         <div className="mt-1 px-3 py-2"><BotonSalir/></div>
       </section>
     </div>}
