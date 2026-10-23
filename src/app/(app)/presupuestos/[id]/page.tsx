@@ -198,9 +198,9 @@ function SeccionPartida({ presupuestoId, partida, modificar, decidir }: { presup
                 <FormAccion action={renombrarPartida}>
                   <input type="hidden" name="id" value={partida.id} />
                   <label className="etiqueta" htmlFor={`r-${partida.id}`}>Nombre</label>
-                  <div className="flex gap-2">
-                    <input id={`r-${partida.id}`} name="nombre" defaultValue={partida.nombre} required maxLength={120} className="campo" />
-                    <button className="btn-secundario">Guardar</button>
+                  <div className="flex min-w-0 items-center gap-3">
+                    <input id={`r-${partida.id}`} name="nombre" defaultValue={partida.nombre} required maxLength={120} className="campo min-w-0 flex-1" />
+                    <button className="btn-secundario shrink-0">Guardar</button>
                   </div>
                 </FormAccion>
                 <FormAccion
