@@ -99,7 +99,7 @@ npm run db:migrate
 
 Despliega la aplicación con las variables del proveedor configuradas. Las nuevas subidas usarán ese proveedor. Cada registro guarda su ubicación (`local`, `s3` o `uploadthing`), así que cambiar la configuración no hace que la aplicación busque archivos antiguos en el proveedor equivocado. Los archivos locales anteriores deben conservarse en el disco original o migrarse antes de retirar ese disco.
 
-`ARCHIVOS_STORAGE` vale `local` por defecto para desarrollo. El límite actual sigue siendo 10 MB y los tipos permitidos son PDF, JPG, PNG y WEBP. Si OpenRouter está configurado, el contenido también se envía al proveedor de IA para extraer los datos de la cotización.
+`ARCHIVOS_STORAGE` vale `local` por defecto para desarrollo y `blob` dentro de Vercel, salvo que se configure otro proveedor. El límite por archivo es 4 MB. Se aceptan PDF, JPG, PNG, WEBP, Excel `.xlsx` y Word `.docx`. Si OpenRouter está configurado, el contenido se envía al proveedor de IA para extraer los datos de la cotización; si no, el archivo queda adjunto para completar los ítems a mano.
 
 ## Seguridad y operación
 
