@@ -15,6 +15,13 @@
       "when": 1792600000000,
       "tag": "0001_almacenamiento_archivos",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792776308555,
+      "tag": "0002_rare_sumo",
+      "breakpoints": true
     }
   ]
 }

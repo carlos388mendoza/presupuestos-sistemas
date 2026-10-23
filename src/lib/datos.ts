@@ -361,6 +361,7 @@ export async function guardarAlternativa(db: DB, actor: Actor, entrada: Alternat
             marca: it.marca,
             modelo: it.modelo,
             origen: it.origenEquipo,
+            creadoPor: actor.id,
             // Los creados por la IA quedan pendientes de revisión
             revisado: it.origenEquipo === "manual",
           })
@@ -433,6 +434,7 @@ export async function guardarAlternativasAgrupadas(
             marca: item.marca,
             modelo: item.modelo,
             origen: item.origenEquipo,
+            creadoPor: actor.id,
             revisado: item.origenEquipo === "manual",
           }).returning({ id: equipos.id });
           equipoId = creado.id;

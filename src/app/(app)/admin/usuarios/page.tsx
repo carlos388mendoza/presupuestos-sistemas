@@ -40,6 +40,10 @@ export default async function PaginaUsuarios() {
                 <p className="ayuda mt-1.5">Mínimo 8 caracteres.</p>
               </div>
               <div>
+                <label className="etiqueta" htmlFor="u-confirm-pass">Confirmar contraseña temporal</label>
+                <input id="u-confirm-pass" name="confirmPassword" type="text" minLength={8} required autoComplete="off" className="campo" />
+              </div>
+              <div>
                 <label className="etiqueta" htmlFor="u-role">Rol</label>
                 <select id="u-role" name="role" defaultValue="creador" className="campo">
                   <option value="creador">{NOMBRES_ROL.creador}</option>
