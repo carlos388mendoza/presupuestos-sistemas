@@ -136,6 +136,9 @@ export default async function PaginaPresupuesto({ params }: { params: Promise<{ 
               <a href={`/api/presupuestos/${p.id}/excel`} className="btn-primario" download>
                 Descargar Excel
               </a>
+              <a href={`/api/presupuestos/${p.id}/pdf`} className="btn-secundario" download>
+                Descargar PDF
+              </a>
               {permisos.decidir && (
                 <FormAccion action={cambiarEstado} enLinea className="flex items-center">
                   <input type="hidden" name="id" value={p.id} />

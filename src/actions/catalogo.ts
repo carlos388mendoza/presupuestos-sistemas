@@ -20,8 +20,8 @@ const esquemaEquipo = z.object({
 
 export async function crearEquipo(_prev: EstadoAccion, fd: FormData): Promise<EstadoAccion> {
   try {
-    await usuarioOError();
-    await catalogo.crearEquipo(db, esquemaEquipo.parse(datosDe(fd)));
+    const usuario = await usuarioOError();
+    await catalogo.crearEquipo(db, usuario.id, esquemaEquipo.parse(datosDe(fd)));
     revalidatePath("/catalogo");
     return { ok: "Equipo agregado al catálogo." };
   } catch (e) {

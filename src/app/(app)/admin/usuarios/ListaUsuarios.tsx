@@ -54,6 +54,8 @@ function AccionesUsuario({ usuario }: { usuario: Usuario }) {
             <input type="hidden" name="id" value={usuario.id}/>
             <label className="sr-only" htmlFor={`password-${usuario.id}`}>Nueva contraseña para {usuario.name}</label>
             <input id={`password-${usuario.id}`} name="password" type="text" minLength={8} required autoComplete="off" placeholder="Nueva contraseña" className="campo"/>
+            <label className="sr-only" htmlFor={`confirm-password-${usuario.id}`}>Confirmar nueva contraseña para {usuario.name}</label>
+            <input id={`confirm-password-${usuario.id}`} name="confirmPassword" type="text" minLength={8} required autoComplete="off" placeholder="Confirmar nueva contraseña" className="campo"/>
             <button className="btn-secundario w-full">Guardar contraseña</button>
           </FormAccion>
         </details>

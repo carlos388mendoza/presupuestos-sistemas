@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/db";
 import { adminOError } from "@/lib/sesion";
+import { ErrorNegocio } from "@/lib/datos";
 import * as usuarios from "@/lib/usuarios";
 import type { EstadoAccion } from "@/lib/tipos";
 import { aEstado, texto } from "./util";
@@ -19,9 +20,11 @@ export async function crearUsuario(_prev: EstadoAccion, fd: FormData): Promise<E
         name: texto("El nombre", 120),
         email: z.string().trim().email("Escribe un correo válido."),
         password: contrasena,
+        confirmPassword: contrasena,
         role: rol,
       })
       .parse(Object.fromEntries(fd));
+    if (d.password !== d.confirmPassword) throw new ErrorNegocio("Las contraseñas no coinciden.");
     await usuarios.crearUsuario(db, d);
     revalidatePath("/admin/usuarios");
     return { ok: `Usuario creado. Comparte la contraseña temporal con ${d.name}.` };
@@ -55,7 +58,10 @@ export async function cambiarActivo(_prev: EstadoAccion, fd: FormData): Promise<
 export async function restablecerContrasena(_prev: EstadoAccion, fd: FormData): Promise<EstadoAccion> {
   try {
     await adminOError();
-    await usuarios.restablecerContrasena(db, z.string().parse(fd.get("id")), contrasena.parse(fd.get("password")));
+    const password = contrasena.parse(fd.get("password"));
+    const confirmar = contrasena.parse(fd.get("confirmPassword"));
+    if (password !== confirmar) throw new ErrorNegocio("Las contraseñas no coinciden.");
+    await usuarios.restablecerContrasena(db, z.string().parse(fd.get("id")), password);
     return { ok: "Contraseña actualizada. Se cerraron sus sesiones abiertas." };
   } catch (e) {
     return aEstado(e);

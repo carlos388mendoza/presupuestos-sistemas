@@ -1,6 +1,6 @@
 import { asc, eq, ilike, or, and, inArray } from "drizzle-orm";
 import type { DB } from "@/db/cliente";
-import { equipos, itemsAlternativa } from "@/db/schema";
+import { equipos, itemsAlternativa, user } from "@/db/schema";
 import { ErrorNegocio } from "./datos";
 
 export type EquipoEntrada = {
@@ -21,8 +21,14 @@ export async function listarEquipos(db: DB, filtro: { q?: string; soloPendientes
   }
   if (filtro.soloPendientes) condiciones.push(eq(equipos.revisado, false));
   return db
-    .select()
+    .select({
+      id: equipos.id, nombre: equipos.nombre, marca: equipos.marca, modelo: equipos.modelo,
+      descripcion: equipos.descripcion, categoria: equipos.categoria, origen: equipos.origen,
+      revisado: equipos.revisado, createdAt: equipos.createdAt, updatedAt: equipos.updatedAt,
+      creadoPor: user.name,
+    })
     .from(equipos)
+    .leftJoin(user, eq(equipos.creadoPor, user.id))
     .where(condiciones.length ? and(...condiciones) : undefined)
     .orderBy(asc(equipos.categoria), asc(equipos.nombre));
 }
@@ -31,8 +37,8 @@ export async function contarPendientes(db: DB): Promise<number> {
   return (await db.select({ id: equipos.id }).from(equipos).where(eq(equipos.revisado, false))).length;
 }
 
-export async function crearEquipo(db: DB, datos: EquipoEntrada) {
-  const [e] = await db.insert(equipos).values({ ...datos, origen: "manual", revisado: true }).returning();
+export async function crearEquipo(db: DB, usuarioId: string, datos: EquipoEntrada) {
+  const [e] = await db.insert(equipos).values({ ...datos, creadoPor: usuarioId, origen: "manual", revisado: true }).returning();
   return e;
 }
 

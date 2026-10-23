@@ -46,7 +46,7 @@ export default async function PaginaCatalogo({
             <div className="panel p-6 text-sm text-suave">
               {q || soloPendientes ? "Ningún equipo coincide con el filtro." : "El catálogo está vacío. Agrega el primer equipo."}
             </div>
-          ) : <TablaEquipos equipos={equipos} todos={todos} />}
+          ) : <TablaEquipos key={`${q}:${soloPendientes}`} equipos={equipos} todos={todos} />}
         </div>
 
         <aside className="panel h-fit p-5 lg:sticky lg:top-8">

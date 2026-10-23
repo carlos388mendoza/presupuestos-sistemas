@@ -104,6 +104,7 @@ export const equipos = pgTable(
     // 'ia' = creado automáticamente desde una cotización
     origen: text("origen", { enum: ["manual", "ia"] }).notNull().default("manual"),
     revisado: boolean("revisado").notNull().default(true),
+    creadoPor: text("creado_por").references(() => user.id, { onDelete: "set null" }),
     createdAt: creadoEn(),
     updatedAt: actualizadoEn(),
   },
