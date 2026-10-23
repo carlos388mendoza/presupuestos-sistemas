@@ -33,7 +33,6 @@ export function NavegacionApp({ children, usuario, pendientes, puedeCrear, puede
   const router = useRouter();
   const [menuMovil, setMenuMovil] = useState(false);
   const [menuUsuario, setMenuUsuario] = useState(false);
-  const [buscar, setBuscar] = useState(false);
   const [busquedaGlobal, setBusquedaGlobal] = useState(false);
   const [ayudaAtajos, setAyudaAtajos] = useState(false);
   const inicio = ruta === "/presupuestos";
