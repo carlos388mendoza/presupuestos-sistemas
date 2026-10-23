@@ -1,4 +1,15 @@
 export type ModoTema = "claro" | "oscuro" | "automatico";
+const EVENTO_TEMA = "presupuestos:tema";
+
+export function suscribirTema(actualizar: () => void): () => void {
+  if (typeof window === "undefined") return () => {};
+  window.addEventListener(EVENTO_TEMA, actualizar);
+  window.addEventListener("storage", actualizar);
+  return () => {
+    window.removeEventListener(EVENTO_TEMA, actualizar);
+    window.removeEventListener("storage", actualizar);
+  };
+}
 
 export function obtenerTema(): ModoTema {
   if (typeof window === "undefined") return "automatico";
@@ -18,6 +29,7 @@ export function aplicarTema(modo: ModoTema): void {
   if (typeof window === "undefined") return;
   window.localStorage.setItem("tema", modo);
   document.documentElement.classList.toggle("dark", esOscuro(modo));
+  window.dispatchEvent(new Event(EVENTO_TEMA));
 }
 
 export function iniciarTema(): void {
