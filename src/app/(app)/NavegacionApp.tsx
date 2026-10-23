@@ -2,10 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { NOMBRES_ROL } from "@/lib/datos";
 import { BotonSalir } from "./BotonSalir";
+import { BusquedaGlobal } from "@/components/BusquedaGlobal";
 
 type Rol = keyof typeof NOMBRES_ROL;
 function Icono({ tipo, className = "size-5" }: { tipo: "home" | "box" | "users" | "plus" | "menu" | "close" | "chevron" | "right" | "search"; className?: string }) {
@@ -27,10 +28,55 @@ export function NavegacionApp({ children, usuario, pendientes, puedeCrear, puede
   children: React.ReactNode; usuario: { name: string; email: string; role: Rol }; pendientes: number; puedeCrear: boolean; puedeUsuarios: boolean;
 }) {
   const ruta = usePathname();
+  const router = useRouter();
   const [menuMovil, setMenuMovil] = useState(false);
   const [menuUsuario, setMenuUsuario] = useState(false);
   const [buscar, setBuscar] = useState(false);
+  const [busquedaGlobal, setBusquedaGlobal] = useState(false);
+  const [ayudaAtajos, setAyudaAtajos] = useState(false);
   const inicio = ruta === "/presupuestos";
+
+  useEffect(() => {
+    function esCampoEditable(objetivo: EventTarget | null) {
+      if (!(objetivo instanceof HTMLElement)) return false;
+      const etiqueta = objetivo.tagName;
+      return etiqueta === "INPUT" || etiqueta === "TEXTAREA" || etiqueta === "SELECT" || objetivo.isContentEditable;
+    }
+
+    function manejarTecla(e: KeyboardEvent) {
+      const mod = e.metaKey || e.ctrlKey;
+      if (mod && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setBusquedaGlobal(true);
+        return;
+      }
+      if (mod && e.key.toLowerCase() === "n" && puedeCrear) {
+        e.preventDefault();
+        router.push("/presupuestos/nuevo");
+        return;
+      }
+      if (mod && e.key === "/") {
+        e.preventDefault();
+        setAyudaAtajos(true);
+        return;
+      }
+      if (e.key === "Escape") {
+        setBusquedaGlobal(false);
+        setAyudaAtajos(false);
+        setMenuMovil(false);
+        setMenuUsuario(false);
+        return;
+      }
+      if (e.key === "?" && !mod && !esCampoEditable(e.target)) {
+        e.preventDefault();
+        setAyudaAtajos(true);
+      }
+    }
+
+    window.addEventListener("keydown", manejarTecla);
+    return () => window.removeEventListener("keydown", manejarTecla);
+  }, [puedeCrear, router]);
+
   const secciones = [
     { titulo: "GENERAL", enlaces: [{ href: "/presupuestos", texto: "Presupuestos", icono: "home" as const, badge: undefined }] },
     { titulo: "CATÁLOGO", enlaces: [{ href: "/catalogo", texto: "Catálogo de equipos", icono: "box" as const, badge: pendientes }] },
@@ -114,5 +160,23 @@ export function NavegacionApp({ children, usuario, pendientes, puedeCrear, puede
         <div className="mt-1 px-3 py-2"><BotonSalir/></div>
       </section>
     </div>}
+  <BusquedaGlobal abierto={busquedaGlobal} onCerrar={() => setBusquedaGlobal(false)} />
+  {ayudaAtajos && (
+    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/40 p-4">
+      <div role="dialog" aria-modal="true" aria-label="Atajos de teclado" className="panel w-full max-w-md p-5">
+        <h2 className="mb-3 font-semibold">Atajos de teclado</h2>
+        <ul className="space-y-2 text-sm">
+          <li><span className="cifra rounded bg-fondo px-2 py-1">Ctrl/Cmd + K</span> Buscar en todo</li>
+          <li><span className="cifra rounded bg-fondo px-2 py-1">Ctrl/Cmd + N</span> Nuevo presupuesto</li>
+          <li><span className="cifra rounded bg-fondo px-2 py-1">Ctrl/Cmd + /</span> Mostrar esta ayuda</li>
+          <li><span className="cifra rounded bg-fondo px-2 py-1">?</span> Mostrar esta ayuda</li>
+          <li><span className="cifra rounded bg-fondo px-2 py-1">Esc</span> Cerrar ventanas</li>
+        </ul>
+        <div className="mt-4 flex justify-end">
+          <button type="button" className="btn-secundario" onClick={() => setAyudaAtajos(false)}>Cerrar</button>
+        </div>
+      </div>
+    </div>
+  )}
   </div>;
 }
