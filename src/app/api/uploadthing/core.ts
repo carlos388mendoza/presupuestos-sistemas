@@ -4,8 +4,8 @@ import { UploadThingError } from "uploadthing/server";
 import { db } from "@/db";
 import { user } from "@/db/schema";
 import { puedeCrearPresupuestos } from "@/lib/datos";
-import { borrarArchivo, leerArchivo } from "@/lib/archivos";
-import { procesarCotizacion } from "@/lib/procesar-cotizacion";
+import { borrarArchivo } from "@/lib/archivos";
+import { registrarCotizacion } from "@/lib/procesar-cotizacion";
 import { obtenerUsuario } from "@/lib/sesion";
 
 const f = createUploadthing();
@@ -44,10 +44,9 @@ export const ourFileRouter = {
         }
 
         const almacenamiento = { nombreGuardado: file.key, almacenamiento: "uploadthing" as const };
-        const buffer = await leerArchivo(file.key, "uploadthing");
-        return await procesarCotizacion(
+        return await registrarCotizacion(
           { id: usuario.id, name: usuario.name, email: usuario.email, role: usuario.role },
-          { nombre: file.name, mime: file.type, tamano: file.size, buffer },
+          { nombre: file.name, mime: file.type, tamano: file.size },
           almacenamiento,
         );
       } catch (error) {

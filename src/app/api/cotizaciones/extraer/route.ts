@@ -3,15 +3,14 @@ import { obtenerUsuario } from "@/lib/sesion";
 import { puedeCrearPresupuestos } from "@/lib/datos";
 import { TAMANO_MAXIMO, TIPOS_PERMITIDOS } from "@/lib/archivos";
 import { MENSAJE_ARCHIVO_GRANDE } from "@/lib/limites";
-import { procesarCotizacion } from "@/lib/procesar-cotizacion";
+import { registrarCotizacion } from "@/lib/procesar-cotizacion";
 
 // Máximo del plan gratis (Hobby) de Vercel con Fluid compute: 300 segundos.
 export const maxDuration = 300;
 
 /**
- * Recibe el archivo de una cotización, lo guarda y (si la IA está configurada)
- * devuelve un borrador de alternativa para que el usuario lo revise.
- * Nada se guarda en el presupuesto hasta que el usuario confirma.
+ * Recibe y guarda el archivo. La lectura con IA se solicita después, aparte,
+ * para que el formulario pueda mostrar la cotización en cuanto se suba.
  */
 export async function POST(req: Request) {
   const usuario = await obtenerUsuario();
@@ -34,7 +33,7 @@ export async function POST(req: Request) {
 
   const buffer = Buffer.from(await archivo.arrayBuffer());
   try {
-    return NextResponse.json(await procesarCotizacion(usuario, {
+    return NextResponse.json(await registrarCotizacion(usuario, {
       nombre: archivo.name,
       mime: archivo.type,
       tamano: archivo.size,

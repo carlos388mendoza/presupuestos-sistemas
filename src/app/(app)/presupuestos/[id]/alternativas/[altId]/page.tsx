@@ -36,7 +36,9 @@ export default async function EditarAlternativa({ params }: { params: Promise<{ 
         presupuestoId={id}
         partida={{ id: partida.id, nombre: partida.nombre }}
         catalogo={catalogo}
+        usuarioId={usuario.id}
         usarUploadThingDropzone={process.env.ARCHIVOS_STORAGE === "uploadthing"}
+        usarSubidaDirectaBlob={process.env.ARCHIVOS_STORAGE === "blob" || (!process.env.ARCHIVOS_STORAGE && Boolean(process.env.VERCEL))}
         iniciales={{
           id: alternativa.id,
           proveedor: alternativa.proveedor,

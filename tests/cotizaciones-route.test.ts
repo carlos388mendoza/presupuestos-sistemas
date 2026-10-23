@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   obtenerUsuario: vi.fn(),
   puedeCrearPresupuestos: vi.fn(),
-  procesarCotizacion: vi.fn(),
+  registrarCotizacion: vi.fn(),
 }));
 
 vi.mock("@/lib/sesion", () => ({ obtenerUsuario: mocks.obtenerUsuario }));
@@ -12,16 +12,14 @@ vi.mock("@/lib/archivos", () => ({
   TAMANO_MAXIMO: 4 * 1024 * 1024,
   TIPOS_PERMITIDOS: { "application/pdf": "pdf" },
 }));
-vi.mock("@/lib/procesar-cotizacion", () => ({ procesarCotizacion: mocks.procesarCotizacion }));
+vi.mock("@/lib/procesar-cotizacion", () => ({ registrarCotizacion: mocks.registrarCotizacion }));
 
 import { POST } from "@/app/api/cotizaciones/extraer/route";
 
 const creador = { id: "ana", name: "Ana", email: "ana@example.com", role: "creador" as const };
 
 function requestWithFile(file: File): Request {
-  const form = new FormData();
-  form.set("archivo", file);
-  return { formData: async () => form } as Request;
+  return { formData: async () => ({ get: () => file }) } as unknown as Request;
 }
 
 describe("POST /api/cotizaciones/extraer", () => {
@@ -29,7 +27,7 @@ describe("POST /api/cotizaciones/extraer", () => {
     vi.clearAllMocks();
     mocks.obtenerUsuario.mockResolvedValue(creador);
     mocks.puedeCrearPresupuestos.mockReturnValue(true);
-    mocks.procesarCotizacion.mockResolvedValue({ archivoId: "archivo-1", archivoNombre: "cotizacion.pdf" });
+    mocks.registrarCotizacion.mockResolvedValue({ archivoId: "archivo-1", archivoNombre: "cotizacion.pdf" });
   });
 
   it("rechaza archivos mayores a 4 MB antes de leer su contenido", async () => {
@@ -41,7 +39,7 @@ describe("POST /api/cotizaciones/extraer", () => {
     expect(response.status).toBe(400);
     expect(await response.json()).toMatchObject({ error: "El archivo pasa de 4 MB. Comprime el PDF o toma una foto más liviana e intenta de nuevo." });
     expect(leerContenido).not.toHaveBeenCalled();
-    expect(mocks.procesarCotizacion).not.toHaveBeenCalled();
+    expect(mocks.registrarCotizacion).not.toHaveBeenCalled();
   });
 
   it("requiere una sesión antes de leer el formulario", async () => {
@@ -60,7 +58,7 @@ describe("POST /api/cotizaciones/extraer", () => {
     const response = await POST(requestWithFile(archivo));
 
     expect(response.status).toBe(200);
-    expect(mocks.procesarCotizacion).toHaveBeenCalledWith(
+    expect(mocks.registrarCotizacion).toHaveBeenCalledWith(
       creador,
       expect.objectContaining({ nombre: "cotizacion.pdf", mime: "application/pdf", tamano: archivo.size }),
     );

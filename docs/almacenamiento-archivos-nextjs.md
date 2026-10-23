@@ -6,17 +6,22 @@ La aplicación puede guardar las cotizaciones localmente, en Vercel Blob privado
 
 1. En el proyecto de Vercel: **Storage → Create → Blob**, acceso **Private**, conectado a todos los entornos. Vercel agrega solo las credenciales.
 2. `ARCHIVOS_STORAGE=blob` en las variables del proyecto (dentro de Vercel es el valor por defecto si se deja vacío).
-3. Los archivos se guardan como `cotizaciones/<uuid>.<ext>` con `access: "private"`. Nadie puede abrirlos con su URL; `/api/archivos/[id]` comprueba permisos y los lee con `get()` del SDK.
+3. Los archivos se guardan como `cotizaciones/<id-usuario>/<uuid>.<ext>` con `access: "private"`. Nadie puede abrirlos con su URL; `/api/archivos/[id]` comprueba permisos y los lee con `get()` del SDK.
 4. Para probar en tu computadora, pon `ARCHIVOS_STORAGE=blob` y el `BLOB_READ_WRITE_TOKEN` del almacenamiento en tu `.env`. Las descargas siempre pasan por `/api/archivos/[id]`, que comprueba la sesión y los permisos del presupuesto antes de leer el archivo.
+
+En Blob, la pantalla sube el archivo directamente desde el navegador al almacenamiento privado, con un token temporal emitido por `/api/archivos/subida` después de validar la sesión y el rol. La app registra el archivo y procesa la lectura con IA en una solicitud aparte, así la espera de la IA no retrasa la subida. En desarrollo, usa un Blob token válido; la subida directa no necesita que Blob llame de vuelta a `localhost`.
 
 ## Componentes que ya vienen listos
 
-La pantalla de alternativas ya incluye el control de selección, el estado de subida, los mensajes de error y el enlace al archivo:
+La pantalla de alternativas ya incluye el control de selección, el progreso de subida, los mensajes de error y el enlace al archivo:
 
-- `src/app/(app)/presupuestos/[id]/alternativas/EditorAlternativa.tsx`: componente de interfaz; manda el archivo como `FormData`.
-- `src/app/api/cotizaciones/extraer/route.ts`: valida sesión, tipo y tamaño, guarda el archivo y opcionalmente extrae los datos de la cotización.
+- `src/app/(app)/presupuestos/[id]/alternativas/EditorAlternativa.tsx`: usa subida directa desde el navegador en Blob y UploadThing; los otros proveedores usan `FormData`.
+- `src/app/api/archivos/subida/route.ts`: autoriza tokens privados de Blob, limitados por usuario, tipo y tamaño.
+- `src/app/api/archivos/registrar/route.ts`: verifica los metadatos de Blob y registra el archivo.
+- `src/app/api/cotizaciones/extraer/route.ts`: recibe y guarda archivos de los proveedores que usan `FormData`.
+- `src/app/api/cotizaciones/[archivoId]/extraer/route.ts`: lee el archivo ya guardado y devuelve los datos extraídos por IA.
 - `src/app/api/archivos/[id]/route.ts`: sirve el archivo solo después de validar acceso.
-- `src/lib/archivos.ts`: adaptador de almacenamiento local/UploadThing/S3.
+- `src/lib/archivos.ts`: adaptador de almacenamiento local/Blob/UploadThing/S3.
 
 El componente existente ya usa el flujo. Para una pantalla propia de Next.js, el patrón de subida es:
 
@@ -30,15 +35,15 @@ async function subirCotizacion(file: File) {
   });
   const result = await response.json();
   if (!response.ok) throw new Error(result.error ?? "No se pudo subir el archivo");
-  return result as { archivoId: string; archivoNombre: string; aviso?: string };
+  return result as { archivoId: string; archivoNombre: string };
 }
 ```
 
-No establezcas manualmente `Content-Type`: el navegador agrega el boundary correcto para `FormData`. La ruta devuelve un `archivoId`; al guardar la alternativa, la base de datos lo asocia con ella. El enlace de lectura es `/api/archivos/<archivoId>`.
+No establezcas manualmente `Content-Type`: el navegador agrega el boundary correcto para `FormData`. La ruta devuelve un `archivoId`; la pantalla solicita la lectura de IA aparte, de modo que la subida no espera al modelo. Al guardar la alternativa, la base de datos asocia el archivo con ella. El enlace de lectura es `/api/archivos/<archivoId>`.
 
 ## UploadThing
 
-Al configurar `ARCHIVOS_STORAGE=uploadthing`, las pantallas para crear y editar alternativas usan el componente oficial `UploadDropzone`. Acepta PDF, imágenes, Excel `.xlsx` y Word `.docx`. El endpoint valida la sesión y el rol antes de permitir la subida, exige ACL privada desde el inicio y, al terminar, registra el archivo y devuelve el mismo borrador que se obtiene con los demás proveedores. Si UploadThing no admite la ACL privada, la subida falla antes de aceptar el archivo. En los otros modos de almacenamiento se conserva la zona de carga de la aplicación.
+Al configurar `ARCHIVOS_STORAGE=uploadthing`, las pantallas para crear y editar alternativas usan el componente oficial `UploadDropzone`. Acepta PDF, imágenes, Excel `.xlsx` y Word `.docx`. El endpoint valida la sesión y el rol antes de permitir la subida, exige ACL privada desde el inicio y registra el archivo al terminar. Después la pantalla solicita la lectura con IA por separado. Si UploadThing no admite la ACL privada, la subida falla antes de aceptar el archivo. En los otros modos de almacenamiento se conserva la zona de carga de la aplicación.
 
 **Requisito del plan:** UploadThing confirma que los archivos privados solo están disponibles en planes de pago. El plan gratuito publica los archivos y cualquier persona que tenga su URL puede abrirlos; no lo uses para las cotizaciones internas de esta aplicación. Consulta [regiones y controles ACL de UploadThing](https://docs.uploadthing.com/concepts/regions-acl). Para mantener los archivos privados sin pagar un plan de UploadThing, usa Cloudflare R2 o AWS S3 siguiendo las secciones de abajo.
 
