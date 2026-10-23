@@ -514,6 +514,42 @@ export async function reabrir(db: DB, actor: Actor, presupuestoId: string) {
  * Un archivo se puede ver si lo subió el actor, si es admin o si es dueño del presupuesto que lo usa.
  * El aprobador ve las cotizaciones que ya están en algún presupuesto (las necesita para decidir).
  */
+/* ------------------------------------------------------------------ */
+/* Búsqueda global                                                    */
+/* ------------------------------------------------------------------ */
+
+export type ResultadoBusquedaGlobal = {
+  presupuestos: { id: string; nombre: string; restaurante: string; estado: string; autor: string }[];
+  equipos: { id: string; nombre: string; marca: string; modelo: string; categoria: string; revisado: boolean }[];
+  usuarios: { id: string; name: string; email: string; role: string }[];
+};
+
+export async function buscarGlobal(db: DB, actor: Actor, consulta: string): Promise<ResultadoBusquedaGlobal> {
+  const q = consulta.trim().toLowerCase();
+  const todosPresupuestos = await listarPresupuestos(db, actor);
+  const presupuestos = todosPresupuestos
+    .filter((p) => !q || p.textoBusqueda.includes(q))
+    .slice(0, 8)
+    .map((p) => ({ id: p.id, nombre: p.nombre, restaurante: p.restaurante, estado: p.estado, autor: p.autor }));
+
+  const todosEquipos = await (await import("./catalogo")).listarEquipos(db, q ? { q: consulta.trim() } : {});
+  const equipos = todosEquipos.slice(0, 8).map((e) => ({
+    id: e.id, nombre: e.nombre, marca: e.marca, modelo: e.modelo, categoria: e.categoria, revisado: e.revisado,
+  }));
+
+  let usuarios: ResultadoBusquedaGlobal["usuarios"] = [];
+  if (actor.role === "admin") {
+    const { listarUsuarios } = await import("./usuarios");
+    const todos = await listarUsuarios(db);
+    usuarios = todos
+      .filter((u) => !q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q))
+      .slice(0, 8)
+      .map((u) => ({ id: u.id, name: u.name, email: u.email, role: u.role }));
+  }
+
+  return { presupuestos, equipos, usuarios };
+}
+
 export async function puedeVerArchivo(db: DB, actor: Actor, archivoId: string): Promise<boolean> {
   const [a] = await db.select().from(archivos).where(eq(archivos.id, archivoId));
   if (!a) return false;
