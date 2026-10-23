@@ -49,7 +49,7 @@ export default async function PaginaCatalogo({
           ) : <TablaEquipos key={`${q}:${soloPendientes}`} equipos={equipos} todos={todos} />}
         </div>
 
-        <aside className="panel h-fit p-5 lg:sticky lg:top-8">
+        <aside className="panel h-fit p-5 lg:sticky lg:top-4">
           <ModalFormulario titulo="Agregar equipo">
             <FormAccion action={crearEquipo} limpiarAlTerminar className="formulario">
               <div className="grid gap-x-4 gap-y-5 sm:grid-cols-2">
