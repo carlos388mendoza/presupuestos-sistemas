@@ -58,7 +58,7 @@ textarea,
   @apply inline-flex items-center justify-center gap-2 rounded-md px-3.5 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50;
 }
 @utility btn-primario {
-  @apply btn bg-tinta text-white hover:bg-tinta-2;
+  @apply btn bg-tinta text-papel hover:bg-tinta-2;
 }
 @utility btn-secundario {
   @apply btn border border-linea bg-papel text-tinta hover:border-tinta;
@@ -126,20 +126,64 @@ select.campo {
   }
 }
 
+/* Modo oscuro: negro cálido (como la wiki de Grupo Comidas), sin grises ni azulados en
+   fondos, paneles ni bordes. El verde de USD y el azul de HNL solo se usan en textos.
+   Todos los textos cumplen contraste 4.5:1 o más sobre fondo, papel y sus fondos "claro". */
 html.dark {
-  --color-tinta: #e6edf3;
-  --color-tinta-2: #b6c2cf;
-  --color-fondo: #0d1117;
-  --color-papel: #161b22;
-  --color-linea: #30363d;
-  --color-linea-2: #21262d;
-  --color-suave: #8b949e;
+  color-scheme: dark; /* barras de scroll y controles nativos oscuros */
+  --color-tinta: #f2f0ef; /* texto principal; también fondo del botón principal */
+  --color-tinta-2: #d6cfcd;
+  --color-fondo: #141010; /* página y menú lateral */
+  --color-papel: #1b1616; /* tarjetas, paneles, modales, campos y encabezado */
+  --color-linea: #2a2222; /* bordes muy sutiles */
+  --color-linea-2: #211b1b; /* divisores tenues y fondo de etiquetas neutras */
+  --color-suave: #b3a9a7; /* texto secundario */
   --color-usd: #3fb950;
-  --color-usd-claro: #1b2e20;
+  --color-usd-claro: #1a221a;
   --color-hnl: #58a6ff;
-  --color-hnl-claro: #1a2a3d;
+  --color-hnl-claro: #261f1f; /* seleccionado / al pasar el mouse; el azul queda solo en el texto */
   --color-aviso: #d29922;
-  --color-aviso-claro: #2a2416;
+  --color-aviso-claro: #2a2014;
   --color-peligro: #f85149;
-  --color-peligro-claro: #2a1a18;
+  --color-peligro-claro: #2c1816;
+}
+/* La palomita de la casilla marcada va del color del papel para verse sobre el fondo claro (tinta). */
+html.dark .casilla:checked {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231b1616' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E");
+}
+/* Menú lateral, menú móvil y encabezado: mismo negro que la página (en modo claro siguen blancos). */
+html.dark .menu-lateral {
+  background-color: var(--color-fondo);
+}
+/* Detalles en blanco que resaltan sobre el negro (solo modo oscuro):
+   - elemento seleccionado del menú: fondo blanco y texto negro;
+   - botones secundarios: sin fondo, borde blanco tenue y texto blanco. */
+html.dark .menu-lateral a[aria-current="page"],
+html.dark nav[aria-label="Navegación móvil"] a[aria-current="page"] {
+  background-color: var(--color-tinta);
+  color: var(--color-papel);
+}
+/* Barra inferior en celular: ícono activo en círculo blanco y su texto en blanco. */
+html.dark .icono-activo {
+  background-color: var(--color-tinta);
+  color: var(--color-papel);
+}
+html.dark nav[aria-label="Navegación móvil"] .text-hnl {
+  color: var(--color-tinta);
+}
+html.dark .avatar-usuario {
+  background-color: var(--color-tinta);
+  color: var(--color-papel);
+}
+html.dark .btn-secundario {
+  background-color: transparent;
+  border-color: rgb(242 240 239 / 0.35);
+  color: var(--color-tinta);
+}
+html.dark .btn-secundario:hover {
+  border-color: var(--color-tinta);
+}
+/* Flecha de los select en el gris cálido del texto secundario, no gris azulado. */
+html.dark select.campo {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23b3a9a7' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
 }

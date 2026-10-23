@@ -10,7 +10,7 @@ export function EnlaceNav({ href, children }: { href: string; children: React.Re
       href={href}
       aria-current={activo ? "page" : undefined}
       className={`flex shrink-0 items-center gap-2 rounded-md px-3 py-2 text-sm font-medium ${
-        activo ? "bg-tinta text-white" : "text-tinta-2 hover:bg-fondo"
+        activo ? "bg-tinta text-papel" : "text-tinta-2 hover:bg-fondo"
       }`}
     >
       {children}
