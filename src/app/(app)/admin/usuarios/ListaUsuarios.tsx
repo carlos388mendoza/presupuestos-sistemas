@@ -15,7 +15,10 @@ type Usuario = {
 
 type Filtro = "todos" | "activos" | "inactivos";
 
-function AccionesUsuario({ usuario }: { usuario: Usuario }) {
+// `vista` distingue la tabla (computadora) de las tarjetas (celular): ambas existen en la página
+// y sus campos necesitan id distintos para que cada etiqueta apunte al campo visible.
+function AccionesUsuario({ usuario, vista }: { usuario: Usuario; vista: "tabla" | "tarjeta" }) {
+  const id = `${vista}-${usuario.id}`;
   return (
     <details className="relative">
       <summary aria-label={`Acciones de ${usuario.name}`} className="flex size-9 cursor-pointer list-none items-center justify-center rounded-md text-suave hover:bg-fondo hover:text-tinta focus-visible:outline-2 focus-visible:outline-hnl [&::-webkit-details-marker]:hidden">
@@ -27,8 +30,8 @@ function AccionesUsuario({ usuario }: { usuario: Usuario }) {
         <FormAccion action={cambiarRol} enLinea className="flex items-end gap-2">
           <input type="hidden" name="id" value={usuario.id}/>
           <div className="min-w-0 flex-1">
-            <label className="etiqueta" htmlFor={`role-${usuario.id}`}>Rol</label>
-            <select id={`role-${usuario.id}`} name="role" defaultValue={usuario.role} className="campo py-2">
+            <label className="etiqueta" htmlFor={`role-${id}`}>Rol</label>
+            <select id={`role-${id}`} name="role" defaultValue={usuario.role} className="campo py-2">
               <option value="creador">{NOMBRES_ROL.creador}</option>
               <option value="aprobador">{NOMBRES_ROL.aprobador}</option>
               <option value="admin">{NOMBRES_ROL.admin}</option>
@@ -52,10 +55,10 @@ function AccionesUsuario({ usuario }: { usuario: Usuario }) {
           <summary className="cursor-pointer rounded-md px-3 py-2 text-sm font-medium text-tinta-2 hover:bg-fondo">Cambiar contraseña</summary>
           <FormAccion action={restablecerContrasena} limpiarAlTerminar className="mt-2 space-y-2 px-1">
             <input type="hidden" name="id" value={usuario.id}/>
-            <label className="sr-only" htmlFor={`password-${usuario.id}`}>Nueva contraseña para {usuario.name}</label>
-            <input id={`password-${usuario.id}`} name="password" type="text" minLength={8} required autoComplete="off" placeholder="Nueva contraseña" className="campo"/>
-            <label className="sr-only" htmlFor={`confirm-password-${usuario.id}`}>Confirmar nueva contraseña para {usuario.name}</label>
-            <input id={`confirm-password-${usuario.id}`} name="confirmPassword" type="text" minLength={8} required autoComplete="off" placeholder="Confirmar nueva contraseña" className="campo"/>
+            <label className="sr-only" htmlFor={`password-${id}`}>Nueva contraseña para {usuario.name}</label>
+            <input id={`password-${id}`} name="password" type="text" minLength={8} required autoComplete="off" placeholder="Nueva contraseña" className="campo"/>
+            <label className="sr-only" htmlFor={`confirm-password-${id}`}>Confirmar nueva contraseña para {usuario.name}</label>
+            <input id={`confirm-password-${id}`} name="confirmPassword" type="text" minLength={8} required autoComplete="off" placeholder="Confirmar nueva contraseña" className="campo"/>
             <button className="btn-secundario w-full">Guardar contraseña</button>
           </FormAccion>
         </details>
@@ -144,7 +147,7 @@ export function ListaUsuarios({ usuarios, actualId }: { usuarios: Usuario[]; act
                 <td className="px-4 py-3"><span className="block truncate text-tinta-2" title={usuario.email}>{usuario.email}</span></td>
                 <td className="px-4 py-3"><span className="inline-flex max-w-full truncate rounded-full border border-linea-2 bg-papel px-2.5 py-1 text-xs font-medium text-tinta-2">{NOMBRES_ROL[usuario.role]}</span></td>
                 <td className="px-4 py-3"><span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${usuario.activo ? "bg-hnl-claro text-hnl" : "bg-fondo text-suave"}`}>{usuario.activo ? "Activo" : "Inactivo"}</span></td>
-                <td className="px-3 py-3 text-right"><AccionesUsuario usuario={usuario}/></td>
+                <td className="px-3 py-3 text-right"><AccionesUsuario usuario={usuario} vista="tabla"/></td>
               </tr>
             ))}
           </tbody>
@@ -161,7 +164,7 @@ export function ListaUsuarios({ usuarios, actualId }: { usuarios: Usuario[]; act
                 <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${usuario.activo ? "bg-hnl-claro text-hnl" : "bg-fondo text-suave"}`}>{usuario.activo ? "Activo" : "Inactivo"}</span>
               </div>
             </div>
-            <AccionesUsuario usuario={usuario}/>
+            <AccionesUsuario usuario={usuario} vista="tarjeta"/>
           </li>
         ))}
       </ul>

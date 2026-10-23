@@ -8,6 +8,8 @@ import { aplicarTema, type ModoTema } from "@/lib/tema";
 import { buscarGlobalAction } from "@/actions/busqueda";
 import { marcarListoAccion, reabrirAccion } from "@/actions/presupuestos";
 import type { ResultadoBusquedaGlobal } from "@/lib/datos";
+import type { EstadoAccion } from "@/lib/tipos";
+import { ejemploCafeteriaLaCeiba } from "@/lib/ejemplo-cafeteria";
 
 type Props = { abierto: boolean; onCerrar: () => void; puedeCrear: boolean; puedeUsuarios: boolean };
 
@@ -17,10 +19,12 @@ export function BusquedaGlobal({ abierto, onCerrar, puedeCrear, puedeUsuarios }:
   const [consulta, setConsulta] = useState("");
   const [resultados, setResultados] = useState<ResultadoBusquedaGlobal | null>(null);
   const [cargando, setCargando] = useState(false);
+  const [errorAccion, setErrorAccion] = useState<string | null>(null);
 
   useEffect(() => {
     if (!abierto) return;
     setConsulta("");
+    setErrorAccion(null);
   }, [abierto]);
 
   useEffect(() => {
@@ -60,7 +64,9 @@ export function BusquedaGlobal({ abierto, onCerrar, puedeCrear, puedeUsuarios }:
     };
   }, [abierto, onCerrar]);
 
-  const idPresupuesto = ruta.match(/^\/presupuestos\/([^/]+)$/)?.[1];
+  // Solo presupuestos reales: no la página "nuevo" ni el ejemplo estático.
+  const idRuta = ruta.match(/^\/presupuestos\/([^/]+)$/)?.[1];
+  const idPresupuesto = idRuta && idRuta !== "nuevo" && idRuta !== ejemploCafeteriaLaCeiba.id ? idRuta : undefined;
 
   function ir(destino: string) {
     onCerrar();
@@ -79,16 +85,15 @@ export function BusquedaGlobal({ abierto, onCerrar, puedeCrear, puedeUsuarios }:
     onCerrar();
   }
 
-  async function marcarListo() {
+  async function ejecutar(accion: (id: string) => Promise<EstadoAccion>) {
     if (!idPresupuesto) return;
-    await marcarListoAccion(idPresupuesto);
-    onCerrar();
-    router.refresh();
-  }
-
-  async function reabrir() {
-    if (!idPresupuesto) return;
-    await reabrirAccion(idPresupuesto);
+    setErrorAccion(null);
+    const r = await accion(idPresupuesto).catch(() => ({ error: "No se pudo completar la acción. Intenta de nuevo." }));
+    if (r?.error) {
+      // Se queda abierto para mostrar por qué no se pudo.
+      setErrorAccion(r.error);
+      return;
+    }
     onCerrar();
     router.refresh();
   }
@@ -106,6 +111,11 @@ export function BusquedaGlobal({ abierto, onCerrar, puedeCrear, puedeUsuarios }:
             placeholder="Buscar o ejecutar una acción…"
             className="h-11 w-full border-b border-linea-2 bg-transparent px-4 text-sm outline-none placeholder:text-suave"
           />
+          {errorAccion && (
+            <p role="alert" className="border-b border-linea-2 bg-peligro-claro px-4 py-2 text-sm text-peligro">
+              {errorAccion}
+            </p>
+          )}
           <CommandList className="max-h-[60vh] overflow-y-auto p-2">
             <CommandEmpty>{cargando ? "Cargando…" : "Sin resultados."}</CommandEmpty>
 
@@ -134,11 +144,13 @@ export function BusquedaGlobal({ abierto, onCerrar, puedeCrear, puedeUsuarios }:
               <>
                 <CommandSeparator />
                 <CommandGroup heading="Este presupuesto">
-                  <CommandItem onSelect={() => ir(`/presupuestos/${idPresupuesto}/cotizaciones/nueva`)}>Subir cotización</CommandItem>
+                  {puedeCrear && (
+                    <CommandItem onSelect={() => ir(`/presupuestos/${idPresupuesto}/cotizaciones/nueva`)}>Subir cotización</CommandItem>
+                  )}
                   <CommandItem onSelect={() => window.open(`/api/presupuestos/${idPresupuesto}/excel`, "_blank")}>Descargar Excel</CommandItem>
                   <CommandItem onSelect={() => window.open(`/api/presupuestos/${idPresupuesto}/pdf`, "_blank")}>Descargar PDF</CommandItem>
-                  <CommandItem onSelect={() => marcarListo()}>Marcar como listo</CommandItem>
-                  <CommandItem onSelect={() => reabrir()}>Reabrir</CommandItem>
+                  <CommandItem onSelect={() => ejecutar(marcarListoAccion)}>Marcar como listo</CommandItem>
+                  <CommandItem onSelect={() => ejecutar(reabrirAccion)}>Reabrir</CommandItem>
                 </CommandGroup>
               </>
             )}

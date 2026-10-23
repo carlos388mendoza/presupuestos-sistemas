@@ -77,7 +77,7 @@ export default async function PaginaPresupuestos({ searchParams }: { searchParam
             <p className="mt-2 text-xs text-suave">{verTodo ? `Creado por ${p.autor}` : `Actualizado ${fecha.format(p.updatedAt)}`}</p>
           </Link>)}
         </div>
-        <div className="panel hidden overflow-x-auto xl:block">
+        <div className="panel relative hidden overflow-x-auto xl:block">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-linea text-left text-suave">
