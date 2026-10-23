@@ -1,14 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { aplicarTema, obtenerTema, type ModoTema } from "@/lib/tema";
+import { useSyncExternalStore } from "react";
+import { aplicarTema, obtenerTema, suscribirTema, type ModoTema } from "@/lib/tema";
 
 export function SelectorTema() {
-  const [tema, setTema] = useState<ModoTema>("automatico");
-
-  useEffect(() => {
-    setTema(obtenerTema());
-  }, []);
+  const tema = useSyncExternalStore(suscribirTema, obtenerTema, () => "automatico");
 
   return (
     <label className="flex items-center gap-2 text-sm">
@@ -17,7 +13,6 @@ export function SelectorTema() {
         value={tema}
         onChange={(evento) => {
           const modo = evento.target.value as ModoTema;
-          setTema(modo);
           aplicarTema(modo);
         }}
         className="campo w-auto"

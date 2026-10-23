@@ -10,8 +10,14 @@ import { marcarListoAccion, reabrirAccion } from "@/actions/presupuestos";
 import type { ResultadoBusquedaGlobal } from "@/lib/datos";
 
 type Props = { abierto: boolean; onCerrar: () => void; puedeCrear: boolean; puedeUsuarios: boolean };
+type ContenidoProps = Omit<Props, "abierto">;
 
 export function BusquedaGlobal({ abierto, onCerrar, puedeCrear, puedeUsuarios }: Props) {
+  if (!abierto) return null;
+  return <ContenidoBusquedaGlobal onCerrar={onCerrar} puedeCrear={puedeCrear} puedeUsuarios={puedeUsuarios} />;
+}
+
+function ContenidoBusquedaGlobal({ onCerrar, puedeCrear, puedeUsuarios }: ContenidoProps) {
   const router = useRouter();
   const ruta = usePathname();
   const [consulta, setConsulta] = useState("");
@@ -19,12 +25,6 @@ export function BusquedaGlobal({ abierto, onCerrar, puedeCrear, puedeUsuarios }:
   const [cargando, setCargando] = useState(false);
 
   useEffect(() => {
-    if (!abierto) return;
-    setConsulta("");
-  }, [abierto]);
-
-  useEffect(() => {
-    if (!abierto) return;
     let cancelado = false;
     const temporizador = setTimeout(() => {
       setCargando(true);
@@ -41,10 +41,9 @@ export function BusquedaGlobal({ abierto, onCerrar, puedeCrear, puedeUsuarios }:
       cancelado = true;
       clearTimeout(temporizador);
     };
-  }, [consulta, abierto]);
+  }, [consulta]);
 
   useEffect(() => {
-    if (!abierto) return;
     const overflowAnterior = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     function tecla(e: KeyboardEvent) {
@@ -58,7 +57,7 @@ export function BusquedaGlobal({ abierto, onCerrar, puedeCrear, puedeUsuarios }:
       document.body.style.overflow = overflowAnterior;
       window.removeEventListener("keydown", tecla);
     };
-  }, [abierto, onCerrar]);
+  }, [onCerrar]);
 
   const idPresupuesto = ruta.match(/^\/presupuestos\/([^/]+)$/)?.[1];
 
@@ -92,8 +91,6 @@ export function BusquedaGlobal({ abierto, onCerrar, puedeCrear, puedeUsuarios }:
     onCerrar();
     router.refresh();
   }
-
-  if (!abierto) return null;
 
   return (
     <div className="fixed inset-0 z-[80] flex items-start justify-center bg-black/40 p-4 pt-[12vh]" onClick={onCerrar}>
