@@ -37,7 +37,6 @@ export default async function PaginaCatalogo({
       <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
         <div className="min-w-0">
           <FiltrosCatalogo
-            key={`${q}|${soloPendientes}`}
             busquedaInicial={q}
             soloPendientesInicial={soloPendientes}
             totalPendientes={totalPendientes}

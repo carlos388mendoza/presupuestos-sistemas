@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -15,6 +14,7 @@ export function FiltrosCatalogo({
 }) {
   const router = useRouter();
   const temporizador = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const [busqueda, setBusqueda] = useState(busquedaInicial);
   const [soloPendientes, setSoloPendientes] = useState(soloPendientesInicial);
 
@@ -47,6 +47,7 @@ export function FiltrosCatalogo({
     >
       <label htmlFor="q" className="sr-only">Buscar</label>
       <input
+        ref={inputRef}
         id="q"
         name="q"
         value={busqueda}
@@ -73,7 +74,12 @@ export function FiltrosCatalogo({
         Solo por revisar ({totalPendientes})
       </label>
       <button type="submit" className="sr-only">Buscar equipos</button>
-      {(busqueda || soloPendientes) && <Link href="/catalogo" className="btn-texto">Limpiar</Link>}
+      {(busqueda || soloPendientes) && <button type="button" className="btn-texto" onClick={() => {
+        if (temporizador.current) clearTimeout(temporizador.current);
+        setBusqueda("");
+        setSoloPendientes(false);
+        router.replace("/catalogo", { scroll: false });
+      }}>Limpiar</button>}
     </form>
   );
 }
