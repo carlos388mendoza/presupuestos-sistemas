@@ -59,6 +59,23 @@ describe("archivo de cotización en alternativas", () => {
   });
 });
 
+describe("límites de montos", () => {
+  it("rechaza con un mensaje claro un precio que no cabe en la base de datos", async () => {
+    const { db, ana, pa } = await armar();
+    await expect(
+      datos.guardarAlternativa(db, ana, {
+        partidaId: pa.id, proveedor: "Caro", tipoCompra: "nacional", notas: "", archivoId: null,
+        items: [item(2_500_000_000, "HNL")], // L 25,000,000.00
+      }),
+    ).rejects.toThrow(datos.MENSAJE_PRECIO_MAXIMO);
+    // El máximo exacto sí se guarda.
+    await datos.guardarAlternativa(db, ana, {
+      partidaId: pa.id, proveedor: "Al límite", tipoCompra: "nacional", notas: "", archivoId: null,
+      items: [item(2_147_483_647, "HNL")],
+    });
+  });
+});
+
 describe("permisos", () => {
   it("un creador no ve presupuestos ajenos", async () => {
     const { db, beto, ana, admin, p } = await armar();
