@@ -47,16 +47,19 @@ export function NavegacionApp({ children, usuario, pendientes, puedeCrear, puede
       const mod = e.metaKey || e.ctrlKey;
       if (mod && e.key.toLowerCase() === "k") {
         e.preventDefault();
+        e.stopImmediatePropagation();
         setBusquedaGlobal(true);
         return;
       }
       if (mod && e.key.toLowerCase() === "n" && puedeCrear) {
         e.preventDefault();
+        e.stopImmediatePropagation();
         router.push("/presupuestos/nuevo");
         return;
       }
       if (mod && e.key === "/") {
         e.preventDefault();
+        e.stopImmediatePropagation();
         setAyudaAtajos(true);
         return;
       }
@@ -69,12 +72,13 @@ export function NavegacionApp({ children, usuario, pendientes, puedeCrear, puede
       }
       if (e.key === "?" && !mod && !esCampoEditable(e.target)) {
         e.preventDefault();
+        e.stopImmediatePropagation();
         setAyudaAtajos(true);
       }
     }
 
-    window.addEventListener("keydown", manejarTecla);
-    return () => window.removeEventListener("keydown", manejarTecla);
+    window.addEventListener("keydown", manejarTecla, true);
+    return () => window.removeEventListener("keydown", manejarTecla, true);
   }, [puedeCrear, router]);
 
   const secciones = [
@@ -106,17 +110,14 @@ export function NavegacionApp({ children, usuario, pendientes, puedeCrear, puede
         <Link href="/presupuestos" className="flex min-w-0 items-center gap-2"><Image src="/logo-grupo-comidas-circulo-96.png" alt="Grupo Comidas" width={96} height={96} className="size-9 shrink-0"/><span className="truncate font-semibold">Presupuestos</span></Link>
       </div>
       <div className="flex items-center gap-2">
-        <form action="/presupuestos" className="hidden h-11 w-[min(22rem,32vw)] items-center gap-2 rounded-full border border-linea px-4 xl:flex">
+        <button type="button" onClick={() => setBusquedaGlobal(true)} className="hidden h-11 w-[min(22rem,32vw)] items-center gap-2 rounded-full border border-linea px-4 text-left xl:flex" aria-label="Buscar en todo">
           <Icono tipo="search" className="size-[18px] shrink-0 text-suave"/>
-          <input name="buscar" placeholder="Buscar" aria-label="Buscar en presupuestos" className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-suave"/>
-          <button className="sr-only">Buscar</button>
-        </form>
-        {buscar && <form action="/presupuestos" className="flex h-10 min-w-0 items-center gap-1 rounded-full border border-linea px-3 xl:hidden">
-          <Icono tipo="search" className="size-4 shrink-0 text-suave"/>
-          <input autoFocus name="buscar" placeholder="Buscar" aria-label="Buscar en presupuestos" className="w-[min(40vw,18rem)] min-w-0 bg-transparent text-sm outline-none placeholder:text-suave"/>
-          <button className="sr-only">Buscar</button>
-        </form>}
-        <button type="button" aria-label={buscar ? "Cerrar búsqueda" : "Buscar presupuestos"} onClick={() => setBuscar(!buscar)} className="shrink-0 rounded-md p-2 text-tinta hover:bg-fondo xl:hidden"><Icono tipo={buscar ? "close" : "search"}/></button>
+          <span className="min-w-0 flex-1 truncate text-sm text-suave">Buscar…</span>
+          <kbd className="shrink-0 rounded bg-fondo px-1.5 py-0.5 text-[10px] text-suave">Ctrl K</kbd>
+        </button>
+        <button type="button" onClick={() => setBusquedaGlobal(true)} className="shrink-0 rounded-md p-2 text-tinta hover:bg-fondo xl:hidden" aria-label="Buscar en todo">
+          <Icono tipo="search"/>
+        </button>
       </div>
     </header>
     <main className="min-w-0 px-4 pb-24 pt-5 sm:px-6 xl:ml-80 xl:px-8 xl:py-7">
@@ -143,7 +144,7 @@ export function NavegacionApp({ children, usuario, pendientes, puedeCrear, puede
           </footer>
         </nav>
       </div>}
-      <div className="mx-auto max-w-6xl">{children}</div>
+      <div className="mx-auto max-w-7xl">{children}</div>
     </main>
     <nav aria-label="Navegación móvil" className="fixed inset-x-0 bottom-0 z-40 grid h-[4.5rem] grid-cols-4 border-t border-linea bg-papel/95 px-2 pb-[env(safe-area-inset-bottom)] backdrop-blur xl:hidden">
       <Link href="/presupuestos" aria-label="Inicio, presupuestos" className={`flex flex-col items-center justify-center gap-0.5 ${inicio ? "text-hnl" : "text-suave"}`}><span className={inicio ? "flex size-9 items-center justify-center rounded-full bg-hnl-claro" : "flex size-9 items-center justify-center"}><Icono tipo="home"/></span><span className="text-[11px]">Inicio</span></Link>
