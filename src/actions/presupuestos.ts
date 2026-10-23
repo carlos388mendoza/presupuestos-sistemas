@@ -214,14 +214,24 @@ export async function guardarAlternativasAgrupadas(entrada: EntradaAlternativasA
   redirect(destino);
 }
 
-export async function marcarListoAccion(presupuestoId: string): Promise<void> {
-  const u = await usuarioOError();
-  await datos.marcarListo(db, u, presupuestoId);
-  revalidatePath(`/presupuestos/${presupuestoId}`);
+export async function marcarListoAccion(presupuestoId: string): Promise<EstadoAccion> {
+  try {
+    const u = await usuarioOError();
+    await datos.marcarListo(db, u, presupuestoId);
+    revalidatePath(`/presupuestos/${presupuestoId}`);
+    return null;
+  } catch (e) {
+    return aEstado(e);
+  }
 }
 
-export async function reabrirAccion(presupuestoId: string): Promise<void> {
-  const u = await usuarioOError();
-  await datos.reabrir(db, u, presupuestoId);
-  revalidatePath(`/presupuestos/${presupuestoId}`);
+export async function reabrirAccion(presupuestoId: string): Promise<EstadoAccion> {
+  try {
+    const u = await usuarioOError();
+    await datos.reabrir(db, u, presupuestoId);
+    revalidatePath(`/presupuestos/${presupuestoId}`);
+    return null;
+  } catch (e) {
+    return aEstado(e);
+  }
 }

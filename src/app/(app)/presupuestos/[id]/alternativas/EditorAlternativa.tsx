@@ -44,11 +44,13 @@ export type ValoresIniciales = {
 };
 
 const NUEVO = "__nuevo__";
+// Las filas iniciales usan claves fijas (`i0`, `i1`…) para que el servidor y el navegador
+// generen los mismos id; el contador solo se usa para filas agregadas en el navegador.
 let contador = 0;
 const clave = () => `f${++contador}`;
 
-function filaVacia(moneda: Moneda): Fila {
-  return { clave: clave(), equipo: "", origenNuevo: "manual", descripcion: "", marca: "", modelo: "", cantidad: "1", precio: "", moneda };
+function filaVacia(moneda: Moneda, claveFila: string = clave()): Fila {
+  return { clave: claveFila, equipo: "", origenNuevo: "manual", descripcion: "", marca: "", modelo: "", cantidad: "1", precio: "", moneda };
 }
 
 function filaEstaVacia(f: Fila) {
@@ -80,10 +82,10 @@ export function EditorAlternativa({
   const [archivo, setArchivo] = useState(iniciales?.archivo ?? null);
   const [filas, setFilas] = useState<Fila[]>(() =>
     iniciales?.items.length
-      ? iniciales.items.map((it) => {
+      ? iniciales.items.map((it, i) => {
           const e = it.equipoId ? porId.get(it.equipoId) : undefined;
           return {
-            clave: clave(),
+            clave: `i${i}`,
             equipo: e ? e.id : "",
             origenNuevo: "manual",
             descripcion: it.descripcion,
@@ -94,7 +96,7 @@ export function EditorAlternativa({
             moneda: it.moneda,
           };
         })
-      : [filaVacia("HNL")],
+      : [filaVacia("HNL", "i0")],
   );
 
   const [leyendo, setLeyendo] = useState(false);
@@ -468,7 +470,7 @@ export function EditorAlternativa({
             );
           })}
         </div>
-        <div className="hidden min-w-0 overflow-x-auto xl:block">
+        <div className="relative hidden min-w-0 overflow-x-auto xl:block">
           <table className="w-full min-w-[980px] text-sm">
             <thead>
               <tr className="text-left text-suave">

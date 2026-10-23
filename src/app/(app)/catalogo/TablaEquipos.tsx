@@ -96,7 +96,7 @@ export function TablaEquipos({ equipos, todos }: { equipos: Equipo[]; todos: Equ
           {abierto === e.id && <div className="mt-3"><DetallesEquipo e={e} todos={todos} /></div>}
         </article>)}
       </div>
-      <div className="hidden overflow-x-auto xl:block">
+      <div className="relative hidden overflow-x-auto xl:block">
         <table className="w-full min-w-[1120px] text-left text-sm">
           <thead className="bg-fondo text-suave"><tr>
             <th className="w-10 px-3 py-3"><span className="sr-only">Seleccionar</span></th>
