@@ -71,8 +71,8 @@ export default async function PaginaPresupuestos({ searchParams }: { searchParam
         <>
         <div className="grid gap-3 xl:hidden">
           {resultados.map((p) => <Link key={p.id} href={`/presupuestos/${p.id}`} className="panel block p-4 transition-colors hover:bg-papel">
-            <div className="flex items-start justify-between gap-3"><span className="font-semibold">{p.nombre}{p.id === ejemploCafeteriaLaCeiba.id && " · Ejemplo"}</span><Etiqueta tipo={p.estado}>{p.estado === "listo" ? "Listo" : "Borrador"}</Etiqueta></div>
-            <p className="mt-1 text-sm text-suave">{p.restaurante} · {p.tipo === "apertura" ? "Apertura" : "Remodelación"}</p>
+            <div className="flex min-w-0 items-start justify-between gap-3"><span className="min-w-0 break-words font-semibold">{p.nombre}{p.id === ejemploCafeteriaLaCeiba.id && " · Ejemplo"}</span><span className="shrink-0"><Etiqueta tipo={p.estado}>{p.estado === "listo" ? "Listo" : "Borrador"}</Etiqueta></span></div>
+            <p className="mt-1 break-words text-sm text-suave">{p.restaurante} · {p.tipo === "apertura" ? "Apertura" : "Remodelación"}</p>
             <div className="mt-4 flex flex-wrap gap-x-5 gap-y-1 text-sm"><span className="cifra text-usd">{formatear(p.resumen.total.USD, "USD")}</span><span className="cifra text-hnl">{formatear(p.resumen.total.HNL, "HNL")}</span></div>
             <p className="mt-2 text-xs text-suave">{verTodo ? `Creado por ${p.autor}` : `Actualizado ${fecha.format(p.updatedAt)}`}</p>
           </Link>)}

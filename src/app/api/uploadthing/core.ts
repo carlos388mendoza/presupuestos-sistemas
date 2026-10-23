@@ -14,6 +14,8 @@ const config = {
   "image/jpeg": { maxFileSize: "4MB", maxFileCount: 1, acl: "private" },
   "image/png": { maxFileSize: "4MB", maxFileCount: 1, acl: "private" },
   "image/webp": { maxFileSize: "4MB", maxFileCount: 1, acl: "private" },
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": { maxFileSize: "4MB", maxFileCount: 1, acl: "private" },
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": { maxFileSize: "4MB", maxFileCount: 1, acl: "private" },
 } as const;
 
 async function limpiarArchivoPrivado(key: string) {

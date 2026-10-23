@@ -38,7 +38,7 @@ No establezcas manualmente `Content-Type`: el navegador agrega el boundary corre
 
 ## UploadThing
 
-Al configurar `ARCHIVOS_STORAGE=uploadthing`, las pantallas para crear y editar alternativas usan el componente oficial `UploadDropzone`. El endpoint valida la sesión y el rol antes de permitir la subida, exige ACL privada desde el inicio y, al terminar, registra el archivo y devuelve el mismo borrador que se obtiene con los demás proveedores. Si UploadThing no admite la ACL privada, la subida falla antes de aceptar el archivo. En los otros modos de almacenamiento se conserva la zona de carga de la aplicación.
+Al configurar `ARCHIVOS_STORAGE=uploadthing`, las pantallas para crear y editar alternativas usan el componente oficial `UploadDropzone`. Acepta PDF, imágenes, Excel `.xlsx` y Word `.docx`. El endpoint valida la sesión y el rol antes de permitir la subida, exige ACL privada desde el inicio y, al terminar, registra el archivo y devuelve el mismo borrador que se obtiene con los demás proveedores. Si UploadThing no admite la ACL privada, la subida falla antes de aceptar el archivo. En los otros modos de almacenamiento se conserva la zona de carga de la aplicación.
 
 **Requisito del plan:** UploadThing confirma que los archivos privados solo están disponibles en planes de pago. El plan gratuito publica los archivos y cualquier persona que tenga su URL puede abrirlos; no lo uses para las cotizaciones internas de esta aplicación. Consulta [regiones y controles ACL de UploadThing](https://docs.uploadthing.com/concepts/regions-acl). Para mantener los archivos privados sin pagar un plan de UploadThing, usa Cloudflare R2 o AWS S3 siguiendo las secciones de abajo.
 

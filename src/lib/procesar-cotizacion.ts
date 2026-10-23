@@ -18,7 +18,7 @@ export async function procesarCotizacion(
 ): Promise<RespuestaExtraccion> {
   if (!puedeCrearPresupuestos(usuario)) throw new Error("Tu rol no permite subir cotizaciones.");
   const extension = TIPOS_PERMITIDOS[archivo.mime];
-  if (!extension) throw new Error("Formato no permitido. Sube un PDF, JPG, PNG o WEBP.");
+  if (!extension) throw new Error("Formato no permitido. Sube PDF, JPG, PNG, WEBP, Excel (.xlsx) o Word (.docx).");
   if (archivo.tamano > TAMANO_MAXIMO || archivo.buffer.byteLength > TAMANO_MAXIMO) {
     throw new Error(MENSAJE_ARCHIVO_GRANDE);
   }

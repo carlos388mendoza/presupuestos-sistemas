@@ -1,4 +1,4 @@
-import { asc, eq, ilike, or, and } from "drizzle-orm";
+import { asc, eq, ilike, or, and, inArray } from "drizzle-orm";
 import type { DB } from "@/db/cliente";
 import { equipos, itemsAlternativa } from "@/db/schema";
 import { ErrorNegocio } from "./datos";
@@ -47,6 +47,17 @@ export async function aprobarEquipo(db: DB, id: string) {
 export async function eliminarEquipo(db: DB, id: string) {
   // Los ítems que lo usaban conservan su descripción y quedan sin vincular.
   await db.delete(equipos).where(eq(equipos.id, id));
+}
+
+export async function aprobarEquipos(db: DB, ids: string[]) {
+  if (!ids.length) return;
+  await db.update(equipos).set({ revisado: true }).where(inArray(equipos.id, ids));
+}
+
+export async function eliminarEquipos(db: DB, ids: string[]) {
+  if (!ids.length) return;
+  // Los ítems conservan su descripción y quedan sin vincular por onDelete: set null.
+  await db.delete(equipos).where(inArray(equipos.id, ids));
 }
 
 /** Une un equipo duplicado (origen) con uno existente (destino) y borra el duplicado. */

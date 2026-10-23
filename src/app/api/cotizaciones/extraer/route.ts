@@ -26,7 +26,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "No se recibió ningún archivo." }, { status: 400 });
   }
   if (!TIPOS_PERMITIDOS[archivo.type]) {
-    return NextResponse.json({ error: "Formato no permitido. Sube un PDF, JPG, PNG o WEBP." }, { status: 400 });
+    return NextResponse.json({ error: "Formato no permitido. Sube PDF, JPG, PNG, WEBP, Excel (.xlsx) o Word (.docx)." }, { status: 400 });
   }
   if (archivo.size > TAMANO_MAXIMO) {
     return NextResponse.json({ error: MENSAJE_ARCHIVO_GRANDE }, { status: 400 });

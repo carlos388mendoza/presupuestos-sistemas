@@ -56,8 +56,24 @@ export default function PaginaEjemploCafeteria() {
                         {alternativa.elegida ? "Seleccionada" : "Alternativa"}
                       </Etiqueta>
                     </header>
-                    <div className="overflow-x-auto p-4">
-                      <table className="w-full min-w-[440px] text-sm">
+                    <div className="space-y-3 p-4 sm:hidden">
+                      {alternativa.items.map((item) => (
+                        <div key={item.descripcion} className="min-w-0 rounded-md border border-linea-2 p-3">
+                          <p className="break-words text-sm font-medium">{item.descripcion}</p>
+                          <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+                            <span className="text-suave">Cantidad</span><span className="cifra text-right">{item.cantidad}</span>
+                            <span className="text-suave">Precio unitario</span><span className="cifra text-right">{formatear(item.precioUnitarioCentavos, item.moneda)}</span>
+                            <span className="text-suave">Subtotal</span><span className="cifra text-right">{formatear(subtotalItem(item.cantidad, item.precioUnitarioCentavos), item.moneda)}</span>
+                          </div>
+                        </div>
+                      ))}
+                      <p className="break-words border-t border-linea-2 pt-3 text-right text-sm font-semibold">
+                        Total de la alternativa: <span className="cifra">{formatear(totales.USD, "USD")} · {formatear(totales.HNL, "HNL")}</span>
+                      </p>
+                      <p className="break-words text-xs text-suave">{alternativa.notas}</p>
+                    </div>
+                    <div className="hidden p-4 sm:block">
+                      <table className="w-full table-fixed text-sm">
                         <thead>
                           <tr className="text-left text-suave">
                             <th className="pb-2 font-medium">Equipo / servicio</th>

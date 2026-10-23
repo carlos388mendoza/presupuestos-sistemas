@@ -14,6 +14,8 @@ export const TIPOS_PERMITIDOS: Record<string, string> = {
   "image/jpeg": "jpg",
   "image/png": "png",
   "image/webp": "webp",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "xlsx",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
 };
 
 export type AlmacenamientoArchivo = "local" | "s3" | "uploadthing" | "blob";
