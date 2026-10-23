@@ -30,7 +30,7 @@ Llena el `.env`:
 | `BETTER_AUTH_SECRET` | Texto largo y aleatorio (`openssl rand -base64 32`) |
 | `BETTER_AUTH_URL` | `http://localhost:3000` en desarrollo; la dirección pública `https://...` en producción |
 | `OPENROUTER_API_KEY` | Llave de openrouter.ai (con límite de crédito) |
-| `OPENROUTER_MODEL` | ID de un modelo con visión/PDF y structured outputs |
+| `OPENROUTER_MODEL` | ID de un modelo con visión/PDF y structured outputs (no uno de voz/“tts”: no puede leer cotizaciones) |
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NAME` | Primer administrador |
 
 Las cotizaciones se guardan en la carpeta `uploads/` en desarrollo y en **Vercel Blob privado** al publicar en Vercel (`ARCHIVOS_STORAGE=blob`, es el valor por defecto dentro de Vercel). También se puede usar UploadThing (`uploadthing`) o AWS S3/Cloudflare R2 (`s3`); pasos y variables en la [guía de almacenamiento](docs/almacenamiento-archivos-nextjs.md). En todos los casos los archivos se ven solo por `/api/archivos/[id]`, que revisa que seas el dueño, administrador o aprobador (este último solo los que ya están en un presupuesto). Tamaño máximo por archivo: 4 MB (Vercel no acepta envíos de más de 4.5 MB).
@@ -94,7 +94,7 @@ src/
     excel.ts                    Generación del Excel
   proxy.ts                      Redirección al login
 scripts/                        Migración y seed
-tests/                          Pruebas con Vitest (usan un Postgres temporal, no tocan Neon)
+tests/                          Pruebas con Vitest (usan PGlite en memoria, no tocan Neon)
 drizzle/                        Migraciones SQL
 ```
 
@@ -113,4 +113,8 @@ drizzle/                        Migraciones SQL
 
 ## Trabajo en equipo
 
-Cada tarea en su rama (`feat/...`), integrada con Pull Request a `main`. Los cambios al esquema (`src/db/schema.ts`) los hace una persona a la vez y siempre con su migración (`npm run db:generate`).
+Cada tarea en su rama (`feat/...` o `fix/...`), integrada con Pull Request a `main`; nada se sube directo a `main`. Para que un PR cierre su issue al unirse, escribe `Closes #N` (en inglés) en la descripción.
+
+- **CI:** cada PR corre `.github/workflows/ci.yml` (lint, `tsc`, `npm test` y `npm run build`), y Vercel genera una vista previa que usa la branch `desarrollo` de Neon. Une el PR solo si ambos pasan.
+- **Después de bajar `main`**, corre `npm ci`: si el otro agregó una librería y no la instalas, la app falla con "Module not found".
+- **Esquema:** los cambios a `src/db/schema.ts` los hace una persona a la vez y siempre con su migración (`npm run db:generate`). La migración se aplica primero en `desarrollo` y, después de unir el PR, en producción.
