@@ -174,3 +174,42 @@ export async function guardarAlternativa(entrada: EntradaAlternativa): Promise<E
   }
   redirect(destino);
 }
+
+const esquemaAlternativasAgrupadas = z.object({
+  presupuestoId: z.string().min(1),
+  alternativas: z.array(z.object({
+    partidaId: z.string().min(1),
+    proveedor: texto("El proveedor", 150),
+    tipoCompra: z.enum(["nacional", "internacional"]),
+    notas: textoOpcional(),
+    archivoId: z.string().nullable(),
+    items: z.array(z.object({
+      equipoId: z.string().nullable(),
+      crearEquipo: z.boolean(),
+      origenEquipo: z.enum(["manual", "ia"]),
+      descripcion: texto("La descripción de cada ítem", 300),
+      marca: textoOpcional(120),
+      modelo: textoOpcional(120),
+      cantidad: z.number().positive("Las cantidades deben ser mayores que cero."),
+      precioUnitarioCentavos: z.number().int().nonnegative("Los precios no pueden ser negativos."),
+      moneda: z.enum(["USD", "HNL"]),
+    })).min(1),
+  })).min(1),
+});
+
+export type EntradaAlternativasAgrupadas = z.input<typeof esquemaAlternativasAgrupadas>;
+
+export async function guardarAlternativasAgrupadas(entrada: EntradaAlternativasAgrupadas): Promise<EstadoAccion> {
+  let destino: string;
+  try {
+    const usuario = await usuarioOError();
+    const datosEntrada = esquemaAlternativasAgrupadas.parse(entrada);
+    await datos.guardarAlternativasAgrupadas(db, usuario, datosEntrada.presupuestoId, datosEntrada.alternativas);
+    revalidatePath(`/presupuestos/${datosEntrada.presupuestoId}`);
+    revalidatePath("/catalogo");
+    destino = `/presupuestos/${datosEntrada.presupuestoId}`;
+  } catch (error) {
+    return aEstado(error);
+  }
+  redirect(destino);
+}

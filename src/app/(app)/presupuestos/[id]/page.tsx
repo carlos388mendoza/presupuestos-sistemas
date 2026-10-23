@@ -57,6 +57,11 @@ export default async function PaginaPresupuesto({ params }: { params: Promise<{ 
           <div className="flex flex-wrap items-center gap-3">
             <h1 className="titulo-pagina">{p.nombre}</h1>
             <Etiqueta tipo={p.estado}>{p.estado === "listo" ? "Listo" : "Borrador"}</Etiqueta>
+            {modificar && p.partidas.length > 0 && (
+              <Link href={`/presupuestos/${p.id}/cotizaciones/nueva`} className="btn-secundario">
+                Subir cotización
+              </Link>
+            )}
             {modificar && (
               <ModalFormulario
                 titulo="Editar presupuesto"

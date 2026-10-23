@@ -12,6 +12,8 @@ export type ItemBorrador = {
   cantidad: number;
   precioUnitarioCentavos: number;
   moneda: Moneda;
+  partidaId?: string;
+  partidaNombre?: string;
 };
 
 export type BorradorAlternativa = {

@@ -121,7 +121,12 @@ function clienteIA() {
   return clienteCache;
 }
 
-export async function extraerCotizacion(archivo: Buffer, mime: string, nombre: string): Promise<CotizacionExtraida> {
+export async function extraerCotizacion(
+  archivo: Buffer,
+  mime: string,
+  nombre: string,
+  categorias?: { id: string; nombre: string }[],
+): Promise<CotizacionExtraida & { items: (CotizacionExtraida["items"][number] & { partidaId?: string })[] }> {
   if (!extraccionDisponible()) {
     throw new ErrorExtraccion("La lectura automática no está configurada (faltan OPENROUTER_API_KEY u OPENROUTER_MODEL).");
   }
@@ -145,6 +150,32 @@ export async function extraerCotizacion(archivo: Buffer, mime: string, nombre: s
 
   let texto: string | null | undefined;
   try {
+    const esquemaConPartidas = categorias?.length
+      ? {
+          ...esquemaJson,
+          properties: {
+            ...esquemaJson.properties,
+            items: {
+              ...esquemaJson.properties.items,
+              items: {
+                ...esquemaJson.properties.items.items,
+                properties: {
+                  ...esquemaJson.properties.items.items.properties,
+                  partidaId: {
+                    type: "string",
+                    enum: categorias.map((categoria) => categoria.id),
+                    description: `Partida existente. Opciones: ${categorias.map((categoria) => `${categoria.id}=${categoria.nombre}`).join("; ")}`,
+                  },
+                },
+                required: [...esquemaJson.properties.items.items.required, "partidaId"],
+              },
+            },
+          },
+        }
+      : esquemaJson;
+    const instrucciones = categorias?.length
+      ? `${INSTRUCCIONES}\n- Clasifica cada producto en la partida existente que mejor corresponda. Devuelve solo su partidaId de las opciones permitidas; nunca inventes partidas.\nPartidas: ${categorias.map((categoria) => `${categoria.id}: ${categoria.nombre}`).join("; ")}`
+      : INSTRUCCIONES;
     const stream = await clienteIA().chat.completions.create({
       model: process.env.OPENROUTER_MODEL!,
       temperature: 0,
@@ -152,7 +183,7 @@ export async function extraerCotizacion(archivo: Buffer, mime: string, nombre: s
       max_completion_tokens: 3000,
       stream: true,
       messages: [
-        { role: "system", content: INSTRUCCIONES },
+        { role: "system", content: instrucciones },
         {
           role: "user",
           // El SDK de OpenAI no tipa el bloque "file" de OpenRouter
@@ -161,7 +192,7 @@ export async function extraerCotizacion(archivo: Buffer, mime: string, nombre: s
       ],
       response_format: {
         type: "json_schema",
-        json_schema: { name: "cotizacion", strict: true, schema: esquemaJson as unknown as Record<string, unknown> },
+        json_schema: { name: "cotizacion", strict: true, schema: esquemaConPartidas as unknown as Record<string, unknown> },
       },
     });
     const fragmentos: string[] = [];
@@ -182,7 +213,10 @@ export async function extraerCotizacion(archivo: Buffer, mime: string, nombre: s
   } catch {
     throw new ErrorExtraccion("La IA devolvió una respuesta que no es JSON válido.");
   }
-  const r = esquemaRespuesta.safeParse(json);
+  const esquemaConPartidas = categorias?.length
+    ? esquemaRespuesta.extend({ items: z.array(esquemaRespuesta.shape.items.element.extend({ partidaId: z.enum(categorias.map((categoria) => categoria.id) as [string, ...string[]]) })) })
+    : esquemaRespuesta;
+  const r = esquemaConPartidas.safeParse(json);
   if (!r.success) throw new ErrorExtraccion("La respuesta de la IA no tiene el formato esperado.");
   return r.data;
 }

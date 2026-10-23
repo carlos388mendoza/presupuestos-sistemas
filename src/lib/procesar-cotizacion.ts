@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { archivos } from "@/db/schema";
 import type { UsuarioActual } from "@/lib/sesion";
-import { puedeCrearPresupuestos } from "@/lib/datos";
+import { ErrorNegocio, obtenerPresupuesto, permisosPresupuesto, puedeCrearPresupuestos } from "@/lib/datos";
 import { borrarArchivo, guardarArchivo, leerArchivo, TAMANO_MAXIMO, TIPOS_PERMITIDOS, type AlmacenamientoArchivo } from "@/lib/archivos";
 import { ErrorExtraccion, extraccionDisponible, extraerCotizacion } from "@/lib/extraccion";
 import { buscarCoincidencia } from "@/lib/coincidencias";
@@ -55,6 +55,7 @@ export async function registrarCotizacion(
 export async function extraerCotizacionRegistrada(
   usuario: UsuarioActual,
   archivoId: string,
+  presupuestoId?: string,
 ): Promise<RespuestaExtraccion> {
   if (!puedeCrearPresupuestos(usuario)) throw new ErrorArchivoCotizacion("Tu rol no permite procesar cotizaciones.");
   const [registro] = await db.select().from(archivos).where(eq(archivos.id, archivoId)).limit(1);
@@ -63,6 +64,23 @@ export async function extraerCotizacionRegistrada(
   }
 
   const base = { archivoId: registro.id, archivoNombre: registro.nombreOriginal };
+  let categorias: { id: string; nombre: string }[] | undefined;
+  if (presupuestoId) {
+    try {
+      const presupuesto = await obtenerPresupuesto(db, usuario, presupuestoId);
+      if (presupuesto.estado !== "borrador" || !permisosPresupuesto(usuario, presupuesto.creadoPor).modificar) {
+        throw new ErrorArchivoCotizacion("Este presupuesto no se puede modificar.");
+      }
+      if (presupuesto.partidas.length === 0) {
+        throw new ErrorArchivoCotizacion("Agrega una partida al presupuesto antes de subir la cotización.");
+      }
+      categorias = presupuesto.partidas.map(({ id, nombre }) => ({ id, nombre }));
+    } catch (error) {
+      if (error instanceof ErrorArchivoCotizacion) throw error;
+      if (error instanceof ErrorNegocio) throw new ErrorArchivoCotizacion(error.message);
+      throw error;
+    }
+  }
   if (!extraccionDisponible()) {
     return {
       ...base,
@@ -75,11 +93,13 @@ export async function extraerCotizacionRegistrada(
       leerArchivo(registro.nombreGuardado, registro.almacenamiento),
       listarEquipos(db),
     ]);
-    const datos = await extraerCotizacion(buffer, registro.mime, registro.nombreOriginal);
+    const datos = await extraerCotizacion(buffer, registro.mime, registro.nombreOriginal, categorias);
+    const nombrePartidaPorId = new Map(categorias?.map((categoria) => [categoria.id, categoria.nombre]));
     const borrador: BorradorAlternativa = {
       proveedor: datos.proveedor,
       tipoCompra: datos.tipoCompra,
       items: datos.items.map((it) => {
+        const item = it as typeof it & { partidaId?: string };
         const coincide = buscarCoincidencia(it, catalogo);
         return {
           equipoId: coincide?.id ?? null,
@@ -91,6 +111,7 @@ export async function extraerCotizacionRegistrada(
           cantidad: it.cantidad,
           precioUnitarioCentavos: aCentavos(it.precioUnitario) ?? 0,
           moneda: it.moneda,
+          ...(item.partidaId ? { partidaId: item.partidaId, partidaNombre: nombrePartidaPorId.get(item.partidaId) } : {}),
         };
       }),
     };
