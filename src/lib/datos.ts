@@ -318,16 +318,20 @@ export async function guardarAlternativa(db: DB, actor: Actor, entrada: Alternat
 
   if (entrada.items.length === 0) throw new ErrorNegocio("Agrega al menos un ítem a la alternativa.");
 
-  if (entrada.archivoId) {
+  let archivoActual: string | null = null;
+  if (entrada.id) {
+    const { alternativa } = await alternativaAccesible(db, actor, entrada.id);
+    if (alternativa.partidaId !== entrada.partidaId) throw new ErrorNegocio("La alternativa no pertenece a esa partida.");
+    archivoActual = alternativa.archivoId;
+  }
+
+  // Se puede adjuntar un archivo propio (o cualquiera si es admin). Al editar, también se
+  // puede conservar el que la alternativa ya tenía, aunque lo haya subido otra persona.
+  if (entrada.archivoId && entrada.archivoId !== archivoActual) {
     const [archivo] = await db.select().from(archivos).where(eq(archivos.id, entrada.archivoId));
     if (!archivo || (archivo.subidoPor !== actor.id && actor.role !== "admin")) {
       throw new ErrorNegocio("El archivo de cotización no es válido.");
     }
-  }
-
-  if (entrada.id) {
-    const { alternativa } = await alternativaAccesible(db, actor, entrada.id);
-    if (alternativa.partidaId !== entrada.partidaId) throw new ErrorNegocio("La alternativa no pertenece a esa partida.");
   }
 
   return db.transaction(async (tx) => {

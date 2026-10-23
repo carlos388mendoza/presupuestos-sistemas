@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
-import { alternativas, equipos } from "@/db/schema";
+import { alternativas, archivos, equipos } from "@/db/schema";
 import * as datos from "@/lib/datos";
 import { buscarCoincidencia } from "@/lib/coincidencias";
 import { cerrarTodo, dbDePrueba, item } from "./ayuda";
@@ -19,6 +19,45 @@ async function armar() {
   });
   return { ...ctx, p, pa, a1, a2 };
 }
+
+describe("archivo de cotización en alternativas", () => {
+  async function archivoDe(db: Awaited<ReturnType<typeof armar>>["db"], subidoPor: string, nombre: string) {
+    const [a] = await db.insert(archivos).values({
+      nombreOriginal: `${nombre}.pdf`, nombreGuardado: `${nombre}-guardado.pdf`, almacenamiento: "local",
+      mime: "application/pdf", tamano: 1000, subidoPor,
+    }).returning();
+    return a.id;
+  }
+
+  it("el dueño puede editar una alternativa cuya cotización subió el admin", async () => {
+    const { db, ana, admin, pa } = await armar();
+    const archivoAdmin = await archivoDe(db, admin.id, "admin");
+    const altId = await datos.guardarAlternativa(db, admin, {
+      partidaId: pa.id, proveedor: "Del admin", tipoCompra: "nacional", notas: "", archivoId: archivoAdmin, items: [item(500, "HNL")],
+    });
+    // Ana corrige un precio: el formulario reenvía el mismo archivo.
+    await datos.guardarAlternativa(db, ana, {
+      id: altId, partidaId: pa.id, proveedor: "Del admin", tipoCompra: "nacional", notas: "", archivoId: archivoAdmin, items: [item(650, "HNL")],
+    });
+    const [a] = await db.select().from(alternativas).where(eq(alternativas.id, altId));
+    expect(a.archivoId).toBe(archivoAdmin);
+  });
+
+  it("no se puede adjuntar un archivo ajeno que la alternativa no tenía", async () => {
+    const { db, ana, beto, pa, a1 } = await armar();
+    const archivoBeto = await archivoDe(db, beto.id, "beto");
+    await expect(
+      datos.guardarAlternativa(db, ana, {
+        id: a1, partidaId: pa.id, proveedor: "A", tipoCompra: "nacional", notas: "", archivoId: archivoBeto, items: [item(1000, "HNL")],
+      }),
+    ).rejects.toThrow(/archivo de cotización no es válido/);
+    await expect(
+      datos.guardarAlternativa(db, ana, {
+        partidaId: pa.id, proveedor: "Nueva", tipoCompra: "nacional", notas: "", archivoId: archivoBeto, items: [item(1000, "HNL")],
+      }),
+    ).rejects.toThrow(/archivo de cotización no es válido/);
+  });
+});
 
 describe("permisos", () => {
   it("un creador no ve presupuestos ajenos", async () => {
