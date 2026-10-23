@@ -1,33 +1,33 @@
 "use client";
 
+import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from "cmdk";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import { authClient } from "@/lib/auth-client";
+import { aplicarTema, type ModoTema } from "@/lib/tema";
 import { buscarGlobalAction } from "@/actions/busqueda";
+import { marcarListoAccion, reabrirAccion } from "@/actions/presupuestos";
 import type { ResultadoBusquedaGlobal } from "@/lib/datos";
 
-type Props = { abierto: boolean; onCerrar: () => void };
+type Props = { abierto: boolean; onCerrar: () => void; puedeCrear: boolean; puedeUsuarios: boolean };
 
-export function BusquedaGlobal({ abierto, onCerrar }: Props) {
+export function BusquedaGlobal({ abierto, onCerrar, puedeCrear, puedeUsuarios }: Props) {
   const router = useRouter();
-  const inputRef = useRef<HTMLInputElement>(null);
+  const ruta = usePathname();
   const [consulta, setConsulta] = useState("");
   const [resultados, setResultados] = useState<ResultadoBusquedaGlobal | null>(null);
   const [cargando, setCargando] = useState(false);
-  const temporizador = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    if (abierto) {
-      setConsulta("");
-      setResultados(null);
-      setTimeout(() => inputRef.current?.focus(), 0);
-    }
+    if (!abierto) return;
+    setConsulta("");
+    setResultados(null);
   }, [abierto]);
 
   useEffect(() => {
     if (!abierto) return;
-    if (temporizador.current) clearTimeout(temporizador.current);
-    temporizador.current = setTimeout(async () => {
+    const t = setTimeout(async () => {
       setCargando(true);
       try {
         const r = await buscarGlobalAction(consulta);
@@ -35,103 +35,121 @@ export function BusquedaGlobal({ abierto, onCerrar }: Props) {
       } finally {
         setCargando(false);
       }
-    }, 250);
-    return () => {
-      if (temporizador.current) clearTimeout(temporizador.current);
-    };
+    }, 200);
+    return () => clearTimeout(t);
   }, [consulta, abierto]);
 
-  useEffect(() => {
-    if (!abierto) return;
-    function tecla(e: KeyboardEvent) {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        onCerrar();
-      }
-    }
-    window.addEventListener("keydown", tecla);
-    return () => window.removeEventListener("keydown", tecla);
-  }, [abierto, onCerrar]);
+  const idPresupuesto = ruta.match(/^\/presupuestos\/([^/]+)$/)?.[1];
 
-  if (!abierto) return null;
-
-  const hayResultados =
-    resultados &&
-    (resultados.presupuestos.length || resultados.equipos.length || resultados.usuarios.length);
-
-  function ir(ruta: string) {
+  function ir(rutaDestino: string) {
     onCerrar();
-    router.push(ruta);
+    router.push(rutaDestino);
+  }
+
+  async function cerrarSesion() {
+    onCerrar();
+    await authClient.signOut();
+    router.replace("/login");
+    router.refresh();
+  }
+
+  async function cambiarTema(modo: ModoTema) {
+    aplicarTema(modo);
+    onCerrar();
+  }
+
+  async function marcarListo() {
+    if (!idPresupuesto) return;
+    await marcarListoAccion(idPresupuesto);
+    onCerrar();
+    router.refresh();
+  }
+
+  async function reabrir() {
+    if (!idPresupuesto) return;
+    await reabrirAccion(idPresupuesto);
+    onCerrar();
+    router.refresh();
   }
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-start justify-center bg-black/40 p-4 pt-[12vh]">
-      <div role="dialog" aria-modal="true" aria-label="Búsqueda global" className="panel w-full max-w-2xl overflow-hidden">
-        <div className="flex items-center gap-2 border-b border-linea-2 px-4 py-3">
-          <input
-            ref={inputRef}
-            value={consulta}
-            onChange={(e) => setConsulta(e.target.value)}
-            placeholder="Buscar presupuestos, equipos, usuarios…"
-            aria-label="Buscar en todo"
-            className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-suave"
-          />
-          {cargando && <span className="text-xs text-suave">Buscando…</span>}
-          <button type="button" className="btn-texto px-0 text-xs" onClick={onCerrar}>Esc</button>
-        </div>
-        <div className="max-h-[60vh] overflow-y-auto p-2">
-          {!resultados && <p className="p-4 text-sm text-suave">Escribe para buscar.</p>}
-          {resultados && !hayResultados && <p className="p-4 text-sm text-suave">Sin resultados.</p>}
-          {resultados?.presupuestos.length ? (
-            <section className="mb-2">
-              <h3 className="px-3 py-2 text-[11px] font-semibold tracking-wide text-suave">Presupuestos</h3>
-              <ul>
-                {resultados.presupuestos.map((p) => (
-                  <li key={p.id}>
-                    <button type="button" onClick={() => ir(`/presupuestos/${p.id}`)} className="flex w-full items-center justify-between gap-3 rounded-md px-3 py-2 text-left hover:bg-fondo">
-                      <span className="min-w-0"><span className="block truncate font-medium">{p.nombre}</span><span className="block truncate text-xs text-suave">{p.restaurante} · {p.autor}</span></span>
-                      <span className="shrink-0 text-xs text-suave">{p.estado === "listo" ? "Listo" : "Borrador"}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ) : null}
-          {resultados?.equipos.length ? (
-            <section className="mb-2">
-              <h3 className="px-3 py-2 text-[11px] font-semibold tracking-wide text-suave">Equipos</h3>
-              <ul>
-                {resultados.equipos.map((e) => (
-                  <li key={e.id}>
-                    <button type="button" onClick={() => ir(`/catalogo?q=${encodeURIComponent(e.nombre)}`)} className="flex w-full items-center justify-between gap-3 rounded-md px-3 py-2 text-left hover:bg-fondo">
-                      <span className="min-w-0"><span className="block truncate font-medium">{e.nombre}</span><span className="block truncate text-xs text-suave">{[e.marca, e.modelo, e.categoria].filter(Boolean).join(" · ")}</span></span>
-                      {!e.revisado && <span className="shrink-0 rounded bg-aviso-claro px-2 py-0.5 text-xs">Por revisar</span>}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ) : null}
-          {resultados?.usuarios.length ? (
-            <section className="mb-2">
-              <h3 className="px-3 py-2 text-[11px] font-semibold tracking-wide text-suave">Usuarios</h3>
-              <ul>
-                {resultados.usuarios.map((u) => (
-                  <li key={u.id}>
-                    <button type="button" onClick={() => ir("/admin/usuarios")} className="flex w-full items-center justify-between gap-3 rounded-md px-3 py-2 text-left hover:bg-fondo">
-                      <span className="min-w-0"><span className="block truncate font-medium">{u.name}</span><span className="block truncate text-xs text-suave">{u.email}</span></span>
-                      <span className="shrink-0 text-xs text-suave">{u.role}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ) : null}
-        </div>
-        <div className="border-t border-linea-2 px-4 py-2 text-xs text-suave">
-          Atajos: Ctrl/Cmd+K buscar · Ctrl/Cmd+N nuevo presupuesto · Ctrl/Cmd+/ ayuda · Esc cerrar
-        </div>
-      </div>
-    </div>
+    <CommandDialog open={abierto} onOpenChange={(o) => { if (!o) onCerrar(); }} label="Búsqueda global">
+      <CommandInput
+        value={consulta}
+        onValueChange={setConsulta}
+        placeholder="Buscar o ejecutar una acción…"
+      />
+      <CommandList>
+        <CommandEmpty>{cargando ? "Buscando…" : "Sin resultados."}</CommandEmpty>
+
+        <CommandGroup heading="Navegación">
+          <CommandItem onSelect={() => ir("/presupuestos")}>Presupuestos</CommandItem>
+          <CommandItem onSelect={() => ir("/catalogo")}>Catálogo de equipos</CommandItem>
+          {puedeUsuarios && <CommandItem onSelect={() => ir("/admin/usuarios")}>Usuarios</CommandItem>}
+          {puedeCrear && <CommandItem onSelect={() => ir("/presupuestos/nuevo")}>Nuevo presupuesto</CommandItem>}
+        </CommandGroup>
+
+        <CommandSeparator />
+
+        <CommandGroup heading="Acciones">
+          <CommandItem onSelect={() => cerrarSesion()}>Cerrar sesión</CommandItem>
+          <CommandItem onSelect={() => cambiarTema("claro")}>Tema: claro</CommandItem>
+          <CommandItem onSelect={() => cambiarTema("oscuro")}>Tema: oscuro</CommandItem>
+          <CommandItem onSelect={() => cambiarTema("automatico")}>Tema: automático</CommandItem>
+        </CommandGroup>
+
+        {idPresupuesto && (
+          <>
+            <CommandSeparator />
+            <CommandGroup heading="Este presupuesto">
+              <CommandItem onSelect={() => ir(`/presupuestos/${idPresupuesto}/cotizaciones/nueva`)}>Subir cotización</CommandItem>
+              <CommandItem onSelect={() => window.open(`/api/presupuestos/${idPresupuesto}/excel`, "_blank")}>Descargar Excel</CommandItem>
+              <CommandItem onSelect={() => window.open(`/api/presupuestos/${idPresupuesto}/pdf`, "_blank")}>Descargar PDF</CommandItem>
+              <CommandItem onSelect={() => marcarListo()}>Marcar como listo</CommandItem>
+              <CommandItem onSelect={() => reabrir()}>Reabrir</CommandItem>
+            </CommandGroup>
+          </>
+        )}
+
+        {resultados?.presupuestos.length ? (
+          <>
+            <CommandSeparator />
+            <CommandGroup heading="Presupuestos">
+              {resultados.presupuestos.map((p) => (
+                <CommandItem key={p.id} onSelect={() => ir(`/presupuestos/${p.id}`)}>
+                  {p.nombre} <span className="text-suave">· {p.restaurante}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </>
+        ) : null}
+
+        {resultados?.equipos.length ? (
+          <>
+            <CommandSeparator />
+            <CommandGroup heading="Equipos">
+              {resultados.equipos.map((e) => (
+                <CommandItem key={e.id} onSelect={() => ir(`/catalogo?q=${encodeURIComponent(e.nombre)}`)}>
+                  {e.nombre} <span className="text-suave">· {[e.marca, e.modelo].filter(Boolean).join(" ")}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </>
+        ) : null}
+
+        {resultados?.usuarios.length ? (
+          <>
+            <CommandSeparator />
+            <CommandGroup heading="Usuarios">
+              {resultados.usuarios.map((u) => (
+                <CommandItem key={u.id} onSelect={() => ir("/admin/usuarios")}>
+                  {u.name} <span className="text-suave">· {u.email}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </>
+        ) : null}
+      </CommandList>
+    </CommandDialog>
   );
 }

@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { NOMBRES_ROL } from "@/lib/datos";
 import { BotonSalir } from "./BotonSalir";
 import { BusquedaGlobal } from "@/components/BusquedaGlobal";
+import { iniciarTema } from "@/lib/tema";
 
 type Rol = keyof typeof NOMBRES_ROL;
 function Icono({ tipo, className = "size-5" }: { tipo: "home" | "box" | "users" | "plus" | "menu" | "close" | "chevron" | "right" | "search"; className?: string }) {
@@ -35,6 +36,10 @@ export function NavegacionApp({ children, usuario, pendientes, puedeCrear, puede
   const [busquedaGlobal, setBusquedaGlobal] = useState(false);
   const [ayudaAtajos, setAyudaAtajos] = useState(false);
   const inicio = ruta === "/presupuestos";
+
+  useEffect(() => {
+    iniciarTema();
+  }, []);
 
   useEffect(() => {
     function esCampoEditable(objetivo: EventTarget | null) {
@@ -161,7 +166,7 @@ export function NavegacionApp({ children, usuario, pendientes, puedeCrear, puede
         <div className="mt-1 px-3 py-2"><BotonSalir/></div>
       </section>
     </div>}
-  <BusquedaGlobal abierto={busquedaGlobal} onCerrar={() => setBusquedaGlobal(false)} />
+  <BusquedaGlobal abierto={busquedaGlobal} onCerrar={() => setBusquedaGlobal(false)} puedeCrear={puedeCrear} puedeUsuarios={puedeUsuarios} />
   {ayudaAtajos && (
     <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/40 p-4">
       <div role="dialog" aria-modal="true" aria-label="Atajos de teclado" className="panel w-full max-w-md p-5">

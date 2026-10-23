@@ -125,3 +125,21 @@ select.campo {
     animation: none !important;
   }
 }
+
+html.dark {
+  --color-tinta: #e6edf3;
+  --color-tinta-2: #b6c2cf;
+  --color-fondo: #0d1117;
+  --color-papel: #161b22;
+  --color-linea: #30363d;
+  --color-linea-2: #21262d;
+  --color-suave: #8b949e;
+  --color-usd: #3fb950;
+  --color-usd-claro: #1b2e20;
+  --color-hnl: #58a6ff;
+  --color-hnl-claro: #1a2a3d;
+  --color-aviso: #d29922;
+  --color-aviso-claro: #2a2416;
+  --color-peligro: #f85149;
+  --color-peligro-claro: #2a1a18;
+}
