@@ -31,7 +31,7 @@ export default async function NuevoPresupuesto() {
   if (!puedeCrearPresupuestos(usuario)) redirect("/presupuestos");
   return (
     <div className="w-full max-w-4xl">
-      <Link href="/presupuestos" className="btn-texto -ml-1.5 mb-2">Volver a presupuestos</Link>
+      <Link href="/presupuestos" className="btn-secundario mb-4">Volver a presupuestos</Link>
       <h1 className="titulo-pagina mb-6">Nuevo presupuesto</h1>
       <FormAccion action={crearPresupuesto} className="panel formulario p-6">
         <CamposPresupuesto />

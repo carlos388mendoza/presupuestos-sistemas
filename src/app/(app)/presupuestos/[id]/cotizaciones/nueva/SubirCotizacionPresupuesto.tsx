@@ -143,7 +143,7 @@ export function SubirCotizacionPresupuesto({ presupuestoId, partidas }: { presup
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <button type="button" className="btn-primario" disabled={guardando} onClick={guardar}>{guardando ? "Guardando…" : "Guardar cotización"}</button>
-            <Link href={`/presupuestos/${presupuestoId}`} className="btn-texto">Cancelar</Link>
+            <Link href={`/presupuestos/${presupuestoId}`} className="btn-secundario">Cancelar</Link>
           </div>
         </section>
       )}

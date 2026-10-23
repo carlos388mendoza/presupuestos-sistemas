@@ -47,7 +47,7 @@ export default async function PaginaPresupuesto({ params }: { params: Promise<{ 
 
   return (
     <>
-      <Link href="/presupuestos" className="btn-texto -ml-1.5 mb-2">Volver a presupuestos</Link>
+      <Link href="/presupuestos" className="btn-secundario mb-4">Volver a presupuestos</Link>
 
       <header className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>

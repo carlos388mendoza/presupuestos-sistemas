@@ -9,7 +9,7 @@ const resumen = resumenPresupuesto(ejemploCafeteriaLaCeiba.partidas);
 export default function PaginaEjemploCafeteria() {
   return (
     <>
-      <Link href="/presupuestos" className="btn-texto -ml-1.5 mb-2">Volver a presupuestos</Link>
+      <Link href="/presupuestos" className="btn-secundario mb-4">Volver a presupuestos</Link>
 
       <header className="mb-6">
         <p className="text-sm text-suave">{ejemploCafeteriaLaCeiba.restaurante} · Remodelación · Datos ficticios</p>

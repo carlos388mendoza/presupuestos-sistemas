@@ -27,7 +27,7 @@ export default async function EditarAlternativa({ params }: { params: Promise<{ 
 
   return (
     <>
-      <Link href={`/presupuestos/${id}#partida-${partida.id}`} className="btn-texto -ml-1.5 mb-2">
+      <Link href={`/presupuestos/${id}#partida-${partida.id}`} className="btn-secundario mb-4">
         Volver a {presupuesto.nombre}
       </Link>
       <h1 className="titulo-pagina">Editar alternativa</h1>

@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { db } from "@/db";
 import { ErrorNegocio, obtenerPresupuesto, permisosPresupuesto } from "@/lib/datos";
 import { requerirUsuario } from "@/lib/sesion";
@@ -18,6 +19,7 @@ export default async function NuevaCotizacionPresupuesto({ params }: { params: P
   if (presupuesto.partidas.length === 0) notFound();
   return (
     <>
+      <Link href={`/presupuestos/${presupuesto.id}`} className="btn-secundario mb-4">Volver al presupuesto</Link>
       <h1 className="titulo-pagina mb-2">Subir cotización</h1>
       <p className="ayuda mb-6">La IA leerá los productos y los sugerirá en las partidas de “{presupuesto.nombre}”. Revisa todo antes de guardar.</p>
       <SubirCotizacionPresupuesto
