@@ -7,10 +7,12 @@ export function FiltrosCatalogo({
   busquedaInicial,
   soloPendientesInicial,
   totalPendientes,
+  children,
 }: {
   busquedaInicial: string;
   soloPendientesInicial: boolean;
   totalPendientes: number;
+  children?: React.ReactNode;
 }) {
   const router = useRouter();
   const temporizador = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -37,49 +39,52 @@ export function FiltrosCatalogo({
   }
 
   return (
-    <form
-      className="mb-4 flex flex-wrap items-center gap-3"
-      role="search"
-      onSubmit={(evento) => {
-        evento.preventDefault();
-        aplicarFiltros(busqueda, soloPendientes);
-      }}
-    >
-      <label htmlFor="q" className="sr-only">Buscar</label>
-      <input
-        ref={inputRef}
-        id="q"
-        name="q"
-        value={busqueda}
-        onChange={(evento) => {
-          const nuevaBusqueda = evento.target.value;
-          setBusqueda(nuevaBusqueda);
-          programarBusqueda(nuevaBusqueda);
+    <div className="mb-4 flex flex-wrap items-center gap-3">
+      <form
+        className="flex min-w-0 flex-1 flex-wrap items-center gap-3"
+        role="search"
+        onSubmit={(evento) => {
+          evento.preventDefault();
+          aplicarFiltros(busqueda, soloPendientes);
         }}
-        placeholder="Buscar por nombre, marca, modelo o categoría"
-        className="campo max-w-sm"
-      />
-      <label className="flex items-center gap-2 text-sm">
+      >
+        <label htmlFor="q" className="sr-only">Buscar</label>
         <input
-          type="checkbox"
-          name="pendientes"
-          value="1"
-          checked={soloPendientes}
+          ref={inputRef}
+          id="q"
+          name="q"
+          value={busqueda}
           onChange={(evento) => {
-            const activado = evento.target.checked;
-            setSoloPendientes(activado);
-            aplicarFiltros(busqueda, activado);
+            const nuevaBusqueda = evento.target.value;
+            setBusqueda(nuevaBusqueda);
+            programarBusqueda(nuevaBusqueda);
           }}
+          placeholder="Buscar por nombre, marca, modelo o categoría"
+          className="campo max-w-sm"
         />
-        Solo por revisar ({totalPendientes})
-      </label>
-      <button type="submit" className="sr-only">Buscar equipos</button>
-      {(busqueda || soloPendientes) && <button type="button" className="btn-texto" onClick={() => {
-        if (temporizador.current) clearTimeout(temporizador.current);
-        setBusqueda("");
-        setSoloPendientes(false);
-        router.replace("/catalogo", { scroll: false });
-      }}>Limpiar</button>}
-    </form>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            name="pendientes"
+            value="1"
+            checked={soloPendientes}
+            onChange={(evento) => {
+              const activado = evento.target.checked;
+              setSoloPendientes(activado);
+              aplicarFiltros(busqueda, activado);
+            }}
+          />
+          Solo por revisar ({totalPendientes})
+        </label>
+        <button type="submit" className="sr-only">Buscar equipos</button>
+        {(busqueda || soloPendientes) && <button type="button" className="btn-texto" onClick={() => {
+          if (temporizador.current) clearTimeout(temporizador.current);
+          setBusqueda("");
+          setSoloPendientes(false);
+          router.replace("/catalogo", { scroll: false });
+        }}>Limpiar</button>}
+      </form>
+      {children && <div className="ml-auto shrink-0">{children}</div>}
+    </div>
   );
 }

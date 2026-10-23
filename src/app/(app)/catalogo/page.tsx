@@ -22,15 +22,24 @@ export default async function PaginaCatalogo({
 
   return (
     <>
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="titulo-pagina">Catálogo de equipos</h1>
-          <p className="ayuda max-w-prose">
-            Los equipos que se usan en las cotizaciones. Cuando una cotización trae un equipo que no está aquí, se agrega
-            solo y queda marcado para revisar.
-          </p>
-        </div>
-        <ModalFormulario titulo="Agregar equipo">
+      <div className="mb-6">
+        <h1 className="titulo-pagina">Catálogo de equipos</h1>
+        <p className="ayuda max-w-prose">
+          Los equipos que se usan en las cotizaciones. Cuando una cotización trae un equipo que no está aquí, se agrega
+          solo y queda marcado para revisar.
+        </p>
+      </div>
+
+      <datalist id="categorias">
+        {categorias.map((c) => <option key={c} value={c} />)}
+      </datalist>
+
+      <FiltrosCatalogo
+        busquedaInicial={q}
+        soloPendientesInicial={soloPendientes}
+        totalPendientes={totalPendientes}
+      >
+        <ModalFormulario titulo="Agregar equipo" triggerClassName="btn-primario whitespace-nowrap">
           <FormAccion action={crearEquipo} limpiarAlTerminar className="formulario">
             <div className="grid gap-x-4 gap-y-5 sm:grid-cols-2">
               <div className="sm:col-span-2"><label className="etiqueta" htmlFor="nuevo-nombre">Nombre</label><input id="nuevo-nombre" name="nombre" required maxLength={200} className="campo" /></div>
@@ -42,17 +51,7 @@ export default async function PaginaCatalogo({
             <button className="btn-primario w-full">Agregar al catálogo</button>
           </FormAccion>
         </ModalFormulario>
-      </div>
-
-      <datalist id="categorias">
-        {categorias.map((c) => <option key={c} value={c} />)}
-      </datalist>
-
-      <FiltrosCatalogo
-        busquedaInicial={q}
-        soloPendientesInicial={soloPendientes}
-        totalPendientes={totalPendientes}
-      />
+      </FiltrosCatalogo>
 
       {equipos.length === 0 ? (
         <div className="panel p-6 text-sm text-suave">
