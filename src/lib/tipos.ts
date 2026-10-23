@@ -28,4 +28,6 @@ export type RespuestaExtraccion = {
   error?: string;
 };
 
+export type RespuestaArchivoSubido = Pick<RespuestaExtraccion, "archivoId" | "archivoNombre">;
+
 export type EstadoAccion = { error?: string; ok?: string } | null;

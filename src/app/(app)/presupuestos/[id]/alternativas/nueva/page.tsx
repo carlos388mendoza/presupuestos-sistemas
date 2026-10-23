@@ -41,7 +41,9 @@ export default async function NuevaAlternativa({
         presupuestoId={id}
         partida={{ id: partida.id, nombre: partida.nombre }}
         catalogo={catalogo}
+      usuarioId={usuario.id}
         usarUploadThingDropzone={process.env.ARCHIVOS_STORAGE === "uploadthing"}
+      usarSubidaDirectaBlob={process.env.ARCHIVOS_STORAGE === "blob" || (!process.env.ARCHIVOS_STORAGE && Boolean(process.env.VERCEL))}
       />
     </>
   );

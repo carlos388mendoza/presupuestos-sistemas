@@ -13,6 +13,7 @@ import { Etiqueta } from "@/components/Etiqueta";
 import { UploadDropzone } from "@/lib/uploadthing";
 import { SelectorEquipo } from "@/components/campos/SelectorEquipo";
 import { DialogoConfirmar } from "@/components/DialogoConfirmar";
+import { upload as subirBlob } from "@vercel/blob/client";
 
 type Fila = {
   clave: string;
@@ -58,14 +59,18 @@ export function EditorAlternativa({
   presupuestoId,
   partida,
   catalogo,
+  usuarioId,
   iniciales,
   usarUploadThingDropzone = false,
+  usarSubidaDirectaBlob = false,
 }: {
   presupuestoId: string;
   partida: { id: string; nombre: string };
   catalogo: EquipoOpcion[];
+  usuarioId: string;
   iniciales?: ValoresIniciales;
   usarUploadThingDropzone?: boolean;
+  usarSubidaDirectaBlob?: boolean;
 }) {
   const porId = useMemo(() => new Map(catalogo.map((e) => [e.id, e])), [catalogo]);
 
@@ -93,6 +98,8 @@ export function EditorAlternativa({
   );
 
   const [leyendo, setLeyendo] = useState(false);
+  const [subiendo, setSubiendo] = useState(false);
+  const [progresoSubida, setProgresoSubida] = useState(0);
   const [arrastrandoArchivo, setArrastrandoArchivo] = useState(false);
   const [aviso, setAviso] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -149,6 +156,20 @@ export function EditorAlternativa({
     setTipoCompra(b.tipoCompra);
   }
 
+  async function extraerCotizacion(archivoId: string) {
+    setLeyendo(true);
+    try {
+      const res = await fetch(`/api/cotizaciones/${encodeURIComponent(archivoId)}/extraer`, { method: "POST" });
+      const respuesta = (await res.json()) as RespuestaExtraccion;
+      if (!res.ok || respuesta.error) setError(respuesta.error ?? "No se pudo leer la cotización.");
+      else aplicarRespuestaExtraccion(respuesta);
+    } catch {
+      setError("El archivo quedó adjunto, pero no se pudo leer. Puedes ingresar los ítems a mano.");
+    } finally {
+      setLeyendo(false);
+    }
+  }
+
   async function leerCotizacion(file: File) {
     setAviso(null);
     setError(null);
@@ -157,23 +178,66 @@ export function EditorAlternativa({
       if (inputArchivo.current) inputArchivo.current.value = "";
       return;
     }
-    setLeyendo(true);
+
+    setSubiendo(true);
+    setProgresoSubida(0);
+    let subida: { archivoId: string; archivoNombre: string } | null = null;
     try {
-      const fd = new FormData();
-      fd.append("archivo", file);
-      const res = await fetch("/api/cotizaciones/extraer", { method: "POST", body: fd });
-      if (res.status === 413) {
-        setError(MENSAJE_ARCHIVO_GRANDE);
-        return;
+      if (usarSubidaDirectaBlob) {
+        const extensiones: Record<string, string> = {
+          "application/pdf": "pdf",
+          "image/jpeg": "jpg",
+          "image/png": "png",
+          "image/webp": "webp",
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "xlsx",
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
+        };
+        const extension = extensiones[file.type];
+        if (!extension) {
+          setError("Formato no permitido.");
+          return;
+        }
+
+        const pathname = `cotizaciones/${usuarioId}/${crypto.randomUUID()}.${extension}`;
+        const blob = await subirBlob(pathname, file, {
+          access: "private",
+          contentType: file.type,
+          handleUploadUrl: "/api/archivos/subida",
+          onUploadProgress: ({ percentage }) => setProgresoSubida(Math.round(percentage)),
+        });
+        const response = await fetch("/api/archivos/registrar", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pathname: blob.pathname, nombreOriginal: file.name }),
+        });
+        const respuesta = (await response.json()) as RespuestaExtraccion;
+        if (!response.ok || respuesta.error) {
+          setError(respuesta.error ?? "El archivo se subió, pero no se pudo registrar.");
+          return;
+        }
+        subida = respuesta;
+      } else {
+        const fd = new FormData();
+        fd.append("archivo", file);
+        const response = await fetch("/api/cotizaciones/extraer", { method: "POST", body: fd });
+        if (response.status === 413) {
+          setError(MENSAJE_ARCHIVO_GRANDE);
+          return;
+        }
+        const respuesta = (await response.json()) as RespuestaExtraccion;
+        if (!response.ok || respuesta.error) setError(respuesta.error ?? "No se pudo subir el archivo.");
+        else subida = respuesta;
       }
-      const r = (await res.json()) as RespuestaExtraccion;
-      if (!res.ok || r.error) setError(r.error ?? "No se pudo subir el archivo.");
-      else aplicarRespuestaExtraccion(r);
     } catch {
       setError("No se pudo conectar con el servidor. Revisa tu conexión e intenta de nuevo.");
     } finally {
-      setLeyendo(false);
+      setSubiendo(false);
       if (inputArchivo.current) inputArchivo.current.value = "";
+    }
+
+    if (subida) {
+      setArchivo({ id: subida.archivoId, nombre: subida.archivoNombre });
+      void extraerCotizacion(subida.archivoId);
     }
   }
 
@@ -194,7 +258,7 @@ export function EditorAlternativa({
   function soltarArchivo(e: React.DragEvent<HTMLDivElement>) {
     e.preventDefault();
     setArrastrandoArchivo(false);
-    if (leyendo) return;
+    if (leyendo || subiendo) return;
     const file = e.dataTransfer.files[0];
     if (file) void leerCotizacion(file);
   }
@@ -277,25 +341,28 @@ export function EditorAlternativa({
               allowedContent: "text-xs text-suave",
               button: "btn-secundario mt-3",
             }}
-            onUploadBegin={() => { setAviso(null); setError(null); setLeyendo(true); }}
+            onUploadBegin={() => { setAviso(null); setError(null); setSubiendo(true); }}
             onClientUploadComplete={(archivosSubidos) => {
-              setLeyendo(false);
+              setSubiendo(false);
               const respuesta = archivosSubidos[0]?.serverData;
-              if (!respuesta?.archivoId) setError("No se pudo procesar la cotización.");
-              else aplicarRespuestaExtraccion(respuesta);
+              if (!respuesta?.archivoId) setError("No se pudo registrar la cotización.");
+              else {
+                setArchivo({ id: respuesta.archivoId, nombre: respuesta.archivoNombre });
+                void extraerCotizacion(respuesta.archivoId);
+              }
             }}
             onUploadError={(errorSubida) => {
-              setLeyendo(false);
+              setSubiendo(false);
               setError(errorSubida.message || "No se pudo subir el archivo.");
             }}
           />
         ) : <div
-          onDragEnter={(e) => { e.preventDefault(); if (!leyendo) setArrastrandoArchivo(true); }}
-          onDragOver={(e) => { e.preventDefault(); if (!leyendo) setArrastrandoArchivo(true); }}
+          onDragEnter={(e) => { e.preventDefault(); if (!leyendo && !subiendo) setArrastrandoArchivo(true); }}
+          onDragOver={(e) => { e.preventDefault(); if (!leyendo && !subiendo) setArrastrandoArchivo(true); }}
           onDragLeave={(e) => { e.preventDefault(); setArrastrandoArchivo(false); }}
           onDrop={soltarArchivo}
           className={`mt-4 flex min-h-36 flex-col items-center justify-center rounded-lg border-2 border-dashed px-4 py-6 text-center transition-colors ${
-            leyendo ? "cursor-wait border-linea bg-fondo opacity-70" : arrastrandoArchivo ? "border-hnl bg-hnl-claro" : "border-linea hover:border-hnl hover:bg-fondo"
+            subiendo || leyendo ? "cursor-wait border-linea bg-fondo opacity-70" : arrastrandoArchivo ? "border-hnl bg-hnl-claro" : "border-linea hover:border-hnl hover:bg-fondo"
           }`}
         >
           <input
@@ -305,17 +372,18 @@ export function EditorAlternativa({
             className="sr-only"
             id="archivo"
             onChange={(e) => e.target.files?.[0] && leerCotizacion(e.target.files[0])}
-            disabled={leyendo}
+            disabled={leyendo || subiendo}
           />
           <svg aria-hidden="true" className="mb-2 size-7 text-hnl" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 16V4m0 0L7 9m5-5 5 5"/><path d="M20 16.5v2A1.5 1.5 0 0 1 18.5 20h-13A1.5 1.5 0 0 1 4 18.5v-2"/>
           </svg>
-          <p className="text-sm font-medium">{leyendo ? "Leyendo cotización…" : arrastrandoArchivo ? "Suelta el archivo para subirlo" : "Arrastra y suelta tu cotización aquí"}</p>
+          <p className="text-sm font-medium">{subiendo ? "Subiendo archivo…" : leyendo ? "Leyendo cotización…" : arrastrandoArchivo ? "Suelta el archivo para subirlo" : "Arrastra y suelta tu cotización aquí"}</p>
+          {subiendo && usarSubidaDirectaBlob && <p className="mt-1 text-xs text-suave">{progresoSubida}%</p>}
           <p className="mt-1 text-xs text-suave">PDF, JPG, PNG, WEBP, Excel (.xlsx) o Word (.docx) · máximo 4 MB</p>
           <label
             htmlFor="archivo"
-            aria-disabled={leyendo}
-            className={`mt-3 btn-secundario cursor-pointer ${leyendo ? "pointer-events-none opacity-60" : ""}`}
+            aria-disabled={leyendo || subiendo}
+            className={`mt-3 btn-secundario cursor-pointer ${leyendo || subiendo ? "pointer-events-none opacity-60" : ""}`}
           >
             {archivo ? "Elegir otra cotización" : "Seleccionar archivo"}
           </label>
@@ -329,7 +397,7 @@ export function EditorAlternativa({
             <button type="button" className="btn-texto" onClick={() => setArchivo(null)}>Quitar</button>
           </p>
         )}
-        {leyendo && <p className="mt-3 text-sm text-suave" role="status">Leyendo el archivo. Si el servicio de IA no responde, el archivo quedará adjunto para ingresar los datos manualmente.</p>}
+        {leyendo && <p className="mt-3 text-sm text-suave" role="status">El archivo ya está adjunto. La lectura con IA sigue en segundo plano; puedes completar los ítems manualmente mientras termina.</p>}
         {aviso && <p className="mt-3 rounded-md bg-aviso-claro px-3 py-2 text-sm text-aviso" role="status">{aviso}</p>}
       </section>
 
@@ -496,7 +564,7 @@ export function EditorAlternativa({
       {error && <p role="alert" className="rounded-md bg-peligro-claro px-3 py-2 text-sm text-peligro">{error}</p>}
 
       <div className="flex flex-wrap items-center gap-3">
-        <button type="submit" className="btn-primario" disabled={guardando || leyendo}>
+        <button type="submit" className="btn-primario" disabled={guardando || subiendo}>
           {guardando ? "Guardando…" : iniciales?.id ? "Guardar cambios" : "Guardar alternativa"}
         </button>
         <Link href={`/presupuestos/${presupuestoId}#partida-${partida.id}`} className="btn-texto">Cancelar</Link>
