@@ -23,21 +23,12 @@ export function BusquedaGlobal({ abierto, onCerrar, puedeCrear, puedeUsuarios }:
     if (!abierto) return;
     setConsulta("");
     setResultados(null);
+    setCargando(true);
+    buscarGlobalAction("").then((r) => {
+      setResultados(r);
+      setCargando(false);
+    }).catch(() => setCargando(false));
   }, [abierto]);
-
-  useEffect(() => {
-    if (!abierto) return;
-    const t = setTimeout(async () => {
-      setCargando(true);
-      try {
-        const r = await buscarGlobalAction(consulta);
-        setResultados(r);
-      } finally {
-        setCargando(false);
-      }
-    }, 200);
-    return () => clearTimeout(t);
-  }, [consulta, abierto]);
 
   const idPresupuesto = ruta.match(/^\/presupuestos\/([^/]+)$/)?.[1];
 
