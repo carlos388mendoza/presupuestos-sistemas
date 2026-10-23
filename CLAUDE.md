@@ -12,4 +12,8 @@ Lee `README.md` (reglas de negocio y estructura) y `AGENTS.md` (Next.js 16 tiene
 - Formularios: usa los componentes de `src/components/campos` (`CampoTexto`, `CampoContrasena`, `CampoSelect`, `AreaTexto`, `Casilla`, `OpcionRadio`) en vez de inputs sueltos.
 - El texto de la interfaz no se puede seleccionar (`user-select: none` en `body`). Los campos y `.cifra` sí; para otro texto copiable usa la clase `seleccionable`.
 - Tailwind 4: clases propias definidas con `@utility` en `globals.css` (tokens: tinta, usd, hnl, linea, suave…).
-- Interfaz en español. Corre `npm test` y `npm run build` antes de terminar.
+- Tablas anchas dentro de `overflow-x-auto`: el contenedor debe ser `relative`, o los `sr-only` (absolutos) se salen y crean scroll horizontal en la página.
+- Si una vista existe dos veces (tabla en computadora y tarjetas en celular), sus `id` deben ser distintos; los `id` de filas deben ser estables entre servidor y navegador (nada de contadores globales ni `Math.random()`).
+- Las server actions que llama un componente cliente fuera de `<FormAccion>` deben devolver `{ error }`, no lanzar.
+- Estado vivo del proyecto (issues, pendientes, cómo retomar): `ESTADO.md`.
+- Interfaz en español. Corre `npm run lint`, `npx tsc --noEmit`, `npm test` y `npm run build` antes de terminar (es lo mismo que corre el CI).
