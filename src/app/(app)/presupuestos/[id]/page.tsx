@@ -263,7 +263,7 @@ function TarjetaAlternativa({ presupuestoId, a, modificar, decidir }: { presupue
           </div>
         </div>
         {a.elegida && (
-          <span className="shrink-0 rounded bg-tinta px-2 py-0.5 text-xs font-semibold text-white">Elegida</span>
+          <span className="shrink-0 rounded bg-tinta px-2 py-0.5 text-xs font-semibold text-papel">Elegida</span>
         )}
       </div>
 

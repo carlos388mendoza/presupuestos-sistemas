@@ -92,12 +92,12 @@ export function NavegacionApp({ children, usuario, pendientes, puedeCrear, puede
     ...(puedeUsuarios ? [{ titulo: "ADMINISTRACIÓN", enlaces: [{ href: "/admin/usuarios", texto: "Usuarios", icono: "users" as const, badge: undefined }] }] : []),
   ];
   return <div className="min-h-screen">
-    <aside className="hidden xl:fixed xl:inset-y-0 xl:left-0 xl:z-40 xl:flex xl:w-80 xl:flex-col xl:border-r xl:border-linea xl:bg-papel">
+    <aside className="hidden xl:fixed xl:inset-y-0 xl:left-0 xl:z-40 xl:flex xl:w-80 xl:flex-col xl:border-r xl:border-linea xl:bg-papel menu-lateral">
       <div className="flex h-16 shrink-0 items-center gap-3 border-b border-linea-2 px-4 xl:py-0">
         <Image src="/logo-grupo-comidas-circulo-96.png" alt="Grupo Comidas" width={96} height={96} className="size-11 shrink-0"/>
         <span className="min-w-0"><span className="block truncate text-lg font-semibold">Presupuestos</span><span className="block truncate text-sm text-suave">Grupo Comidas · Sistemas</span></span>
       </div>
-      {puedeCrear && <div className="shrink-0 px-4 pt-4"><Link href="/presupuestos/nuevo" className="flex h-11 items-center justify-center gap-2 rounded-lg bg-tinta px-3 text-sm font-semibold text-white transition-colors hover:bg-tinta-2"><Icono tipo="plus" className="size-4"/>Nuevo presupuesto</Link></div>}
+      {puedeCrear && <div className="shrink-0 px-4 pt-4"><Link href="/presupuestos/nuevo" className="flex h-11 items-center justify-center gap-2 rounded-lg bg-tinta px-3 text-sm font-semibold text-papel transition-colors hover:bg-tinta-2"><Icono tipo="plus" className="size-4"/>Nuevo presupuesto</Link></div>}
       <nav aria-label="Navegación principal" className="min-h-0 flex-1 space-y-5 overflow-y-auto px-3 py-5">
         {secciones.map((seccion) => <section key={seccion.titulo}>
           <h2 className="px-3 pb-2 text-[11px] font-semibold tracking-wide text-suave">{seccion.titulo}</h2>
@@ -105,12 +105,12 @@ export function NavegacionApp({ children, usuario, pendientes, puedeCrear, puede
         </section>)}
       </nav>
       <footer className="shrink-0 border-t border-linea px-4 py-3">
-        <div className="mb-3 flex min-w-0 items-center gap-3"><span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-hnl text-sm font-semibold text-white">{usuario.name.slice(0,1).toLocaleUpperCase()}</span><span className="min-w-0"><span className="block truncate text-sm font-semibold">{usuario.name}</span><span className="block truncate text-xs text-suave">{usuario.email} · {NOMBRES_ROL[usuario.role]}</span></span></div>
+        <div className="mb-3 flex min-w-0 items-center gap-3"><span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-hnl avatar-usuario text-sm font-semibold text-papel">{usuario.name.slice(0,1).toLocaleUpperCase()}</span><span className="min-w-0"><span className="block truncate text-sm font-semibold">{usuario.name}</span><span className="block truncate text-xs text-suave">{usuario.email} · {NOMBRES_ROL[usuario.role]}</span></span></div>
         <div className="mb-3"><SelectorTema/></div>
         <BotonSalir/>
       </footer>
     </aside>
-    <header className="sticky top-0 z-40 flex min-h-16 items-center justify-between gap-3 border-b border-linea bg-papel px-3 sm:px-5 xl:ml-80">
+    <header className="sticky top-0 z-40 flex min-h-16 items-center justify-between gap-3 border-b border-linea bg-papel px-3 sm:px-5 xl:ml-80 menu-lateral">
       <div className="flex min-w-0 items-center gap-2 sm:gap-3 xl:hidden">
         <button type="button" aria-label={menuMovil ? "Cerrar menú" : "Abrir menú"} aria-expanded={menuMovil} onClick={() => setMenuMovil(!menuMovil)} className="shrink-0 rounded-md p-2 text-tinta hover:bg-fondo"><Icono tipo={menuMovil ? "close" : "menu"}/></button>
         <Link href="/presupuestos" className="flex min-w-0 items-center gap-2"><Image src="/logo-grupo-comidas-circulo-96.png" alt="Grupo Comidas" width={96} height={96} className="size-9 shrink-0"/><span className="truncate font-semibold">Presupuestos</span></Link>
@@ -129,12 +129,12 @@ export function NavegacionApp({ children, usuario, pendientes, puedeCrear, puede
     <main className="min-w-0 px-4 pb-24 pt-5 sm:px-6 xl:ml-80 xl:px-8 xl:py-7">
       {menuMovil && <div className="fixed inset-0 z-50">
         <button type="button" aria-label="Cerrar menú" className="absolute inset-0 bg-black/40" onClick={() => setMenuMovil(false)}/>
-        <nav aria-label="Menú de navegación" className="absolute inset-y-0 left-0 flex w-[min(84vw,21rem)] flex-col border-r border-linea bg-papel shadow-2xl">
+        <nav aria-label="Menú de navegación" className="absolute inset-y-0 left-0 flex w-[min(84vw,21rem)] flex-col border-r border-linea bg-papel shadow-2xl menu-lateral">
           <div className="flex shrink-0 items-center justify-between border-b border-linea-2 px-4 py-3">
             <Link href="/presupuestos" onClick={() => setMenuMovil(false)} className="flex min-w-0 items-center gap-3"><Image src="/logo-grupo-comidas-circulo-96.png" alt="" width={96} height={96} className="size-10 shrink-0"/><span className="min-w-0"><span className="block truncate font-semibold">Presupuestos</span><span className="block truncate text-sm text-suave">Grupo Comidas · Sistemas</span></span></Link>
             <button type="button" aria-label="Cerrar menú" onClick={() => setMenuMovil(false)} className="ml-2 shrink-0 rounded-md p-2 text-suave hover:bg-fondo"><Icono tipo="close"/></button>
           </div>
-          {puedeCrear && <div className="shrink-0 px-4 pt-4"><Link href="/presupuestos/nuevo" onClick={() => setMenuMovil(false)} className="flex h-11 items-center justify-center gap-2 rounded-lg bg-tinta px-3 text-sm font-semibold text-white transition-colors hover:bg-tinta-2"><Icono tipo="plus" className="size-4"/>Nuevo presupuesto</Link></div>}
+          {puedeCrear && <div className="shrink-0 px-4 pt-4"><Link href="/presupuestos/nuevo" onClick={() => setMenuMovil(false)} className="flex h-11 items-center justify-center gap-2 rounded-lg bg-tinta px-3 text-sm font-semibold text-papel transition-colors hover:bg-tinta-2"><Icono tipo="plus" className="size-4"/>Nuevo presupuesto</Link></div>}
           <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-3 py-5">
             {secciones.map((seccion) => <section key={seccion.titulo}>
               <h2 className="px-3 pb-2 text-[11px] font-semibold tracking-wide text-suave">{seccion.titulo}</h2>
@@ -143,7 +143,7 @@ export function NavegacionApp({ children, usuario, pendientes, puedeCrear, puede
           </div>
           <footer className="shrink-0 border-t border-linea px-4 py-3">
             <div className="mb-3 flex min-w-0 items-center gap-3">
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-hnl text-sm font-semibold text-white">{usuario.name.slice(0,1).toLocaleUpperCase()}</span>
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-hnl avatar-usuario text-sm font-semibold text-papel">{usuario.name.slice(0,1).toLocaleUpperCase()}</span>
               <span className="min-w-0"><span className="block truncate text-sm font-semibold">{usuario.name}</span><span className="block truncate text-xs text-suave">{usuario.email} · {NOMBRES_ROL[usuario.role]}</span></span>
             </div>
             <div className="mb-3 px-3"><SelectorTema/></div>
@@ -154,16 +154,16 @@ export function NavegacionApp({ children, usuario, pendientes, puedeCrear, puede
       <div className="mx-auto max-w-7xl">{children}</div>
     </main>
     <nav aria-label="Navegación móvil" className="fixed inset-x-0 bottom-0 z-40 grid h-[4.5rem] grid-cols-4 border-t border-linea bg-papel/95 px-2 pb-[env(safe-area-inset-bottom)] backdrop-blur xl:hidden">
-      <Link href="/presupuestos" aria-label="Inicio, presupuestos" className={`flex flex-col items-center justify-center gap-0.5 ${inicio ? "text-hnl" : "text-suave"}`}><span className={inicio ? "flex size-9 items-center justify-center rounded-full bg-hnl-claro" : "flex size-9 items-center justify-center"}><Icono tipo="home"/></span><span className="text-[11px]">Inicio</span></Link>
-      <Link href="/catalogo" aria-label="Catálogo de equipos" className={`flex flex-col items-center justify-center gap-0.5 ${ruta.startsWith("/catalogo") ? "text-hnl" : "text-suave"}`}><span className={ruta.startsWith("/catalogo") ? "flex size-9 items-center justify-center rounded-full bg-hnl-claro" : "flex size-9 items-center justify-center"}><Icono tipo="box"/></span><span className="text-[11px]">Catálogo</span></Link>
-      <button type="button" aria-label="Menú de cuenta" aria-expanded={menuUsuario} onClick={() => setMenuUsuario(!menuUsuario)} className={`flex flex-col items-center justify-center gap-0.5 ${menuUsuario ? "text-hnl" : "text-suave"}`}><span className={menuUsuario ? "flex size-9 items-center justify-center rounded-full bg-hnl-claro" : "flex size-9 items-center justify-center"}><Icono tipo="users"/></span><span className="text-[11px]">Cuenta</span></button>
-      {puedeCrear ? <Link href="/presupuestos/nuevo" aria-label="Nuevo presupuesto" className="flex flex-col items-center justify-center gap-0.5 text-suave"><span className="flex size-9 items-center justify-center rounded-full bg-tinta text-white"><Icono tipo="plus"/></span><span className="text-[11px]">Nuevo</span></Link> : <span aria-hidden className="size-9"/>}
+      <Link href="/presupuestos" aria-label="Inicio, presupuestos" className={`flex flex-col items-center justify-center gap-0.5 ${inicio ? "text-hnl" : "text-suave"}`}><span className={inicio ? "flex size-9 items-center justify-center rounded-full bg-hnl-claro icono-activo" : "flex size-9 items-center justify-center"}><Icono tipo="home"/></span><span className="text-[11px]">Inicio</span></Link>
+      <Link href="/catalogo" aria-label="Catálogo de equipos" className={`flex flex-col items-center justify-center gap-0.5 ${ruta.startsWith("/catalogo") ? "text-hnl" : "text-suave"}`}><span className={ruta.startsWith("/catalogo") ? "flex size-9 items-center justify-center rounded-full bg-hnl-claro icono-activo" : "flex size-9 items-center justify-center"}><Icono tipo="box"/></span><span className="text-[11px]">Catálogo</span></Link>
+      <button type="button" aria-label="Menú de cuenta" aria-expanded={menuUsuario} onClick={() => setMenuUsuario(!menuUsuario)} className={`flex flex-col items-center justify-center gap-0.5 ${menuUsuario ? "text-hnl" : "text-suave"}`}><span className={menuUsuario ? "flex size-9 items-center justify-center rounded-full bg-hnl-claro icono-activo" : "flex size-9 items-center justify-center"}><Icono tipo="users"/></span><span className="text-[11px]">Cuenta</span></button>
+      {puedeCrear ? <Link href="/presupuestos/nuevo" aria-label="Nuevo presupuesto" className="flex flex-col items-center justify-center gap-0.5 text-suave"><span className="flex size-9 items-center justify-center rounded-full bg-tinta text-papel"><Icono tipo="plus"/></span><span className="text-[11px]">Nuevo</span></Link> : <span aria-hidden className="size-9"/>}
     </nav>
     {menuUsuario && <div className="fixed inset-0 z-[60] xl:hidden">
       <button type="button" aria-label="Cerrar menú de cuenta" onClick={() => setMenuUsuario(false)} className="absolute inset-0 bg-black/40"/>
       <section role="dialog" aria-modal="true" aria-label="Menú de cuenta" className="absolute inset-x-0 bottom-0 rounded-t-2xl border border-linea bg-papel p-5 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] shadow-2xl">
         <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-linea"/>
-        <div className="mb-3 flex items-center gap-3 rounded-lg bg-fondo p-3"><span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-hnl font-semibold text-white">{usuario.name.slice(0,1).toLocaleUpperCase()}</span><span className="min-w-0"><span className="block truncate font-semibold">{usuario.name}</span><span className="block truncate text-xs text-suave">{usuario.email} · {NOMBRES_ROL[usuario.role]}</span></span></div>
+        <div className="mb-3 flex items-center gap-3 rounded-lg bg-fondo p-3"><span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-hnl avatar-usuario font-semibold text-papel">{usuario.name.slice(0,1).toLocaleUpperCase()}</span><span className="min-w-0"><span className="block truncate font-semibold">{usuario.name}</span><span className="block truncate text-xs text-suave">{usuario.email} · {NOMBRES_ROL[usuario.role]}</span></span></div>
         {puedeUsuarios && <Link href="/admin/usuarios" onClick={() => setMenuUsuario(false)} className="flex items-center gap-3 rounded-md px-3 py-3 hover:bg-fondo"><Icono tipo="users"/>Administrar usuarios y crear cuentas</Link>}
         <div className="mt-1 px-3 py-2"><SelectorTema/></div>
         <div className="mt-1 px-3 py-2"><BotonSalir/></div>
