@@ -43,11 +43,11 @@ export async function crearEquipo(db: DB, usuarioId: string, datos: EquipoEntrad
 }
 
 export async function actualizarEquipo(db: DB, id: string, datos: EquipoEntrada) {
-  await db.update(equipos).set(datos).where(eq(equipos.id, id));
+  await db.update(equipos).set({ ...datos, updatedAt: new Date() }).where(eq(equipos.id, id));
 }
 
 export async function aprobarEquipo(db: DB, id: string) {
-  await db.update(equipos).set({ revisado: true }).where(eq(equipos.id, id));
+  await db.update(equipos).set({ revisado: true, updatedAt: new Date() }).where(eq(equipos.id, id));
 }
 
 export async function eliminarEquipo(db: DB, id: string) {
@@ -57,7 +57,7 @@ export async function eliminarEquipo(db: DB, id: string) {
 
 export async function aprobarEquipos(db: DB, ids: string[]) {
   if (!ids.length) return;
-  await db.update(equipos).set({ revisado: true }).where(inArray(equipos.id, ids));
+  await db.update(equipos).set({ revisado: true, updatedAt: new Date() }).where(inArray(equipos.id, ids));
 }
 
 export async function eliminarEquipos(db: DB, ids: string[]) {

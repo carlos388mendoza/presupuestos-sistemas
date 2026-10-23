@@ -21,10 +21,11 @@ async function main() {
   }
 
   const [existe] = await db.select().from(user).where(eq(user.email, email));
+  let adminId = existe?.id;
   if (existe) {
     console.log(`El administrador ${email} ya existe.`);
   } else {
-    await crearUsuario(db, { name: process.env.ADMIN_NAME || "Administrador", email, password, role: "admin" });
+    adminId = await crearUsuario(db, { name: process.env.ADMIN_NAME || "Administrador", email, password, role: "admin" });
     console.log(`Administrador creado: ${email}`);
   }
 
@@ -46,7 +47,7 @@ async function main() {
       { nombre: "UPS", categoria: "Energía" },
       { nombre: "Pantalla de cocina (KDS)", categoria: "Cocina" },
     ];
-    await db.insert(equipos).values(base.map((e) => ({ ...e, origen: "manual" as const, revisado: true })));
+    await db.insert(equipos).values(base.map((e) => ({ ...e, origen: "manual" as const, revisado: true, creadoPor: adminId ?? null })));
     console.log(`Catálogo inicial: ${base.length} equipos de ejemplo.`);
   }
 }
