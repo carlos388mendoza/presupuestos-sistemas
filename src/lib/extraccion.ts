@@ -111,7 +111,9 @@ function clienteIA() {
     clienteCache = new OpenAI({
       baseURL: "https://openrouter.ai/api/v1",
       apiKey: process.env.OPENROUTER_API_KEY,
-      timeout: 30_000,
+      // El endpoint de Vercel permite hasta 300 s; deja margen al proveedor para
+      // cotizaciones extensas sin abandonar el análisis a los 30 s.
+      timeout: 120_000,
       maxRetries: 0,
       defaultHeaders: { "X-Title": "Presupuestos Sistemas" },
     });
@@ -143,11 +145,12 @@ export async function extraerCotizacion(archivo: Buffer, mime: string, nombre: s
 
   let texto: string | null | undefined;
   try {
-    const res = await clienteIA().chat.completions.create({
+    const stream = await clienteIA().chat.completions.create({
       model: process.env.OPENROUTER_MODEL!,
       temperature: 0,
       reasoning_effort: "none",
       max_completion_tokens: 3000,
+      stream: true,
       messages: [
         { role: "system", content: INSTRUCCIONES },
         {
@@ -161,7 +164,12 @@ export async function extraerCotizacion(archivo: Buffer, mime: string, nombre: s
         json_schema: { name: "cotizacion", strict: true, schema: esquemaJson as unknown as Record<string, unknown> },
       },
     });
-    texto = res.choices[0]?.message?.content;
+    const fragmentos: string[] = [];
+    for await (const parte of stream) {
+      const fragmento = parte.choices[0]?.delta?.content;
+      if (typeof fragmento === "string") fragmentos.push(fragmento);
+    }
+    texto = fragmentos.join("");
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     throw new ErrorExtraccion(`No se pudo contactar al servicio de IA: ${msg}`);
