@@ -226,7 +226,7 @@ function SeccionPartida({ presupuestoId, partida, modificar, decidir }: { presup
           )}
         </p>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {partida.alternativas.map((a) => (
             <TarjetaAlternativa key={a.id} presupuestoId={presupuestoId} a={a} modificar={modificar} decidir={decidir} />
           ))}
@@ -239,7 +239,7 @@ function SeccionPartida({ presupuestoId, partida, modificar, decidir }: { presup
 function TarjetaAlternativa({ presupuestoId, a, modificar, decidir }: { presupuestoId: string; a: Alternativa } & Permisos) {
   return (
     <article
-      className={`flex flex-col rounded-lg bg-papel ${a.elegida ? "border-2 border-tinta" : "border border-linea"}`}
+      className={`flex min-w-0 max-w-full flex-col overflow-hidden rounded-lg bg-papel ${a.elegida ? "border-2 border-tinta" : "border border-linea"}`}
       aria-label={`Alternativa de ${a.proveedor}${a.elegida ? ", elegida" : ""}`}
     >
       <div className="flex items-start justify-between gap-3 p-4 pb-3">
@@ -248,7 +248,7 @@ function TarjetaAlternativa({ presupuestoId, a, modificar, decidir }: { presupue
           <div className="mt-1 flex flex-wrap items-center gap-2">
             <Etiqueta tipo={a.tipoCompra}>{a.tipoCompra === "nacional" ? "Nacional" : "Internacional"}</Etiqueta>
             {a.archivoId && (
-              <a href={`/api/archivos/${a.archivoId}`} target="_blank" rel="noopener" className="truncate text-xs text-hnl underline">
+              <a href={`/api/archivos/${a.archivoId}`} target="_blank" rel="noopener" className="max-w-full break-all text-xs text-hnl underline">
                 {a.archivoNombre ?? "Ver cotización"}
               </a>
             )}
@@ -259,11 +259,11 @@ function TarjetaAlternativa({ presupuestoId, a, modificar, decidir }: { presupue
         )}
       </div>
 
-      <ul className="flex-1 divide-y divide-linea-2 border-t border-linea-2 text-sm">
+      <ul className="min-w-0 flex-1 divide-y divide-linea-2 border-t border-linea-2 text-sm">
         {a.items.map((it) => (
-          <li key={it.id} className="flex justify-between gap-3 px-4 py-2">
+          <li key={it.id} className="flex min-w-0 justify-between gap-3 px-4 py-2">
             <div className="min-w-0">
-              <div className="truncate" title={it.descripcion}>{it.descripcion}</div>
+              <div className="break-words" title={it.descripcion}>{it.descripcion}</div>
               <div className="cifra text-xs text-suave">
                 {it.cantidad} × {formatear(it.precioUnitarioCentavos, it.moneda)}
                 {!it.equipoId && " · sin vincular al catálogo"}
