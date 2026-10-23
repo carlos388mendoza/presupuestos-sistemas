@@ -36,6 +36,7 @@ export default async function EditarAlternativa({ params }: { params: Promise<{ 
         presupuestoId={id}
         partida={{ id: partida.id, nombre: partida.nombre }}
         catalogo={catalogo}
+        usarUploadThingDropzone={process.env.ARCHIVOS_STORAGE === "uploadthing"}
         iniciales={{
           id: alternativa.id,
           proveedor: alternativa.proveedor,

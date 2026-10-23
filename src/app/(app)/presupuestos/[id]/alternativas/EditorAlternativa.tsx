@@ -10,6 +10,7 @@ import { GrupoOpciones } from "@/components/campos";
 import type { EquipoOpcion } from "@/components/campos";
 import { guardarAlternativa, type EntradaAlternativa } from "@/actions/presupuestos";
 import { Etiqueta } from "@/components/Etiqueta";
+import { UploadDropzone } from "@/lib/uploadthing";
 import { SelectorEquipo } from "@/components/campos/SelectorEquipo";
 import { DialogoConfirmar } from "@/components/DialogoConfirmar";
 
@@ -58,11 +59,13 @@ export function EditorAlternativa({
   partida,
   catalogo,
   iniciales,
+  usarUploadThingDropzone = false,
 }: {
   presupuestoId: string;
   partida: { id: string; nombre: string };
   catalogo: EquipoOpcion[];
   iniciales?: ValoresIniciales;
+  usarUploadThingDropzone?: boolean;
 }) {
   const porId = useMemo(() => new Map(catalogo.map((e) => [e.id, e])), [catalogo]);
 
@@ -164,26 +167,27 @@ export function EditorAlternativa({
         return;
       }
       const r = (await res.json()) as RespuestaExtraccion;
-      if (!res.ok || r.error) {
-        setError(r.error ?? "No se pudo subir el archivo.");
-        return;
-      }
-      setArchivo({ id: r.archivoId, nombre: r.archivoNombre });
-      if (r.borrador) {
-        aplicarBorrador(r.borrador);
-        const nuevos = r.borrador.items.filter((i) => i.nuevo).length;
-        setAviso(
-          `Se leyeron ${r.borrador.items.length} ítems. Revisa proveedor, cantidades, precios y monedas antes de guardar.` +
-            (nuevos ? ` ${nuevos} no están en el catálogo y se agregarán al guardar.` : ""),
-        );
-      } else if (r.aviso) {
-        setAviso(r.aviso);
-      }
+      if (!res.ok || r.error) setError(r.error ?? "No se pudo subir el archivo.");
+      else aplicarRespuestaExtraccion(r);
     } catch {
       setError("No se pudo conectar con el servidor. Revisa tu conexión e intenta de nuevo.");
     } finally {
       setLeyendo(false);
       if (inputArchivo.current) inputArchivo.current.value = "";
+    }
+  }
+
+  function aplicarRespuestaExtraccion(r: RespuestaExtraccion) {
+    setArchivo({ id: r.archivoId, nombre: r.archivoNombre });
+    if (r.borrador) {
+      aplicarBorrador(r.borrador);
+      const nuevos = r.borrador.items.filter((i) => i.nuevo).length;
+      setAviso(
+        `Se leyeron ${r.borrador.items.length} ítems. Revisa proveedor, cantidades, precios y monedas antes de guardar.` +
+          (nuevos ? ` ${nuevos} no están en el catálogo y se agregarán al guardar.` : ""),
+      );
+    } else if (r.aviso) {
+      setAviso(r.aviso);
     }
   }
 
@@ -263,7 +267,29 @@ export function EditorAlternativa({
             </p>
           </div>
         </div>
-        <div
+        {usarUploadThingDropzone ? (
+          <UploadDropzone
+            endpoint="cotizacion"
+            className="mt-4"
+            appearance={{
+              container: "min-h-36 rounded-lg border-2 border-dashed border-linea bg-fondo px-4 py-6 transition-colors",
+              label: "text-sm font-medium text-tinta",
+              allowedContent: "text-xs text-suave",
+              button: "btn-secundario mt-3",
+            }}
+            onUploadBegin={() => { setAviso(null); setError(null); setLeyendo(true); }}
+            onClientUploadComplete={(archivosSubidos) => {
+              setLeyendo(false);
+              const respuesta = archivosSubidos[0]?.serverData;
+              if (!respuesta?.archivoId) setError("No se pudo procesar la cotización.");
+              else aplicarRespuestaExtraccion(respuesta);
+            }}
+            onUploadError={(errorSubida) => {
+              setLeyendo(false);
+              setError(errorSubida.message || "No se pudo subir el archivo.");
+            }}
+          />
+        ) : <div
           onDragEnter={(e) => { e.preventDefault(); if (!leyendo) setArrastrandoArchivo(true); }}
           onDragOver={(e) => { e.preventDefault(); if (!leyendo) setArrastrandoArchivo(true); }}
           onDragLeave={(e) => { e.preventDefault(); setArrastrandoArchivo(false); }}
@@ -293,7 +319,7 @@ export function EditorAlternativa({
           >
             {archivo ? "Elegir otra cotización" : "Seleccionar archivo"}
           </label>
-        </div>
+        </div>}
         {archivo && (
           <p className="mt-3 text-sm">
             Archivo adjunto:{" "}

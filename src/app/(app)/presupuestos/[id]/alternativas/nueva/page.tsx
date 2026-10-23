@@ -37,7 +37,12 @@ export default async function NuevaAlternativa({
       </Link>
       <h1 className="titulo-pagina">Nueva alternativa</h1>
       <p className="ayuda mb-6">Partida: {partida.nombre}</p>
-      <EditorAlternativa presupuestoId={id} partida={{ id: partida.id, nombre: partida.nombre }} catalogo={catalogo} />
+      <EditorAlternativa
+        presupuestoId={id}
+        partida={{ id: partida.id, nombre: partida.nombre }}
+        catalogo={catalogo}
+        usarUploadThingDropzone={process.env.ARCHIVOS_STORAGE === "uploadthing"}
+      />
     </>
   );
 }

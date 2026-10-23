@@ -38,12 +38,12 @@ No establezcas manualmente `Content-Type`: el navegador agrega el boundary corre
 
 ## UploadThing
 
-El selector que ya existe no necesita reemplazarse por `UploadButton`: manda el archivo a la ruta autenticada de la aplicación, que lo sube al servidor de UploadThing con `UTApi`. La misma ruta conserva la copia temporal en memoria para la lectura opcional de la cotización. Este patrón evita duplicar la lógica de permisos y extracción. UploadThing también permite `FileRouter` y componentes propios; aquí se conserva la interfaz ya conectada.
+Al configurar `ARCHIVOS_STORAGE=uploadthing`, las pantallas para crear y editar alternativas usan el componente oficial `UploadDropzone`. El endpoint valida la sesión y el rol antes de permitir la subida, exige ACL privada desde el inicio y, al terminar, registra el archivo y devuelve el mismo borrador que se obtiene con los demás proveedores. Si UploadThing no admite la ACL privada, la subida falla antes de aceptar el archivo. En los otros modos de almacenamiento se conserva la zona de carga de la aplicación.
 
 **Requisito del plan:** UploadThing confirma que los archivos privados solo están disponibles en planes de pago. El plan gratuito publica los archivos y cualquier persona que tenga su URL puede abrirlos; no lo uses para las cotizaciones internas de esta aplicación. Consulta [regiones y controles ACL de UploadThing](https://docs.uploadthing.com/concepts/regions-acl). Para mantener los archivos privados sin pagar un plan de UploadThing, usa Cloudflare R2 o AWS S3 siguiendo las secciones de abajo.
 
 1. Entra al [dashboard de UploadThing](https://uploadthing.com/dashboard), crea una aplicación y copia su token.
-2. Usa un plan que admita archivos privados. En la configuración de la aplicación, habilita los overrides de ACL y deja los archivos privados. La app solicita `acl: "private"` al subir.
+2. Usa un plan que admita archivos privados y habilita los overrides de ACL. La app solicita `acl: "private"` como parte de la autorización de subida para que el archivo no quede público mientras se procesa.
 3. En `.env` local (y luego en las variables del entorno donde se despliega), configura:
 
    ```dotenv
@@ -54,7 +54,7 @@ El selector que ya existe no necesita reemplazarse por `UploadButton`: manda el 
 4. Mantén el token solo del lado servidor. No lo publiques en el repositorio ni lo pongas en una variable `NEXT_PUBLIC_*`.
 5. Aplica la migración con `npm run db:migrate` y reinicia/despliega la app.
 
-La ruta registra la clave que devuelve UploadThing en la base. Al descargar, primero comprueba los permisos, genera un enlace privado temporal de 60 segundos en el servidor y transmite el archivo por `/api/archivos/[id]`. `UTApi.uploadFiles()` permite este flujo de carga directa desde el servidor sin montar un `FileRouter` adicional.
+La ruta registra la clave que devuelve UploadThing en la base. Al descargar, primero comprueba los permisos, genera un enlace privado temporal de 60 segundos en el servidor y transmite el archivo por `/api/archivos/[id]`. La integración tipada de React usa un `FileRouter` servido desde `/api/uploadthing` y espera su respuesta del servidor antes de completar la subida en el navegador.
 
 ## Cloudflare R2
 
