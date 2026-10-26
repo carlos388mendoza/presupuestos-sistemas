@@ -213,6 +213,16 @@ describe("estado del presupuesto", () => {
     await datos.reabrir(db, ana, p.id);
     await datos.elegirAlternativa(db, ana, a2);
   });
+
+  it("no se puede borrar un presupuesto listo hasta reabrirlo", async () => {
+    const { db, ana, p, a1 } = await armar();
+    await datos.elegirAlternativa(db, ana, a1);
+    await datos.marcarListo(db, ana, p.id);
+    await expect(datos.eliminarPresupuesto(db, ana, p.id)).rejects.toThrow(/listo/);
+    await datos.reabrir(db, ana, p.id);
+    await datos.eliminarPresupuesto(db, ana, p.id);
+    await expect(datos.obtenerPresupuesto(db, ana, p.id)).rejects.toThrow(datos.ErrorNegocio);
+  });
 });
 
 describe("catálogo automático", () => {
