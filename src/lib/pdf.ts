@@ -21,7 +21,8 @@ export async function generarPdf(p: PresupuestoCompleto): Promise<Buffer> {
   const columnas = [0.15, 0.15, 0.35, 0.08, 0.12, 0.15].map((porcion) => ancho * porcion);
   const x = () => doc.page.margins.left;
 
-  doc.font("Helvetica-Bold").fontSize(18).fillColor("#1d2b3a").text(`Presupuesto de Sistemas · ${p.nombre}`);
+  doc.font("Helvetica-Bold").fontSize(18).fillColor("#1d2b3a")
+    .text(`Presupuesto de Sistemas · ${p.nombre}`, { align: "left" });
   doc.moveDown(0.4).font("Helvetica").fontSize(10).fillColor("#303a43");
   doc.text(`Restaurante: ${p.restaurante}    Tipo: ${p.tipo === "apertura" ? "Apertura" : "Remodelación"}`);
   doc.text(`Elaborado por: ${p.autor}    Fecha: ${new Date().toLocaleDateString("es-HN")}`);
@@ -35,7 +36,7 @@ export async function generarPdf(p: PresupuestoCompleto): Promise<Buffer> {
     doc.rect(x(), y, ancho, 22).fill("#e8edeb");
     doc.fillColor("#1d2b3a").font("Helvetica-Bold").fontSize(8);
     labels.forEach((label, i) => {
-      doc.text(label, left + 4, y + 7, { width: columnas[i] - 8, lineBreak: false });
+      doc.text(label, left + 4, y + 7, { width: columnas[i] - 8, lineBreak: false, align: "left" });
       left += columnas[i];
     });
     doc.y = y + 27;
@@ -47,7 +48,7 @@ export async function generarPdf(p: PresupuestoCompleto): Promise<Buffer> {
       .flatMap((alternativa) => alternativa.items.map((item) => ({ partida, alternativa, item }))));
     if (!filas.length) continue;
     if (doc.y > doc.page.height - 90) doc.addPage();
-    doc.font("Helvetica-Bold").fontSize(13).fillColor("#1d2b3a").text(LABEL[tipo]);
+    doc.font("Helvetica-Bold").fontSize(13).fillColor("#1d2b3a").text(LABEL[tipo], { align: "left" });
     doc.moveDown(0.4);
     encabezadoTabla();
     for (const { partida, alternativa, item } of filas) {
@@ -69,7 +70,8 @@ export async function generarPdf(p: PresupuestoCompleto): Promise<Buffer> {
   }
 
   if (doc.y > doc.page.height - 100) doc.addPage();
-  doc.font("Helvetica-Bold").fontSize(13).fillColor("#1d2b3a").text("Total del presupuesto");
+  doc.font("Helvetica-Bold").fontSize(13).fillColor("#1d2b3a")
+    .text("Total del presupuesto", { align: "left" });
   for (const moneda of ["USD", "HNL"] as Moneda[]) {
     doc.font("Helvetica-Bold").fontSize(10).text(`Total en ${moneda}: ${formatear(p.resumen.total[moneda], moneda)}`);
   }

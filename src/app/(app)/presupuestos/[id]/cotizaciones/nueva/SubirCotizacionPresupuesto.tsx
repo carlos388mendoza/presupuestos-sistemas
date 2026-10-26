@@ -4,12 +4,17 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 import { aCentavos, centavosATexto } from "@/lib/dinero";
 import { MENSAJE_ARCHIVO_GRANDE, TAMANO_MAXIMO_ARCHIVO } from "@/lib/limites";
-import type { BorradorAlternativa, RespuestaExtraccion } from "@/lib/tipos";
+import type { BorradorAlternativa, RespuestaArchivoSubido, RespuestaExtraccion } from "@/lib/tipos";
 import { guardarAlternativasAgrupadas, type EntradaAlternativasAgrupadas } from "@/actions/presupuestos";
+import { UploadDropzone } from "@/lib/uploadthing";
 
 type Partida = { id: string; nombre: string };
 
-export function SubirCotizacionPresupuesto({ presupuestoId, partidas }: { presupuestoId: string; partidas: Partida[] }) {
+export function SubirCotizacionPresupuesto({ presupuestoId, partidas, usarUploadThingDropzone = false }: {
+  presupuestoId: string;
+  partidas: Partida[];
+  usarUploadThingDropzone?: boolean;
+}) {
   const [archivo, setArchivo] = useState<{ id: string; nombre: string } | null>(null);
   const [borrador, setBorrador] = useState<BorradorAlternativa | null>(null);
   const [categorias, setCategorias] = useState<string[]>([]);
@@ -18,24 +23,14 @@ export function SubirCotizacionPresupuesto({ presupuestoId, partidas }: { presup
   const [guardando, iniciarGuardado] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
+  const [arrastrando, setArrastrando] = useState(false);
 
-  async function subir(file?: File) {
-    if (!file) return;
-    setError(null);
-    setAviso(null);
-    setBorrador(null);
-    if (file.size > TAMANO_MAXIMO_ARCHIVO) return setError(MENSAJE_ARCHIVO_GRANDE);
-    setSubiendo(true);
+  async function leerCotizacion(archivoId: string, archivoNombre: string) {
+    setArchivo({ id: archivoId, nombre: archivoNombre });
+    setSubiendo(false);
+    setLeyendo(true);
     try {
-      const form = new FormData();
-      form.append("archivo", file);
-      const response = await fetch("/api/cotizaciones/extraer", { method: "POST", body: form });
-      const subido = await response.json() as RespuestaExtraccion;
-      if (!response.ok || subido.error) throw new Error(subido.error ?? "No se pudo subir el archivo.");
-      setArchivo({ id: subido.archivoId, nombre: subido.archivoNombre });
-      setSubiendo(false);
-      setLeyendo(true);
-      const respuestaIA = await fetch(`/api/cotizaciones/${encodeURIComponent(subido.archivoId)}/extraer`, {
+      const respuestaIA = await fetch(`/api/cotizaciones/${encodeURIComponent(archivoId)}/extraer`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ presupuestoId }),
@@ -50,9 +45,47 @@ export function SubirCotizacionPresupuesto({ presupuestoId, partidas }: { presup
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "No se pudo procesar la cotización.");
     } finally {
+      setLeyendo(false);
+    }
+  }
+
+  async function subir(file?: File) {
+    if (!file) return;
+    setError(null);
+    setAviso(null);
+    setBorrador(null);
+    if (file.size > TAMANO_MAXIMO_ARCHIVO) return setError(MENSAJE_ARCHIVO_GRANDE);
+    setSubiendo(true);
+    try {
+      const form = new FormData();
+      form.append("archivo", file);
+      const response = await fetch("/api/cotizaciones/extraer", { method: "POST", body: form });
+      const subido = await response.json() as RespuestaExtraccion;
+      if (!response.ok || subido.error) throw new Error(subido.error ?? "No se pudo subir el archivo.");
+      await leerCotizacion(subido.archivoId, subido.archivoNombre);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "No se pudo subir el archivo.");
+    } finally {
       setSubiendo(false);
       setLeyendo(false);
     }
+  }
+
+  function prepararCarga() {
+    setError(null);
+    setAviso(null);
+    setBorrador(null);
+    setSubiendo(true);
+  }
+
+  async function completarCarga(resultados: { serverData?: RespuestaArchivoSubido }[]) {
+    const archivoSubido = resultados[0]?.serverData;
+    if (!archivoSubido?.archivoId || !archivoSubido.archivoNombre) {
+      setError("No se pudo registrar la cotización subida.");
+      setSubiendo(false);
+      return;
+    }
+    await leerCotizacion(archivoSubido.archivoId, archivoSubido.archivoNombre);
   }
 
   function guardar() {
@@ -99,19 +132,57 @@ export function SubirCotizacionPresupuesto({ presupuestoId, partidas }: { presup
   return (
     <div className="max-w-4xl space-y-6">
       <section className="panel space-y-4 p-5">
-        <label htmlFor="cotizacion" className="etiqueta">Archivo de cotización</label>
-        <input
-          id="cotizacion"
-          type="file"
-          accept="application/pdf,image/jpeg,image/png,image/webp,.xlsx,.docx"
-          className="campo"
-          disabled={subiendo || leyendo || guardando}
-          onChange={(event) => {
-            const file = event.target.files?.[0];
-            event.target.value = "";
-            void subir(file);
-          }}
-        />
+        <p className="etiqueta">Archivo de cotización</p>
+        {usarUploadThingDropzone ? (
+          <UploadDropzone
+            endpoint="cotizacion"
+            disabled={subiendo || leyendo || guardando}
+            className="rounded-lg border-2 border-dashed border-linea bg-fondo px-4 py-6 transition-colors"
+            appearance={{
+              container: "min-h-36 rounded-lg border-2 border-dashed border-linea bg-fondo px-4 py-6 transition-colors",
+              label: "text-sm font-medium text-tinta",
+              allowedContent: "text-xs text-suave",
+              button: "btn-secundario mt-3",
+            }}
+            onUploadBegin={prepararCarga}
+            onClientUploadComplete={(files) => void completarCarga(files)}
+            onUploadError={(uploadError) => {
+              setError(uploadError.message || "No se pudo subir el archivo.");
+              setSubiendo(false);
+              setLeyendo(false);
+            }}
+          />
+        ) : (
+          <div
+            onDragEnter={(event) => { event.preventDefault(); if (!subiendo && !leyendo && !guardando) setArrastrando(true); }}
+            onDragOver={(event) => { event.preventDefault(); if (!subiendo && !leyendo && !guardando) setArrastrando(true); }}
+            onDragLeave={(event) => { event.preventDefault(); setArrastrando(false); }}
+            onDrop={(event) => {
+              event.preventDefault();
+              setArrastrando(false);
+              if (!subiendo && !leyendo && !guardando) void subir(event.dataTransfer.files[0]);
+            }}
+            className={`rounded-lg border-2 border-dashed px-4 py-6 text-center transition-colors ${arrastrando ? "border-tinta bg-fondo" : "border-linea bg-fondo"}`}
+          >
+            <p className="text-sm font-medium">Arrastra la cotización aquí</p>
+            <p className="ayuda mt-1">o</p>
+            <label htmlFor="cotizacion" className="btn-secundario mt-3 cursor-pointer">
+              Seleccionar archivo
+            </label>
+            <input
+              id="cotizacion"
+              type="file"
+              accept="application/pdf,image/jpeg,image/png,image/webp,.xlsx,.docx"
+              className="sr-only"
+              disabled={subiendo || leyendo || guardando}
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                event.target.value = "";
+                void subir(file);
+              }}
+            />
+          </div>
+        )}
         <p className="ayuda">PDF, imagen, Excel (.xlsx) o Word (.docx), máximo 4 MB. Puedes volver a seleccionar un archivo para reemplazarlo.</p>
         {archivo && <p className="text-sm text-suave">Archivo: {archivo.nombre}</p>}
         {(subiendo || leyendo) && (
