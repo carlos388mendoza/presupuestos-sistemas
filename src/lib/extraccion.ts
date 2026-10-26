@@ -186,7 +186,7 @@ export async function extraerCotizacion(
     const instrucciones = categorias?.length
       ? `${INSTRUCCIONES}\n- Clasifica cada producto en la partida existente que mejor corresponda. Devuelve solo su partidaId de las opciones permitidas; nunca inventes partidas.\nPartidas: ${categorias.map((categoria) => `${categoria.id}: ${categoria.nombre}`).join("; ")}`
       : INSTRUCCIONES;
-    const stream = await clienteIA().chat.completions.create({
+    const solicitud = {
       model: process.env.OPENROUTER_MODEL!,
       temperature: 0,
       reasoning: { effort: "none" },
@@ -204,7 +204,8 @@ export async function extraerCotizacion(
         type: "json_schema",
         json_schema: { name: "cotizacion", strict: true, schema: esquemaConPartidas as unknown as Record<string, unknown> },
       },
-    } as any) as any;
+    } as unknown as OpenAI.Chat.Completions.ChatCompletionCreateParamsStreaming;
+    const stream = await clienteIA().chat.completions.create(solicitud);
     const fragmentos: string[] = [];
     const razonamientos: string[] = [];
     for await (const parte of stream) {
