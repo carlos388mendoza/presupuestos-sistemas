@@ -163,6 +163,13 @@ describe("rol aprobador", () => {
     expect(datos.permisosPresupuesto(admin, "ana")).toEqual({ modificar: true, decidir: true });
     expect(datos.permisosPresupuesto(damaris, "ana")).toEqual({ modificar: false, decidir: true });
   });
+
+  it("no modifica el catálogo", async () => {
+    const { damaris, ana, admin } = await armar();
+    expect(datos.puedeEditarCatalogo(damaris)).toBe(false);
+    expect(datos.puedeEditarCatalogo(ana)).toBe(true);
+    expect(datos.puedeEditarCatalogo(admin)).toBe(true);
+  });
 });
 
 describe("elección de alternativas", () => {

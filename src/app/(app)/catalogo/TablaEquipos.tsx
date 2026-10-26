@@ -44,7 +44,7 @@ function DetallesEquipo({ e, todos }: { e: Equipo; todos: Equipo[] }) {
   </div>;
 }
 
-export function TablaEquipos({ equipos, todos }: { equipos: Equipo[]; todos: Equipo[] }) {
+export function TablaEquipos({ equipos, todos, puedeEditar = true }: { equipos: Equipo[]; todos: Equipo[]; puedeEditar?: boolean }) {
   const [seleccionados, setSeleccionados] = useState<string[]>([]);
   const [abierto, setAbierto] = useState<string | null>(null);
   const [pagina, setPagina] = useState(1);
@@ -63,7 +63,7 @@ export function TablaEquipos({ equipos, todos }: { equipos: Equipo[]; todos: Equ
 
   return (
     <div className="panel overflow-hidden">
-      <div className="flex flex-wrap items-center gap-3 border-b border-linea-2 bg-fondo px-4 py-3">
+      {puedeEditar && <div className="flex flex-wrap items-center gap-3 border-b border-linea-2 bg-fondo px-4 py-3">
         <label className="flex items-center gap-2 text-sm font-medium">
           <input type="checkbox" aria-label="Seleccionar equipos de esta página" checked={todosVisiblesSeleccionados} onChange={() => setSeleccionados(todosVisiblesSeleccionados ? seleccionados.filter((id) => !visibles.some((e) => e.id === id)) : [...new Set([...seleccionados, ...visibles.map((e) => e.id)])])} />
           {seleccionados.length} seleccionados
@@ -81,38 +81,40 @@ export function TablaEquipos({ equipos, todos }: { equipos: Equipo[]; todos: Equ
           </FormAccion>
         </>}
       </div>
+      }
       <div className="divide-y divide-linea-2 xl:hidden">
         {visibles.map((e) => <article key={e.id} className={`min-w-0 p-4 ${!e.revisado ? "bg-aviso-claro/30" : ""}`}>
           <div className="flex min-w-0 items-start gap-3">
-            <input type="checkbox" aria-label={`Seleccionar ${e.nombre}`} checked={seleccionados.includes(e.id)} onChange={() => alternarSeleccion(e.id)} className="mt-1 shrink-0" />
+            {puedeEditar && <input type="checkbox" aria-label={`Seleccionar ${e.nombre}`} checked={seleccionados.includes(e.id)} onChange={() => alternarSeleccion(e.id)} className="mt-1 shrink-0" />}
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-start justify-between gap-2"><h3 className="min-w-0 break-words font-medium">{e.nombre}</h3>{e.revisado ? <span className="text-xs text-suave">Revisado</span> : <Etiqueta tipo="nuevo">Por revisar</Etiqueta>}</div>
               <p className="mt-1 break-words text-sm text-suave">{[e.marca, e.modelo].filter(Boolean).join(" · ") || "Sin marca ni modelo"}</p>
               {e.categoria && <p className="mt-1 break-words text-xs text-suave">{e.categoria}</p>}
               <p className="mt-2 text-xs text-suave">Creado por {e.creadoPor ?? "Desconocido"} · {fecha.format(e.createdAt)} · Actualizado {fecha.format(e.updatedAt)}</p>
             </div>
-            <button type="button" className="btn-texto shrink-0" aria-expanded={abierto === e.id} onClick={() => setAbierto(abierto === e.id ? null : e.id)}>{abierto === e.id ? "Cerrar" : "Editar"}</button>
+            {puedeEditar && <button type="button" className="btn-texto shrink-0" aria-expanded={abierto === e.id} onClick={() => setAbierto(abierto === e.id ? null : e.id)}>{abierto === e.id ? "Cerrar" : "Editar"}</button>}
           </div>
-          {abierto === e.id && <div className="mt-3"><DetallesEquipo e={e} todos={todos} /></div>}
+          {puedeEditar && abierto === e.id && <div className="mt-3"><DetallesEquipo e={e} todos={todos} /></div>}
         </article>)}
       </div>
       <div className="relative hidden overflow-x-auto xl:block">
         <table className="w-full min-w-[1120px] text-left text-sm">
           <thead className="bg-fondo text-suave"><tr>
-            <th className="w-10 px-3 py-3"><span className="sr-only">Seleccionar</span></th>
+            {puedeEditar && <th className="w-10 px-3 py-3"><span className="sr-only">Seleccionar</span></th>}
             {([ ["nombre", "Nombre"], ["marca", "Marca"], ["modelo", "Modelo"], ["categoria", "Categoría"] ] as const).map(([campo, titulo]) => <th key={campo} className="px-3 py-3 font-medium"><button type="button" className="inline-flex items-center gap-1 hover:text-texto" onClick={() => cambiarOrden(campo)}>{titulo}<span aria-hidden="true">{orden.campo === campo ? (orden.asc ? "↑" : "↓") : "↕"}</span></button></th>)}
-            <th className="px-3 py-3 font-medium">Creado por</th><th className="px-3 py-3 font-medium">Creado el</th><th className="px-3 py-3 font-medium">Actualizado el</th><th className="px-3 py-3 font-medium">Estado</th><th className="px-3 py-3 text-right font-medium">Acciones</th>
+            <th className="px-3 py-3 font-medium">Creado por</th><th className="px-3 py-3 font-medium">Creado el</th><th className="px-3 py-3 font-medium">Actualizado el</th><th className="px-3 py-3 font-medium">Estado</th>
+            {puedeEditar && <th className="px-3 py-3 text-right font-medium">Acciones</th>}
           </tr></thead>
           <tbody className="divide-y divide-linea-2">
             {visibles.map((e) => <Fragment key={e.id}>
               <tr className={!e.revisado ? "bg-aviso-claro/30" : ""}>
-                <td className="px-3 py-3"><input type="checkbox" aria-label={`Seleccionar ${e.nombre}`} checked={seleccionados.includes(e.id)} onChange={() => alternarSeleccion(e.id)} /></td>
+                {puedeEditar && <td className="px-3 py-3"><input type="checkbox" aria-label={`Seleccionar ${e.nombre}`} checked={seleccionados.includes(e.id)} onChange={() => alternarSeleccion(e.id)} /></td>}
                 <td className="px-3 py-3 font-medium">{e.nombre}</td><td className="px-3 py-3">{e.marca || "—"}</td><td className="px-3 py-3">{e.modelo || "—"}</td><td className="px-3 py-3">{e.categoria || "—"}</td>
                 <td className="px-3 py-3">{e.creadoPor ?? "Desconocido"}</td><td className="px-3 py-3">{fecha.format(e.createdAt)}</td><td className="px-3 py-3">{fecha.format(e.updatedAt)}</td>
                 <td className="px-3 py-3">{e.revisado ? <span className="text-suave">Revisado</span> : <Etiqueta tipo="nuevo">Por revisar</Etiqueta>}</td>
-                <td className="px-3 py-3 text-right"><button type="button" className="btn-texto" aria-expanded={abierto === e.id} onClick={() => setAbierto(abierto === e.id ? null : e.id)}>{abierto === e.id ? "Cerrar" : "Editar"}</button></td>
+                {puedeEditar && <td className="px-3 py-3 text-right"><button type="button" className="btn-texto" aria-expanded={abierto === e.id} onClick={() => setAbierto(abierto === e.id ? null : e.id)}>{abierto === e.id ? "Cerrar" : "Editar"}</button></td>}
               </tr>
-              {abierto === e.id && <tr key={`${e.id}-details`}><td colSpan={10} className="border-t border-linea-2 bg-papel"><DetallesEquipo e={e} todos={todos} /></td></tr>}
+              {puedeEditar && abierto === e.id && <tr key={`${e.id}-details`}><td colSpan={puedeEditar ? 10 : 8} className="border-t border-linea-2 bg-papel"><DetallesEquipo e={e} todos={todos} /></td></tr>}
             </Fragment>)}
           </tbody>
         </table>

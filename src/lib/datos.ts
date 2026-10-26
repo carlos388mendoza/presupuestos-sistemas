@@ -64,6 +64,11 @@ export function puedeCrearPresupuestos(actor: Actor): boolean {
   return actor.role !== "aprobador";
 }
 
+/** Crear, editar, aprobar, fusionar o eliminar equipos del catálogo. */
+export function puedeEditarCatalogo(actor: Actor): boolean {
+  return actor.role === "admin" || actor.role === "creador";
+}
+
 export function puedeAcceder(actor: Actor, creadoPor: string): boolean {
   return puedeVerTodo(actor) || actor.id === creadoPor;
 }
