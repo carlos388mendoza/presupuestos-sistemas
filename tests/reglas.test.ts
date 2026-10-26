@@ -164,6 +164,11 @@ describe("rol aprobador", () => {
     expect(datos.permisosPresupuesto(damaris, "ana")).toEqual({ modificar: false, decidir: true });
   });
 
+  it("no modifica sus presupuestos aunque sea el dueño", async () => {
+    const { damaris } = await armar();
+    expect(datos.permisosPresupuesto(damaris, damaris.id)).toEqual({ modificar: false, decidir: true });
+  });
+
   it("no modifica el catálogo", async () => {
     const { damaris, ana, admin } = await armar();
     expect(datos.puedeEditarCatalogo(damaris)).toBe(false);

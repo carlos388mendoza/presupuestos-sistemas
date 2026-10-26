@@ -75,7 +75,7 @@ export function puedeAcceder(actor: Actor, creadoPor: string): boolean {
 
 /** Qué puede hacer el actor con un presupuesto que ya puede ver. */
 export function permisosPresupuesto(actor: Actor, creadoPor: string) {
-  const esDuenoOAdmin = actor.role === "admin" || actor.id === creadoPor;
+  const esDuenoOAdmin = actor.role !== "aprobador" && (actor.role === "admin" || actor.id === creadoPor);
   return {
     /** Editar datos, partidas y alternativas, o eliminar. */
     modificar: esDuenoOAdmin,
