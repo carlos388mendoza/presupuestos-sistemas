@@ -106,7 +106,11 @@ export function SubirCotizacionPresupuesto({ presupuestoId, partidas }: { presup
           accept="application/pdf,image/jpeg,image/png,image/webp,.xlsx,.docx"
           className="campo"
           disabled={subiendo || leyendo || guardando}
-          onChange={(event) => void subir(event.target.files?.[0])}
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            event.target.value = "";
+            void subir(file);
+          }}
         />
         <p className="ayuda">PDF, imagen, Excel (.xlsx) o Word (.docx), máximo 4 MB. Puedes volver a seleccionar un archivo para reemplazarlo.</p>
         {archivo && <p className="text-sm text-suave">Archivo: {archivo.nombre}</p>}
