@@ -51,3 +51,11 @@
 3. Servidor de prueba: `npm run dev -- -p 3001` (el puerto 3000 es de otra app). Si no toma un cambio de CSS, detenerlo, borrar `.next\dev` y volver a arrancarlo.
 4. Datos de prueba: solo en `desarrollo` y siempre borrarlos al terminar. Nunca crear datos de prueba en producción.
 5. Cada cambio va en una rama con su PR. Se une si pasan el CI y la vista previa de Vercel.
+
+
+## Actualizacion 26/10/2026
+- Tarea 1: los PDFs se convierten a texto en el servidor con unpdf (primeras 5 paginas). Si hay texto suficiente se envia solo texto a la IA; si es escaneado no se llama a la IA y se muestra aviso.
+- Modelo recomendado gratis: 
+vidia/nemotron-3.5-super-vl:free (vision + structured outputs). Limites tipicos de OpenRouter para modelos gratis: ~20 solicitudes/minuto y ~50/dia (hasta 1000/dia con USD 10 de creditos), contexto 1M y salida 131k tokens.
+- Tarea 2: buscador global redisenado estilo wiki con secciones Acciones, Ir a, Presupuestos y Equipos, iconos, subtitulos, ayuda inferior y modo oscuro.
+- PRs: #84 (PDFs sin pagar), #85 (buscador wiki).
