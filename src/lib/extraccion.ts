@@ -204,13 +204,14 @@ export async function extraerCotizacion(
         type: "json_schema",
         json_schema: { name: "cotizacion", strict: true, schema: esquemaConPartidas as unknown as Record<string, unknown> },
       },
-    });
+    } as any) as any;
     const fragmentos: string[] = [];
     const razonamientos: string[] = [];
     for await (const parte of stream) {
-      const fragmento = parte.choices[0]?.delta?.content;
+      const delta = parte.choices[0]?.delta as { content?: string; reasoning?: string } | undefined;
+      const fragmento = delta?.content;
       if (typeof fragmento === "string") fragmentos.push(fragmento);
-      const razonamiento = parte.choices[0]?.delta?.reasoning;
+      const razonamiento = delta?.reasoning;
       if (typeof razonamiento === "string") razonamientos.push(razonamiento);
     }
     texto = fragmentos.join("");
