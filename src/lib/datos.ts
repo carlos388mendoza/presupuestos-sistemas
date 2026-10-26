@@ -261,7 +261,7 @@ export async function actualizarPresupuesto(
 }
 
 export async function eliminarPresupuesto(db: DB, actor: Actor, id: string) {
-  await presupuestoConPermiso(db, actor, id, "modificar");
+  await presupuestoEditable(db, actor, id, "modificar");
   await db.delete(presupuestos).where(eq(presupuestos.id, id));
 }
 
