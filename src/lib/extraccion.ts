@@ -189,6 +189,7 @@ export async function extraerCotizacion(
     const stream = await clienteIA().chat.completions.create({
       model: process.env.OPENROUTER_MODEL!,
       temperature: 0,
+      reasoning: { effort: "none" },
       max_completion_tokens: 3000,
       stream: true,
       messages: [
@@ -205,11 +206,15 @@ export async function extraerCotizacion(
       },
     });
     const fragmentos: string[] = [];
+    const razonamientos: string[] = [];
     for await (const parte of stream) {
       const fragmento = parte.choices[0]?.delta?.content;
       if (typeof fragmento === "string") fragmentos.push(fragmento);
+      const razonamiento = parte.choices[0]?.delta?.reasoning;
+      if (typeof razonamiento === "string") razonamientos.push(razonamiento);
     }
     texto = fragmentos.join("");
+    if (!texto && razonamientos.length) texto = razonamientos.join("");
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     throw new ErrorExtraccion(`No se pudo contactar al servicio de IA: ${msg}`);
