@@ -77,7 +77,7 @@ export function TablaEquipos({ equipos, todos, puedeEditar = true }: { equipos: 
           <FormAccion action={actuarEquiposEnLote} enLinea className="flex items-center gap-2" confirmar={`Se eliminarán ${seleccionados.length} equipos del catálogo. Las cotizaciones conservarán sus descripciones. ¿Continuar?`}>
             {seleccionados.map((id) => <input key={id} type="hidden" name="id" value={id} />)}
             <input type="hidden" name="operacion" value="eliminar" />
-            <button className="btn-peligro">Eliminar seleccionados</button>
+            <button className="btn-peligro border border-transparent px-3.5 py-2">Eliminar seleccionados</button>
           </FormAccion>
         </>}
       </div>
@@ -87,12 +87,16 @@ export function TablaEquipos({ equipos, todos, puedeEditar = true }: { equipos: 
           <div className="flex min-w-0 items-start gap-3">
             {puedeEditar && <input type="checkbox" aria-label={`Seleccionar ${e.nombre}`} checked={seleccionados.includes(e.id)} onChange={() => alternarSeleccion(e.id)} className="mt-1 shrink-0" />}
             <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-start justify-between gap-2"><h3 className="min-w-0 break-words font-medium">{e.nombre}</h3>{e.revisado ? <span className="text-xs text-suave">Revisado</span> : <Etiqueta tipo="nuevo">Por revisar</Etiqueta>}</div>
+              <h3 className="min-w-0 break-words font-medium">{e.nombre}</h3>
               <p className="mt-1 break-words text-sm text-suave">{[e.marca, e.modelo].filter(Boolean).join(" · ") || "Sin marca ni modelo"}</p>
               {e.categoria && <p className="mt-1 break-words text-xs text-suave">{e.categoria}</p>}
               <p className="mt-2 text-xs text-suave">Creado por {e.creadoPor ?? "Desconocido"} · {fecha.format(e.createdAt)} · Actualizado {fecha.format(e.updatedAt)}</p>
             </div>
-            {puedeEditar && <button type="button" className="btn-texto shrink-0" aria-expanded={abierto === e.id} onClick={() => setAbierto(abierto === e.id ? null : e.id)}>{abierto === e.id ? "Cerrar" : "Editar"}</button>}
+          </div>
+          {/* Estado y Editar en la misma fila, alineados con el texto de la tarjeta */}
+          <div className={`mt-3 flex flex-wrap items-center justify-between gap-2 ${puedeEditar ? "pl-7" : ""}`}>
+            {e.revisado ? <span className="text-xs text-suave">Revisado</span> : <Etiqueta tipo="nuevo">Por revisar</Etiqueta>}
+            {puedeEditar && <button type="button" className="btn-texto -mr-1.5" aria-expanded={abierto === e.id} onClick={() => setAbierto(abierto === e.id ? null : e.id)}>{abierto === e.id ? "Cerrar" : "Editar"}</button>}
           </div>
           {puedeEditar && abierto === e.id && <div className="mt-3"><DetallesEquipo e={e} todos={todos} /></div>}
         </article>)}

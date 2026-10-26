@@ -65,7 +65,7 @@ export default async function PaginaPresupuesto({ params }: { params: Promise<{ 
             {modificar && (
               <ModalFormulario
                 titulo="Editar presupuesto"
-                triggerClassName="btn-texto rounded-full p-2"
+                triggerClassName="btn-texto rounded-full border border-transparent p-2"
                 triggerAriaLabel="Editar presupuesto"
                 trigger={(
                   <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" className="size-5">
@@ -157,7 +157,7 @@ export default async function PaginaPresupuesto({ params }: { params: Promise<{ 
         {modificar && (
           <ModalFormulario
             titulo="Nueva partida"
-            triggerClassName="btn-texto rounded-full p-2"
+            triggerClassName="btn-texto rounded-full border border-transparent p-2"
             triggerAriaLabel="Agregar partida"
             trigger={(
               <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" className="size-5">
@@ -201,7 +201,7 @@ function SeccionPartida({ presupuestoId, partida, modificar, decidir }: { presup
               Agregar alternativa
             </Link>
             <details className="relative">
-              <summary className="btn-texto cursor-pointer list-none">Opciones</summary>
+              <summary className="btn-texto cursor-pointer list-none border border-transparent px-3.5 py-2">Opciones</summary>
               <div className="panel absolute right-0 z-10 mt-1 w-72 space-y-3 p-4 shadow-lg">
                 <FormAccion action={renombrarPartida}>
                   <input type="hidden" name="id" value={partida.id} />
@@ -300,7 +300,7 @@ function TarjetaAlternativa({ presupuestoId, a, modificar, decidir }: { presupue
               {a.elegida ? (
                 <>
                   <input type="hidden" name="quitar" value="1" />
-                  <button className="btn-texto">Quitar elección</button>
+                  <button className="btn-texto border border-transparent px-3.5 py-1.5">Quitar elección</button>
                 </>
               ) : (
                 <button className="btn-secundario py-1.5">Elegir esta</button>
@@ -309,7 +309,7 @@ function TarjetaAlternativa({ presupuestoId, a, modificar, decidir }: { presupue
           )}
           {modificar && (
             <>
-              <Link href={`/presupuestos/${presupuestoId}/alternativas/${a.id}`} className="btn-texto">Editar</Link>
+              <Link href={`/presupuestos/${presupuestoId}/alternativas/${a.id}`} className="btn-texto border border-transparent px-3.5 py-1.5">Editar</Link>
               <FormAccion
                 action={eliminarAlternativa}
                 confirmar={`¿Eliminar la alternativa de ${a.proveedor}?`}
@@ -317,7 +317,7 @@ function TarjetaAlternativa({ presupuestoId, a, modificar, decidir }: { presupue
                 className="ml-auto flex items-center"
               >
                 <input type="hidden" name="id" value={a.id} />
-                <button className="btn-peligro">Eliminar</button>
+                <button className="btn-peligro border border-transparent px-3.5 py-1.5">Eliminar</button>
               </FormAccion>
             </>
           )}
