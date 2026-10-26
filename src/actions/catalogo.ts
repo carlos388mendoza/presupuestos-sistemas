@@ -5,6 +5,7 @@ import { z } from "zod";
 import { db } from "@/db";
 import { usuarioOError } from "@/lib/sesion";
 import * as catalogo from "@/lib/catalogo";
+import { ErrorNegocio, puedeEditarCatalogo } from "@/lib/datos";
 import type { EstadoAccion } from "@/lib/tipos";
 import { aEstado, datosDe, texto, textoOpcional } from "./util";
 
@@ -21,6 +22,7 @@ const esquemaEquipo = z.object({
 export async function crearEquipo(_prev: EstadoAccion, fd: FormData): Promise<EstadoAccion> {
   try {
     const usuario = await usuarioOError();
+    if (!puedeEditarCatalogo(usuario)) throw new ErrorNegocio("Tu rol no permite modificar el catálogo.");
     await catalogo.crearEquipo(db, usuario.id, esquemaEquipo.parse(datosDe(fd)));
     revalidatePath("/catalogo");
     return { ok: "Equipo agregado al catálogo." };
@@ -31,7 +33,8 @@ export async function crearEquipo(_prev: EstadoAccion, fd: FormData): Promise<Es
 
 export async function actualizarEquipo(_prev: EstadoAccion, fd: FormData): Promise<EstadoAccion> {
   try {
-    await usuarioOError();
+    const usuario = await usuarioOError();
+    if (!puedeEditarCatalogo(usuario)) throw new ErrorNegocio("Tu rol no permite modificar el catálogo.");
     const id = z.string().parse(fd.get("id"));
     await catalogo.actualizarEquipo(db, id, esquemaEquipo.parse(datosDe(fd)));
     if (fd.get("aprobar") === "1") await catalogo.aprobarEquipo(db, id);
@@ -44,7 +47,8 @@ export async function actualizarEquipo(_prev: EstadoAccion, fd: FormData): Promi
 
 export async function aprobarEquipo(_prev: EstadoAccion, fd: FormData): Promise<EstadoAccion> {
   try {
-    await usuarioOError();
+    const usuario = await usuarioOError();
+    if (!puedeEditarCatalogo(usuario)) throw new ErrorNegocio("Tu rol no permite modificar el catálogo.");
     await catalogo.aprobarEquipo(db, z.string().parse(fd.get("id")));
     revalidatePath("/catalogo");
     return null;
@@ -55,7 +59,8 @@ export async function aprobarEquipo(_prev: EstadoAccion, fd: FormData): Promise<
 
 export async function eliminarEquipo(_prev: EstadoAccion, fd: FormData): Promise<EstadoAccion> {
   try {
-    await usuarioOError();
+    const usuario = await usuarioOError();
+    if (!puedeEditarCatalogo(usuario)) throw new ErrorNegocio("Tu rol no permite modificar el catálogo.");
     await catalogo.eliminarEquipo(db, z.string().parse(fd.get("id")));
     revalidatePath("/catalogo");
     return null;
@@ -66,7 +71,8 @@ export async function eliminarEquipo(_prev: EstadoAccion, fd: FormData): Promise
 
 export async function fusionarEquipo(_prev: EstadoAccion, fd: FormData): Promise<EstadoAccion> {
   try {
-    await usuarioOError();
+    const usuario = await usuarioOError();
+    if (!puedeEditarCatalogo(usuario)) throw new ErrorNegocio("Tu rol no permite modificar el catálogo.");
     const origen = z.string().parse(fd.get("id"));
     const destino = z.string().min(1, "Elige con qué equipo fusionarlo.").parse(fd.get("destinoId") ?? "");
     await catalogo.fusionarEquipo(db, origen, destino);
@@ -79,7 +85,8 @@ export async function fusionarEquipo(_prev: EstadoAccion, fd: FormData): Promise
 
 export async function actuarEquiposEnLote(_prev: EstadoAccion, fd: FormData): Promise<EstadoAccion> {
   try {
-    await usuarioOError();
+    const usuario = await usuarioOError();
+    if (!puedeEditarCatalogo(usuario)) throw new ErrorNegocio("Tu rol no permite modificar el catálogo.");
     const ids = z.array(z.string().uuid()).min(1, "Selecciona al menos un equipo.").max(200, "Selecciona como máximo 200 equipos.").parse(fd.getAll("id"));
     const operacion = z.enum(["aprobar", "eliminar"]).parse(fd.get("operacion"));
     if (operacion === "aprobar") {

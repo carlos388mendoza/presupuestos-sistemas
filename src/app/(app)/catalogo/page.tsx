@@ -2,6 +2,7 @@ import { db } from "@/db";
 import { requerirUsuario } from "@/lib/sesion";
 import { contarPendientes, listarEquipos } from "@/lib/catalogo";
 import { crearEquipo } from "@/actions/catalogo";
+import { puedeEditarCatalogo } from "@/lib/datos";
 import { FormAccion } from "@/components/FormAccion";
 import { ModalFormulario } from "@/components/ModalFormulario";
 import { FiltrosCatalogo } from "./FiltrosCatalogo";
@@ -12,7 +13,8 @@ export default async function PaginaCatalogo({
 }: {
   searchParams: Promise<{ q?: string; pendientes?: string }>;
 }) {
-  await requerirUsuario();
+  const usuario = await requerirUsuario();
+  const puedeEditar = puedeEditarCatalogo(usuario);
   const { q = "", pendientes } = await searchParams;
   const soloPendientes = pendientes === "1";
   const equipos = await listarEquipos(db, { q: q.trim() || undefined, soloPendientes });
@@ -39,7 +41,7 @@ export default async function PaginaCatalogo({
         soloPendientesInicial={soloPendientes}
         totalPendientes={totalPendientes}
       >
-        <ModalFormulario titulo="Agregar equipo" triggerClassName="btn-primario whitespace-nowrap">
+        {puedeEditar && <ModalFormulario titulo="Agregar equipo" triggerClassName="btn-primario whitespace-nowrap">
           <FormAccion action={crearEquipo} limpiarAlTerminar className="formulario">
             <div className="grid gap-x-4 gap-y-5 sm:grid-cols-2">
               <div className="sm:col-span-2"><label className="etiqueta" htmlFor="nuevo-nombre">Nombre</label><input id="nuevo-nombre" name="nombre" required maxLength={200} className="campo" /></div>
@@ -51,13 +53,14 @@ export default async function PaginaCatalogo({
             <button className="btn-primario w-full">Agregar al catálogo</button>
           </FormAccion>
         </ModalFormulario>
+        }
       </FiltrosCatalogo>
 
       {equipos.length === 0 ? (
         <div className="panel p-6 text-sm text-suave">
           {q || soloPendientes ? "Ningún equipo coincide con el filtro." : "El catálogo está vacío. Agrega el primer equipo."}
         </div>
-      ) : <TablaEquipos key={`${q}:${soloPendientes}`} equipos={equipos} todos={todos} />}
+      ) : <TablaEquipos key={`${q}:${soloPendientes}`} equipos={equipos} todos={todos} puedeEditar={puedeEditar} />}
     </>
   );
 }
