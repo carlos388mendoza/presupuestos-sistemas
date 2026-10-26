@@ -25,6 +25,7 @@ export default async function NuevaCotizacionPresupuesto({ params }: { params: P
       <SubirCotizacionPresupuesto
         presupuestoId={presupuesto.id}
         partidas={presupuesto.partidas.map(({ id: partidaId, nombre }) => ({ id: partidaId, nombre }))}
+        usarUploadThingDropzone={process.env.ARCHIVOS_STORAGE === "uploadthing"}
       />
     </>
   );
