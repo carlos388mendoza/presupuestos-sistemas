@@ -1,6 +1,7 @@
 import "server-only";
 import OpenAI from "openai";
 import { z } from "zod";
+import { extraerTextoPdf, pdfTieneTextoSuficiente, MAXIMO_PAGINAS_PDF } from "@/lib/pdf-texto";
 
 const esquemaRespuesta = z.object({
   proveedor: z.string(),
@@ -137,11 +138,20 @@ export async function extraerCotizacion(
     if (textoOficina !== null) {
       if (!textoOficina) throw new ErrorExtraccion("El archivo no contiene texto legible. Revisa que tenga datos y no esté protegido con contraseña.");
       contenidoArchivo = { type: "text", text: `Contenido extraído de ${nombre}:\n${textoOficina}` };
+    } else if (mime === "application/pdf") {
+      let textoPdf = "";
+      try {
+        textoPdf = await extraerTextoPdf(archivo);
+      } catch {
+        throw new ErrorExtraccion("No se pudo leer el PDF. Si está protegido o dañado, guárdalo de nuevo e intenta otra vez.");
+      }
+      if (!pdfTieneTextoSuficiente(textoPdf)) {
+        throw new ErrorExtraccion("Este PDF es una imagen escaneada. Sube una foto o captura de la cotización para leerla automáticamente, o ingresa los ítems a mano.");
+      }
+      contenidoArchivo = { type: "text", text: `Contenido extraído de ${nombre} (primeras ${MAXIMO_PAGINAS_PDF} páginas):\n${textoPdf}` };
     } else {
       const dataUrl = `data:${mime};base64,${archivo.toString("base64")}`;
-      contenidoArchivo = mime === "application/pdf"
-        ? { type: "file", file: { filename: nombre, file_data: dataUrl } }
-        : { type: "image_url", image_url: { url: dataUrl } };
+      contenidoArchivo = { type: "image_url", image_url: { url: dataUrl } };
     }
   } catch (e) {
     if (e instanceof ErrorExtraccion) throw e;
@@ -179,7 +189,6 @@ export async function extraerCotizacion(
     const stream = await clienteIA().chat.completions.create({
       model: process.env.OPENROUTER_MODEL!,
       temperature: 0,
-      reasoning_effort: "none",
       max_completion_tokens: 3000,
       stream: true,
       messages: [
