@@ -9,7 +9,7 @@ vi.mock("openai", () => ({
   },
 }));
 
-import { extraerCotizacion } from "@/lib/extraccion";
+import { ErrorPdfEscaneado, extraerCotizacion, modelosIA } from "@/lib/extraccion";
 
 async function crearPdf(textoPorPagina: string[], paginasConTexto = textoPorPagina.length): Promise<Buffer> {
   const PDFDocument = (await import("pdfkit")).default;
@@ -61,6 +61,37 @@ describe("extracción de cotizaciones", () => {
       "Este PDF es una imagen escaneada. Sube una foto o captura de la cotización para leerla automáticamente, o ingresa los ítems a mano.",
     );
     expect(createMock).not.toHaveBeenCalled();
+  });
+
+  it("el error del PDF escaneado es propio, para mostrar el mensaje sin agregados", async () => {
+    const pdf = await crearPdf([""], 0);
+    await expect(extraerCotizacion(pdf, "application/pdf", "escaneado.pdf")).rejects.toBeInstanceOf(ErrorPdfEscaneado);
+  });
+
+  it("con varios modelos separados por coma usa el primero y los demás de respaldo", async () => {
+    process.env.OPENROUTER_MODEL = "nvidia/nemotron-3.5-super-vl:free, dots-studio/dots-3-note-preview:free";
+    async function* stream() {
+      yield { choices: [{ delta: { content: JSON.stringify({ proveedor: "Acme", tipoCompra: "nacional", items: [] }) } }] };
+    }
+    createMock.mockResolvedValue(stream());
+
+    await extraerCotizacion(Buffer.from([0x89, 0x50, 0x4e, 0x47]), "image/png", "foto.png");
+
+    const llamada = createMock.mock.calls[0][0];
+    expect(llamada.model).toBe("nvidia/nemotron-3.5-super-vl:free");
+    expect(llamada.models).toEqual(["nvidia/nemotron-3.5-super-vl:free", "dots-studio/dots-3-note-preview:free"]);
+  });
+
+  it("con un solo modelo no manda lista de respaldo", async () => {
+    expect(modelosIA("nvidia/nemotron-3.5-super-vl:free")).toEqual(["nvidia/nemotron-3.5-super-vl:free"]);
+    async function* stream() {
+      yield { choices: [{ delta: { content: JSON.stringify({ proveedor: "Acme", tipoCompra: "nacional", items: [] }) } }] };
+    }
+    createMock.mockResolvedValue(stream());
+
+    await extraerCotizacion(Buffer.from([0x89, 0x50, 0x4e, 0x47]), "image/png", "foto.png");
+
+    expect(createMock.mock.calls[0][0].models).toBeUndefined();
   });
 
   it("lee solo las primeras 5 páginas de un PDF largo", async () => {

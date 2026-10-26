@@ -54,6 +54,7 @@ const INSTRUCCIONES = `Eres un asistente que lee cotizaciones de proveedores de 
 Extrae el proveedor y cada línea cotizada.
 Reglas:
 - Si el contenido viene en filas de Excel o texto de Word, usa los encabezados y filas para identificar cada producto y su precio.
+- tipoCompra es "nacional" si el proveedor está en Honduras: dirección en Honduras (Tegucigalpa, San Pedro Sula, etc.), RTN, teléfono +504 o precios en Lempiras. Solo es "internacional" si el proveedor está claramente fuera de Honduras.
 - No conviertas monedas. Usa la moneda en que está expresado cada precio: "L", "Lps" o "HNL" es HNL; "$", "US$" o "USD" es USD.
 - precioUnitario es el precio por unidad antes de impuestos. Si solo aparece el total de la línea, divídelo entre la cantidad.
 - No incluyas como ítems los subtotales, impuestos (ISV), descuentos globales ni el total general.
@@ -61,6 +62,22 @@ Reglas:
 - Responde solo con el JSON solicitado.`;
 
 export class ErrorExtraccion extends Error {}
+
+/** El PDF no tiene texto (imagen escaneada): no se llama a la IA y el mensaje ya dice qué hacer. */
+export class ErrorPdfEscaneado extends ErrorExtraccion {
+  constructor() {
+    super("Este PDF es una imagen escaneada. Sube una foto o captura de la cotización para leerla automáticamente, o ingresa los ítems a mano.");
+  }
+}
+
+/**
+ * OPENROUTER_MODEL acepta un modelo o varios separados por coma. El primero es el principal;
+ * los demás son de respaldo: si el principal falla o no responde, OpenRouter prueba el siguiente.
+ * Útil con modelos gratis (":free"), que a veces están saturados.
+ */
+export function modelosIA(valor = process.env.OPENROUTER_MODEL ?? ""): string[] {
+  return valor.split(",").map((m) => m.trim()).filter(Boolean);
+}
 
 export function extraccionDisponible(): boolean {
   return Boolean(process.env.OPENROUTER_API_KEY && process.env.OPENROUTER_MODEL);
@@ -145,9 +162,7 @@ export async function extraerCotizacion(
       } catch {
         throw new ErrorExtraccion("No se pudo leer el PDF. Si está protegido o dañado, guárdalo de nuevo e intenta otra vez.");
       }
-      if (!pdfTieneTextoSuficiente(textoPdf)) {
-        throw new ErrorExtraccion("Este PDF es una imagen escaneada. Sube una foto o captura de la cotización para leerla automáticamente, o ingresa los ítems a mano.");
-      }
+      if (!pdfTieneTextoSuficiente(textoPdf)) throw new ErrorPdfEscaneado();
       contenidoArchivo = { type: "text", text: `Contenido extraído de ${nombre} (primeras ${MAXIMO_PAGINAS_PDF} páginas):\n${textoPdf}` };
     } else {
       const dataUrl = `data:${mime};base64,${archivo.toString("base64")}`;
@@ -186,8 +201,11 @@ export async function extraerCotizacion(
     const instrucciones = categorias?.length
       ? `${INSTRUCCIONES}\n- Clasifica cada producto en la partida existente que mejor corresponda. Devuelve solo su partidaId de las opciones permitidas; nunca inventes partidas.\nPartidas: ${categorias.map((categoria) => `${categoria.id}: ${categoria.nombre}`).join("; ")}`
       : INSTRUCCIONES;
+    const modelos = modelosIA();
     const solicitud = {
-      model: process.env.OPENROUTER_MODEL!,
+      model: modelos[0],
+      // Respaldo automático de OpenRouter (solo si hay más de un modelo configurado).
+      ...(modelos.length > 1 ? { models: modelos } : {}),
       temperature: 0,
       reasoning: { effort: "none" },
       max_completion_tokens: 3000,

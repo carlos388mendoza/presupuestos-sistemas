@@ -5,7 +5,7 @@ import { archivos } from "@/db/schema";
 import type { UsuarioActual } from "@/lib/sesion";
 import { ErrorNegocio, obtenerPresupuesto, permisosPresupuesto, puedeCrearPresupuestos } from "@/lib/datos";
 import { borrarArchivo, guardarArchivo, leerArchivo, TAMANO_MAXIMO, TIPOS_PERMITIDOS, type AlmacenamientoArchivo } from "@/lib/archivos";
-import { ErrorExtraccion, extraccionDisponible, extraerCotizacion } from "@/lib/extraccion";
+import { ErrorExtraccion, ErrorPdfEscaneado, extraccionDisponible, extraerCotizacion } from "@/lib/extraccion";
 import { buscarCoincidencia } from "@/lib/coincidencias";
 import { listarEquipos } from "@/lib/catalogo";
 import { aCentavos } from "@/lib/dinero";
@@ -119,6 +119,8 @@ export async function extraerCotizacionRegistrada(
   } catch (error) {
     const mensaje = error instanceof ErrorExtraccion ? error.message : "Error inesperado al leer la cotización.";
     if (!(error instanceof ErrorExtraccion)) console.error(error);
+    // El mensaje del PDF escaneado ya explica qué hacer; no se le agrega el texto genérico.
+    if (error instanceof ErrorPdfEscaneado) return { ...base, aviso: mensaje };
     return { ...base, aviso: `${mensaje} El archivo quedó adjunto; puedes ingresar los ítems a mano.` };
   }
 }
