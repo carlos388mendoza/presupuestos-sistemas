@@ -54,6 +54,7 @@ const INSTRUCCIONES = `Eres un asistente que lee cotizaciones de proveedores de 
 Extrae el proveedor y cada línea cotizada.
 Reglas:
 - Si el contenido viene en filas de Excel o texto de Word, usa los encabezados y filas para identificar cada producto y su precio.
+- tipoCompra es "nacional" si el proveedor está en Honduras: dirección en Honduras (Tegucigalpa, San Pedro Sula, etc.), RTN, teléfono +504 o precios en Lempiras. Solo es "internacional" si el proveedor está claramente fuera de Honduras.
 - No conviertas monedas. Usa la moneda en que está expresado cada precio: "L", "Lps" o "HNL" es HNL; "$", "US$" o "USD" es USD.
 - precioUnitario es el precio por unidad antes de impuestos. Si solo aparece el total de la línea, divídelo entre la cantidad.
 - No incluyas como ítems los subtotales, impuestos (ISV), descuentos globales ni el total general.
