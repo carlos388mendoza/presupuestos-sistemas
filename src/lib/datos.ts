@@ -3,7 +3,7 @@
  * para que páginas, acciones y APIs no puedan saltárselas.
  * Recibe `db` como parámetro para poder probarse con una base de prueba.
  */
-import { and, asc, desc, eq, ilike, inArray, or } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, inArray, or, sql } from "drizzle-orm";
 import type { DB } from "@/db/cliente";
 import {
   alternativas,
@@ -26,6 +26,11 @@ export class ErrorNegocio extends Error {
     super(mensaje);
     this.name = "ErrorNegocio";
   }
+}
+
+function esViolacionUnica(error: unknown): boolean {
+  const anyError = error as { code?: string; cause?: { code?: string } };
+  return anyError?.code === "23505" || anyError?.cause?.code === "23505";
 }
 
 const NO_ENCONTRADO = "No se encontró el presupuesto o no tienes acceso a él.";
@@ -481,23 +486,44 @@ export async function eliminarAlternativa(db: DB, actor: Actor, alternativaId: s
 
 /** Marca una alternativa como la elegida de su partida (y desmarca las demás). */
 export async function elegirAlternativa(db: DB, actor: Actor, alternativaId: string) {
-  const { alternativa, presupuesto } = await alternativaAccesible(db, actor, alternativaId);
-  await presupuestoEditable(db, actor, presupuesto.id, "decidir");
   await db.transaction(async (tx) => {
-    await tx
-      .update(alternativas)
-      .set({ elegida: false })
-      .where(and(eq(alternativas.partidaId, alternativa.partidaId), eq(alternativas.elegida, true)));
-    await tx.update(alternativas).set({ elegida: true }).where(eq(alternativas.id, alternativaId));
-    await tx.update(presupuestos).set({ updatedAt: new Date() }).where(eq(presupuestos.id, presupuesto.id));
+    const [alternativa] = await tx.select().from(alternativas).where(eq(alternativas.id, alternativaId));
+    if (!alternativa) throw new ErrorNegocio("No se encontró la alternativa.");
+    const [partida] = await tx.select().from(partidas).where(eq(partidas.id, alternativa.partidaId));
+    if (!partida) throw new ErrorNegocio("No se encontró la partida.");
+    await tx.execute(sql`SELECT id FROM partidas WHERE id = ${partida.id} FOR UPDATE`);
+    const [presupuesto] = await tx.select().from(presupuestos).where(eq(presupuestos.id, partida.presupuestoId));
+    if (!presupuesto || !puedeAcceder(actor, presupuesto.creadoPor)) throw new ErrorNegocio(NO_ENCONTRADO);
+    if (!permisosPresupuesto(actor, presupuesto.creadoPor).decidir) throw new ErrorNegocio(SOLO_APROBAR);
+    if (presupuesto.estado === "listo") throw new ErrorNegocio("El presupuesto está marcado como listo. Reábrelo para hacer cambios.");
+    try {
+      await tx
+        .update(alternativas)
+        .set({ elegida: false })
+        .where(and(eq(alternativas.partidaId, alternativa.partidaId), eq(alternativas.elegida, true)));
+      await tx.update(alternativas).set({ elegida: true }).where(eq(alternativas.id, alternativaId));
+      await tx.update(presupuestos).set({ updatedAt: new Date() }).where(eq(presupuestos.id, presupuesto.id));
+    } catch (error) {
+      if (esViolacionUnica(error)) throw new ErrorNegocio("Otra persona acaba de elegir una alternativa en esta partida. Recarga la página.");
+      throw error;
+    }
   });
 }
 
 export async function quitarEleccion(db: DB, actor: Actor, alternativaId: string) {
-  const { presupuesto } = await alternativaAccesible(db, actor, alternativaId);
-  await presupuestoEditable(db, actor, presupuesto.id, "decidir");
-  await db.update(alternativas).set({ elegida: false }).where(eq(alternativas.id, alternativaId));
-  await tocarPresupuesto(db, presupuesto.id);
+  await db.transaction(async (tx) => {
+    const [alternativa] = await tx.select().from(alternativas).where(eq(alternativas.id, alternativaId));
+    if (!alternativa) throw new ErrorNegocio("No se encontró la alternativa.");
+    const [partida] = await tx.select().from(partidas).where(eq(partidas.id, alternativa.partidaId));
+    if (!partida) throw new ErrorNegocio("No se encontró la partida.");
+    await tx.execute(sql`SELECT id FROM partidas WHERE id = ${partida.id} FOR UPDATE`);
+    const [presupuesto] = await tx.select().from(presupuestos).where(eq(presupuestos.id, partida.presupuestoId));
+    if (!presupuesto || !puedeAcceder(actor, presupuesto.creadoPor)) throw new ErrorNegocio(NO_ENCONTRADO);
+    if (!permisosPresupuesto(actor, presupuesto.creadoPor).decidir) throw new ErrorNegocio(SOLO_APROBAR);
+    if (presupuesto.estado === "listo") throw new ErrorNegocio("El presupuesto está marcado como listo. Reábrelo para hacer cambios.");
+    await tx.update(alternativas).set({ elegida: false }).where(eq(alternativas.id, alternativaId));
+    await tx.update(presupuestos).set({ updatedAt: new Date() }).where(eq(presupuestos.id, presupuesto.id));
+  });
 }
 
 /* ------------------------------------------------------------------ */
@@ -512,11 +538,17 @@ export function pendientesParaListo(p: Pick<PresupuestoCompleto, "partidas">): s
 }
 
 export async function marcarListo(db: DB, actor: Actor, presupuestoId: string) {
-  await presupuestoConPermiso(db, actor, presupuestoId, "decidir");
-  const completo = await obtenerPresupuesto(db, actor, presupuestoId);
-  const pendientes = pendientesParaListo(completo);
-  if (pendientes.length) throw new ErrorNegocio(pendientes.join(" "));
-  await db.update(presupuestos).set({ estado: "listo" }).where(eq(presupuestos.id, presupuestoId));
+  await db.transaction(async (tx) => {
+    await tx.execute(sql`SELECT id FROM presupuestos WHERE id = ${presupuestoId} FOR UPDATE`);
+    const [presupuesto] = await tx.select().from(presupuestos).where(eq(presupuestos.id, presupuestoId));
+    if (!presupuesto || !puedeAcceder(actor, presupuesto.creadoPor)) throw new ErrorNegocio(NO_ENCONTRADO);
+    if (!permisosPresupuesto(actor, presupuesto.creadoPor).decidir) throw new ErrorNegocio(SOLO_APROBAR);
+    if (presupuesto.estado === "listo") return;
+    const completo = await obtenerPresupuesto(tx as unknown as DB, actor, presupuestoId);
+    const pendientes = pendientesParaListo(completo);
+    if (pendientes.length) throw new ErrorNegocio(pendientes.join(" "));
+    await tx.update(presupuestos).set({ estado: "listo" }).where(eq(presupuestos.id, presupuestoId));
+  });
 }
 
 export async function reabrir(db: DB, actor: Actor, presupuestoId: string) {
