@@ -53,7 +53,7 @@ function AccionesUsuario({ usuario, vista }: { usuario: Usuario; vista: "tabla" 
         </FormAccion>
         <details className="mt-1 border-t border-linea-2 pt-2">
           <summary className="cursor-pointer rounded-md px-3 py-2 text-sm font-medium text-tinta-2 hover:bg-fondo">Cambiar contraseña</summary>
-          <FormAccion action={restablecerContrasena} limpiarAlTerminar className="mt-2 space-y-2 px-1">
+          <FormAccion action={restablecerContrasena} limpiarAlTerminar className="mt-2 space-y-3 px-1">
             <input type="hidden" name="id" value={usuario.id}/>
             <label className="sr-only" htmlFor={`password-${id}`}>Nueva contraseña para {usuario.name}</label>
             <input id={`password-${id}`} name="password" type="text" minLength={8} required autoComplete="off" placeholder="Nueva contraseña" className="campo"/>
