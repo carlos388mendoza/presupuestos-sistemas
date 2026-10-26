@@ -140,10 +140,12 @@ export function SubirCotizacionPresupuesto({ presupuestoId, partidas, usarUpload
             className="rounded-lg border-2 border-dashed border-linea bg-fondo px-4 py-6 transition-colors"
             appearance={{
               container: "min-h-36 rounded-lg border-2 border-dashed border-linea bg-fondo px-4 py-6 transition-colors",
+              uploadIcon: "text-4xl",
               label: "text-sm font-medium text-tinta",
               allowedContent: "text-xs text-suave",
               button: "btn-secundario mt-3",
             }}
+            content={{ uploadIcon: "☁️⬆️" }}
             onUploadBegin={prepararCarga}
             onClientUploadComplete={(files) => void completarCarga(files)}
             onUploadError={(uploadError) => {
@@ -164,6 +166,7 @@ export function SubirCotizacionPresupuesto({ presupuestoId, partidas, usarUpload
             }}
             className={`rounded-lg border-2 border-dashed px-4 py-6 text-center transition-colors ${arrastrando ? "border-tinta bg-fondo" : "border-linea bg-fondo"}`}
           >
+            <span aria-hidden="true" className="mb-2 block text-4xl">☁️⬆️</span>
             <p className="text-sm font-medium">Arrastra la cotización aquí</p>
             <p className="ayuda mt-1">o</p>
             <label htmlFor="cotizacion" className="btn-secundario mt-3 cursor-pointer">
