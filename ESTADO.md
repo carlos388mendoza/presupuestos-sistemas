@@ -1,7 +1,7 @@
 ﻿# ESTADO.md: estado del proyecto
 
-Última revisión: 2026-10-23 (tarde), por Claude Code con Carlos.
-`main` en `3da484d` (después de este PR, el merge de `docs/estado-revision`). Sin PRs abiertos.
+Última revisión: 2026-10-26, por Claude Code con Carlos.
+`main` en `3d5daac` (antes de este PR, que solo cambia este archivo). PR abierto: [#98](https://github.com/carlos388mendoza/presupuestos-sistemas/pull/98), del compañero (no tocar).
 
 ## Resumen
 - App interna de Grupo Comidas (Honduras), departamento de Sistemas, para presupuestos de aperturas y remodelaciones de restaurantes.
@@ -32,17 +32,21 @@
   - [#77](https://github.com/carlos388mendoza/presupuestos-sistemas/pull/77): redondeo de centavos (`1.005` → 1.01) y precio máximo con mensaje claro en vez de error 500 (con pruebas).
 - **Pruebas:** 28 en 6 archivos, todas pasan. `lint`, `tsc` y `build` sin errores.
 
-## Pendiente: issues abiertos (decisiones de reglas, no errores claros)
-| # | Tema | Recomendación |
-|---|---|---|
-| [#78](https://github.com/carlos388mendoza/presupuestos-sistemas/issues/78) | Cualquier rol, incluido el aprobador, puede eliminar o fusionar equipos del catálogo | `puedeEditarCatalogo` (admin y creador) en `datos.ts` |
-| [#79](https://github.com/carlos388mendoza/presupuestos-sistemas/issues/79) | El servidor permite eliminar un presupuesto listo | Usar `presupuestoEditable` en `eliminarPresupuesto` |
-| [#80](https://github.com/carlos388mendoza/presupuestos-sistemas/issues/80) | Creador que pasa a aprobador sigue modificando sus presupuestos | `modificar` = no aprobador y (admin o dueño) |
-| [#81](https://github.com/carlos388mendoza/presupuestos-sistemas/issues/81) | Carrera al marcar listo o elegir a la vez (posible 500) | Transacción con bloqueo y mensaje amigable |
+## Revisión del 26/10/2026
+- **Issues:** no hay abiertos. #78–#81 (reglas de permisos y carrera), #91–#94 (PDF, dropzone, README) y #58/#93 (reabiertos y vueltos a cerrar) quedaron resueltos en PRs unidos.
+- **main:** `lint`, `tsc`, `build` y 37 pruebas pasan; el CI pasa. Migraciones 0000–0002 aplicadas en `production` y `desarrollo`.
+- **IA (OpenRouter, modelo gratis de NVIDIA):**
+  - Los PDFs con texto se convierten a texto en el servidor (primeras 5 páginas) y solo se envía el texto; los escaneados no llaman a la IA y muestran un aviso para subir una foto.
+  - El modelo gratis de NVIDIA a veces falla (error 502 o más de 2 minutos sin responder). Por eso [#99](https://github.com/carlos388mendoza/presupuestos-sistemas/pull/99) permite poner varios modelos separados por coma en `OPENROUTER_MODEL`: el primero es el principal y los demás de respaldo.
+  - Vercel (Production y Preview) y el `.env` local usan `nvidia/nemotron-3.5-super-vl:free,dots-studio/dots-3-note-preview:free`.
+  - #99 también le enseña a la IA a reconocer proveedores de Honduras como "nacional" (antes los marcaba "internacional").
+  - Probado en la vista previa de #99 con PDF de texto, foto PNG y PDF escaneado: los tres bien, 10–15 s cada uno.
+  - Límites de los modelos gratis: unas 20 solicitudes por minuto y 50 por día (1000 por día si se compran USD 10 de créditos en OpenRouter).
+- Los datos de prueba en `desarrollo` se borraron.
 
 ## Pendiente: configuración (lo hace Carlos)
-- **`OPENROUTER_MODEL` del `.env` local** es `google/gemini-3.8-flash-lite-tts`, un modelo de **voz** que no puede leer cotizaciones; OpenRouter responde 400. Hay que poner un modelo con visión/PDF, por ejemplo el de `.env.example`. Revisar que en Vercel (Production y Preview) tampoco sea uno "tts".
-- **Proteger `main` en GitHub** para que solo se una por PR: ver la guía que se le dio a Carlos (Settings → Rules / Branches).
+- **Llave de OpenRouter del `.env` local:** no es válida (OpenRouter responde "User not found"). La de Vercel sí funciona. Pegar la llave nueva en la línea `OPENROUTER_API_KEY=` del `.env` (nunca en el chat ni en GitHub).
+- **Proteger `main` en GitHub** para que solo se una por PR (Settings → Rules / Branches).
 - `npm audit` reporta vulnerabilidades en dependencias. No es urgente; revisar con calma.
 
 ## Para retomar (Claude Code o Codex)
@@ -53,9 +57,6 @@
 5. Cada cambio va en una rama con su PR. Se une si pasan el CI y la vista previa de Vercel.
 
 
-## Actualizacion 26/10/2026
-- Tarea 1: los PDFs se convierten a texto en el servidor con unpdf (primeras 5 paginas). Si hay texto suficiente se envia solo texto a la IA; si es escaneado no se llama a la IA y se muestra aviso.
-- Modelo recomendado gratis: 
-vidia/nemotron-3.5-super-vl:free (vision + structured outputs). Limites tipicos de OpenRouter para modelos gratis: ~20 solicitudes/minuto y ~50/dia (hasta 1000/dia con USD 10 de creditos), contexto 1M y salida 131k tokens.
-- Tarea 2: buscador global redisenado estilo wiki con secciones Acciones, Ir a, Presupuestos y Equipos, iconos, subtitulos, ayuda inferior y modo oscuro.
-- PRs: #84 (PDFs sin pagar), #85 (buscador wiki).
+
+## Historial 26/10/2026 (mañana)
+- PDFs a texto con unpdf: [#84](https://github.com/carlos388mendoza/presupuestos-sistemas/pull/84). Buscador global estilo wiki (Acciones, Ir a, Presupuestos y Equipos): [#85](https://github.com/carlos388mendoza/presupuestos-sistemas/pull/85).
