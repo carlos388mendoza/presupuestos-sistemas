@@ -39,13 +39,13 @@
   - Los PDFs con texto se convierten a texto en el servidor (primeras 5 páginas) y solo se envía el texto; los escaneados no llaman a la IA y muestran un aviso para subir una foto.
   - El modelo gratis de NVIDIA a veces falla (error 502 o más de 2 minutos sin responder). Por eso [#99](https://github.com/carlos388mendoza/presupuestos-sistemas/pull/99) permite poner varios modelos separados por coma en `OPENROUTER_MODEL`: el primero es el principal y los demás de respaldo.
   - Vercel (Production y Preview) y el `.env` local usan `nvidia/nemotron-3.5-super-vl:free,dots-studio/dots-3-note-preview:free`.
+  - **Llave de OpenRouter:** es de Carlos (la IA es responsabilidad suya). Está en su `.env` local y en Vercel (Production y Preview), cambiada el 26/10 a las 17:37 UTC. Vercel la guarda como secreta (no se puede leer); se comprobó con una huella que la de Preview es igual a la local. Probada el 26/10: local 19 s (PDF, incluye compilar) / 4 s (foto); vista previa 23 s / 12 s; escaneado con su aviso. Sin errores de OpenRouter en producción.
   - #99 también le enseña a la IA a reconocer proveedores de Honduras como "nacional" (antes los marcaba "internacional").
   - Probado en la vista previa de #99 con PDF de texto, foto PNG y PDF escaneado: los tres bien, 10–15 s cada uno.
   - Límites de los modelos gratis: unas 20 solicitudes por minuto y 50 por día (1000 por día si se compran USD 10 de créditos en OpenRouter).
 - Los datos de prueba en `desarrollo` se borraron.
 
 ## Pendiente: configuración (lo hace Carlos)
-- **Llave de OpenRouter del `.env` local:** no es válida (OpenRouter responde "User not found"). La de Vercel sí funciona. Pegar la llave nueva en la línea `OPENROUTER_API_KEY=` del `.env` (nunca en el chat ni en GitHub).
 - **Proteger `main` en GitHub** para que solo se una por PR (Settings → Rules / Branches).
 - `npm audit` reporta vulnerabilidades en dependencias. No es urgente; revisar con calma.
 
