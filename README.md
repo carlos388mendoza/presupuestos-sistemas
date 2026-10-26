@@ -30,7 +30,7 @@ Llena el `.env`:
 | `BETTER_AUTH_SECRET` | Texto largo y aleatorio (`openssl rand -base64 32`) |
 | `BETTER_AUTH_URL` | `http://localhost:3000` en desarrollo; la dirección pública `https://...` en producción |
 | `OPENROUTER_API_KEY` | Llave de openrouter.ai (con límite de crédito) |
-| `OPENROUTER_MODEL` | ID de un modelo con visión/PDF y structured outputs. Recomendado gratis: `nvidia/nemotron-3.5-super-vl:free`. Los PDFs se convierten a texto en el servidor (primeras 5 páginas) antes de enviarlos; si el PDF es una imagen escaneada, no se llama a la IA. |
+| `OPENROUTER_MODEL` | ID de un modelo con visión/PDF y structured outputs. Recomendado gratis: `nvidia/nemotron-3.5-super-vl:free,dots-studio/dots-3-note-preview:free` (varios separados por coma: el primero es el principal y, si falla o no responde, OpenRouter usa el siguiente). Los PDFs se convierten a texto en el servidor (primeras 5 páginas) antes de enviarlos; si el PDF es una imagen escaneada, no se llama a la IA. |
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NAME` | Primer administrador |
 
 Las cotizaciones se guardan en la carpeta `uploads/` en desarrollo y en **Vercel Blob privado** al publicar en Vercel (`ARCHIVOS_STORAGE=blob`, es el valor por defecto dentro de Vercel). También se puede usar UploadThing (`uploadthing`) o AWS S3/Cloudflare R2 (`s3`); pasos y variables en la [guía de almacenamiento](docs/almacenamiento-archivos-nextjs.md). En todos los casos los archivos se ven solo por `/api/archivos/[id]`, que revisa que seas el dueño, administrador o aprobador (este último solo los que ya están en un presupuesto). Tamaño máximo por archivo: 4 MB (Vercel no acepta envíos de más de 4.5 MB).
