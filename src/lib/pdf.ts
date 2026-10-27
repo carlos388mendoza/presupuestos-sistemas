@@ -22,7 +22,7 @@ export async function generarPdf(p: PresupuestoCompleto): Promise<Buffer> {
   const x = () => doc.page.margins.left;
 
   doc.font("Helvetica-Bold").fontSize(18).fillColor("#1d2b3a")
-    .text(`Presupuesto de Sistemas · ${p.nombre}`, { align: "left" });
+    .text(`Presupuesto de Sistemas · ${p.nombre}`, x(), doc.y, { width: ancho, align: "left" });
   doc.moveDown(0.4).font("Helvetica").fontSize(10).fillColor("#303a43");
   doc.text(`Restaurante: ${p.restaurante}    Tipo: ${p.tipo === "apertura" ? "Apertura" : "Remodelación"}`);
   doc.text(`Elaborado por: ${p.autor}    Fecha: ${new Date().toLocaleDateString("es-HN")}`);
@@ -48,7 +48,8 @@ export async function generarPdf(p: PresupuestoCompleto): Promise<Buffer> {
       .flatMap((alternativa) => alternativa.items.map((item) => ({ partida, alternativa, item }))));
     if (!filas.length) continue;
     if (doc.y > doc.page.height - 90) doc.addPage();
-    doc.font("Helvetica-Bold").fontSize(13).fillColor("#1d2b3a").text(LABEL[tipo], { align: "left" });
+    doc.font("Helvetica-Bold").fontSize(13).fillColor("#1d2b3a")
+      .text(LABEL[tipo], x(), doc.y, { width: ancho, align: "left" });
     doc.moveDown(0.4);
     encabezadoTabla();
     for (const { partida, alternativa, item } of filas) {
@@ -71,7 +72,7 @@ export async function generarPdf(p: PresupuestoCompleto): Promise<Buffer> {
 
   if (doc.y > doc.page.height - 100) doc.addPage();
   doc.font("Helvetica-Bold").fontSize(13).fillColor("#1d2b3a")
-    .text("Total del presupuesto", { align: "left" });
+    .text("Total del presupuesto", x(), doc.y, { width: ancho, align: "left" });
   for (const moneda of ["USD", "HNL"] as Moneda[]) {
     doc.font("Helvetica-Bold").fontSize(10).text(`Total en ${moneda}: ${formatear(p.resumen.total[moneda], moneda)}`);
   }
